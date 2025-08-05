@@ -13,7 +13,7 @@ interface PayPalPaymentProps {
   onError?: (error: any) => void
 }
 
-function PayPalPayment({ orderId, amount, onSuccess, onError }: PayPalPaymentProps) {
+export function PayPalPayment({ orderId, amount, onSuccess, onError }: PayPalPaymentProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -167,6 +167,5 @@ function PayPalPayment({ orderId, amount, onSuccess, onError }: PayPalPaymentPro
   )
 }
 
-// Export both named and default exports to ensure compatibility
-export { PayPalPayment }
+// Export as default to ensure compatibility
 export default PayPalPayment
