@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Capa_2" data-name="Capa 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 559.06 535.76">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+
+      .cls-2 {
+        fill: url(#Degradado_sin_nombre_7);
+      }
+    </style>
+    <linearGradient id="Degradado_sin_nombre_7" data-name="Degradado sin nombre 7" x1="88.05" y1="274.4" x2="467.93" y2="274.4" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#9333ea"/>
+    </linearGradient>
+  </defs>
+  <g id="Capa_1" data-name="Capa 1">
+    <rect class="cls-2" x="88.05" y="84.46" width="379.88" height="379.88" rx="28.35" ry="28.35"/>
+    <g id="L_-_LiberCopyç" data-name="L - LiberCopyç">
+      <polygon class="cls-1" points="190.6 398.45 202.25 407.17 224.85 159.15 190.6 398.45"/>
+      <polygon class="cls-1" points="151.22 371.5 163.58 379.97 215.53 170.08 151.22 371.5"/>
+      <polygon class="cls-1" points="225.84 415.91 228.07 166.98 210.52 413.76 225.84 415.91"/>
+      <polygon class="cls-1" points="169.77 385.92 183.53 394.53 221.06 161.91 169.77 385.92"/>
+      <path class="cls-1" d="M314.75,131.74l-81.27.09c-.64-.06-1.29-.09-1.93-.09-9.68-.05-19.42,6.13-24.94,19.16l-72.8,207.33c-1.12,3.19.47,6.69,3.56,7.84,3.09,1.16,6.48-.48,7.6-3.67l72.8-207.33c2.21-6.29,15.23-7.24,17.05,4.07l1.21,257.53,186.49.38v-53.82l-107.78-.09v-231.41Z"/>
+    </g>
+  </g>
+</svg>
