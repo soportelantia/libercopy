@@ -34,6 +34,7 @@ if (isServer && isMailgunConfigured) {
     mg = mailgun.client({
       username: "api",
       key: MAILGUN_API_KEY!,
+      url: "https://api.eu.mailgun.net"
     })
     console.log("✅ Mailgun client initialized successfully")
   } catch (error) {
