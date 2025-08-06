@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     if (error && error.code !== "PGRST116") {
       // PGRST116 = no rows found
       console.error("❌ Error en consulta de perfiles:", error)
-      return NextResponse.json({ error: "Error al consultar email "+error.code }, { status: 500 })
+      return NextResponse.json({ error: "Error al consultar email" }, { status: 500 })
     }
 
     return NextResponse.json({ exists: !!data })
