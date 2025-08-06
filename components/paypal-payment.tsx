@@ -166,3 +166,6 @@ export function PayPalPayment({ orderId, amount, onSuccess, onError }: PayPalPay
     </Card>
   )
 }
+
+// Export as default to ensure compatibility
+export default PayPalPayment
