@@ -27,6 +27,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Función para obtener la URL base correcta
+const getBaseUrl = () => {
+  // En el cliente, usar window.location.origin como fallback
+  if (typeof window !== 'undefined') {
+    return process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+  }
+  // En el servidor, usar la variable de entorno
+  return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -65,8 +75,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [router])
 
- 
-
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
       setLoading(true)
@@ -97,7 +105,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true)
@@ -124,10 +131,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      const baseUrl = getBaseUrl()
+      const redirectUrl = `${baseUrl}/auth/callback`
+      
+      console.log("🔗 Using redirect URL:", redirectUrl)
+      console.log("🌍 NEXT_PUBLIC_SITE_URL:", process.env.NEXT_PUBLIC_SITE_URL)
+      console.log("🌍 Window origin:", typeof window !== 'undefined' ? window.location.origin : 'N/A')
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+          redirectTo: redirectUrl
         }
       })
 
@@ -142,7 +156,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error
     }
   }
-
 
   const signOut = async () => {
     try {
