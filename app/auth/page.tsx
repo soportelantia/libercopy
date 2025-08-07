@@ -41,13 +41,16 @@ export default function AuthPage() {
   // Redirigir si ya está autenticado
   useEffect(() => {
     if (!authLoading && user) {
-      if (items.length > 0) {
+      // Verificar si items existe y tiene length antes de acceder
+      const hasCartItems = items && Array.isArray(items) && items.length > 0
+      
+      if (hasCartItems) {
         router.push("/cart")
       } else {
         router.push(redirect || "/")
       }
     }
-  }, [user, authLoading, router, redirect, items.length])
+  }, [user, authLoading, router, redirect, items])
 
   const translateError = (error: string): string => {
     const errorTranslations: Record<string, string> = {
