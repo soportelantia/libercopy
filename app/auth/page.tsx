@@ -79,10 +79,29 @@ export default function AuthPage() {
     setError("")
 
     try {
-      await signIn(loginEmail, loginPassword)
+      const result = await signIn(loginEmail, loginPassword)
+      if (result && !result.success) {
+        setError(result.error || "Credenciales incorrectas")
+        return
+      }
       router.push(redirectTo)
     } catch (error: any) {
-      setError(error.message || "Error al iniciar sesión")
+      console.error("Error en login:", error)
+      let errorMessage = "Error al iniciar sesión"
+      
+      if (error.message) {
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña."
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Debes confirmar tu email antes de iniciar sesión."
+        } else if (error.message.includes("Too many requests")) {
+          errorMessage = "Demasiados intentos. Espera unos minutos antes de intentar de nuevo."
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -128,20 +147,38 @@ export default function AuthPage() {
       const alreadyExists = await checkIfEmailExists(registerEmail)
       if (alreadyExists) {
         setError("Ya existe una cuenta con ese email. Inicia sesión o recupera tu contraseña.")
+        setIsLoading(false)
         return
       }
+      
       const result = await signUp(registerEmail, registerPassword, registerFirstName, registerLastName)
+      console.log("Resultado del registro:", result)
 
-
-      if (!result.success) {
-        setError(result.error || "Error al crear la cuenta")
+      if (!result || !result.success) {
+        setError(result?.error || "Error al crear la cuenta")
+        setIsLoading(false)
         return
       }
 
       setSuccess("Cuenta creada exitosamente. Revisa tu email para confirmar tu cuenta.")
       setActiveTab("login")
     } catch (error: any) {
-      setError(error.message || "Error inesperado al crear la cuenta")
+      console.error("Error en registro:", error)
+      let errorMessage = "Error inesperado al crear la cuenta"
+      
+      if (error.message) {
+        if (error.message.includes("User already registered")) {
+          errorMessage = "Ya existe una cuenta con ese email."
+        } else if (error.message.includes("Password should be at least")) {
+          errorMessage = "La contraseña debe tener al menos 6 caracteres."
+        } else if (error.message.includes("Invalid email")) {
+          errorMessage = "El formato del email no es válido."
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -152,12 +189,30 @@ export default function AuthPage() {
     setError("")
 
     try {
-      // Guardar la intención de redirección ANTES de iniciar sesión
       sessionStorage.setItem("redirectAfterLogin", redirectTo)
-      await signInWithGoogle()
+      const result = await signInWithGoogle()
+      
+      if (result && !result.success) {
+        setError(result.error || "Error al iniciar sesión con Google")
+        return
+      }
+      
       router.push(redirectTo)
     } catch (error: any) {
-      setError(error.message || "Error al iniciar sesión con Google")
+      console.error("Error en Google Sign In:", error)
+      let errorMessage = "Error al iniciar sesión con Google"
+      
+      if (error.message) {
+        if (error.message.includes("popup_closed_by_user")) {
+          errorMessage = "Inicio de sesión cancelado por el usuario."
+        } else if (error.message.includes("access_denied")) {
+          errorMessage = "Acceso denegado. Verifica los permisos de tu cuenta de Google."
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
