@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
       extractedPathFromFileUrl, // ← ahora se incluye siempre,
       
     ].filter(Boolean)
+    .map(path => decodeURIComponent(path))
 
     console.log("Possible file paths to try:", possiblePaths)
 
