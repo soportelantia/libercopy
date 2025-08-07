@@ -80,15 +80,28 @@ export default function AuthPage() {
 
     try {
       const result = await signIn(loginEmail, loginPassword)
+
       if (result && !result.success) {
-        setError(result.error || "Credenciales incorrectas")
+        // 🔁 Traducción de errores conocidos
+        let errorMessage = result.error || "Credenciales incorrectas"
+
+        if (errorMessage.includes("Invalid login credentials")) {
+          errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña."
+        } else if (errorMessage.includes("Email not confirmed")) {
+          errorMessage = "Debes confirmar tu email antes de iniciar sesión."
+        } else if (errorMessage.includes("Too many requests")) {
+          errorMessage = "Demasiados intentos. Espera unos minutos antes de intentar de nuevo."
+        }
+
+        setError(errorMessage)
         return
       }
+
       router.push(redirectTo)
     } catch (error: any) {
       console.error("Error en login:", error)
       let errorMessage = "Error al iniciar sesión"
-      
+
       if (error.message) {
         if (error.message.includes("Invalid login credentials")) {
           errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña."
@@ -100,7 +113,7 @@ export default function AuthPage() {
           errorMessage = error.message
         }
       }
-      
+
       setError(errorMessage)
     } finally {
       setIsLoading(false)
