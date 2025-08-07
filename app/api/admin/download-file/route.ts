@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       // Usar temp_path si está disponible
       orderItem.temp_path,
       // Usar file_url si es una ruta relativa
-      orderItem.file_url && !orderItem.file_url.startsWith("http") ? orderItem.file_url : null,
+      orderItem.file_url, // ← ahora se incluye siempre,
       // Construir ruta basada en order_id y file_name
       `orders/${orderId}/${orderItem.file_name}`,
       // Ruta alternativa con timestamp
