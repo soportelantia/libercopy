@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Mail, Lock, CheckCircle, X, ArrowLeft, User } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, CheckCircle, X, ArrowLeft, User } from 'lucide-react'
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
