@@ -213,7 +213,7 @@ export default function AuthPage() {
       const result = await signInWithGoogle()
       
       if (result && !result.success) {
-        setError(result.error || "Error al iniciar sesión con Google")
+        //setError(result.error || "Error al iniciar sesión con Google")
         return
       }
       
