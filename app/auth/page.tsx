@@ -268,7 +268,7 @@ export default function AuthPage() {
             {error && (
               <Alert className="mb-4 border-red-200 bg-red-50">
                 <X className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-700">{error}</AlertDescription>
+                <AlertDescription className="text-red-700">{errorMessage}</AlertDescription>
               </Alert>
             )}
 
