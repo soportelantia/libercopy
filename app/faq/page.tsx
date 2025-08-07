@@ -135,7 +135,7 @@ const faqData: FAQItem[] = [
         </div>
         <div className="p-3 bg-green-50 rounded-lg">
           <p className="text-sm text-green-700">
-            <strong>Horarios:</strong> Lunes a Viernes 9:00-18:00, Sábados 10:00-14:00
+            <strong>Horarios:</strong> Lunes a Viernes 9:00-18:00
           </p>
         </div>
       </div>
