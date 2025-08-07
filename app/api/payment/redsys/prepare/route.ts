@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
     // URLs de callback
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://v0-libery-copy.vercel.app"
     const merchantURL = `${baseUrl}/api/payment/redsys/callback`
-    const urlOK = `${baseUrl}/payment/success`
+    const urlOK = `${baseUrl}/payment/success?orderId=${orderId}`
     const urlKO = `${baseUrl}/payment/error`
 
     console.log("=== CALLBACK URLS ===")
