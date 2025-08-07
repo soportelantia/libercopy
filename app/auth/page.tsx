@@ -6,146 +6,148 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/auth-context'
 import { useCart } from '@/hooks/use-cart'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 export default function AuthPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { signIn, signUp, user } = useAuth()
   const { items } = useCart()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect')
+  const redirect = searchParams.get('redirect') || '/'
 
-  // Redirigir si ya está autenticado
+  // Si ya está autenticado, redirigir
   useEffect(() => {
     if (user) {
       if (items.length > 0) {
         router.push('/cart')
       } else {
-        router.push(redirect || '/')
+        router.push(redirect)
       }
     }
-  }, [user, items, router, redirect])
+  }, [user, router, redirect, items])
 
   const translateError = (error: string): string => {
     const errorMessages: { [key: string]: string } = {
       'Invalid login credentials': 'Credenciales de acceso inválidas',
-      'Email not confirmed': 'Email no confirmado',
+      'Email not confirmed': 'Email no confirmado. Revisa tu bandeja de entrada',
       'User already registered': 'El usuario ya está registrado',
       'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres',
       'Invalid email': 'Email inválido',
       'Signup requires a valid password': 'El registro requiere una contraseña válida',
       'User not found': 'Usuario no encontrado',
-      'Invalid password': 'Contraseña inválida',
-      'Email already registered': 'El email ya está registrado',
-      'Weak password': 'Contraseña débil',
-      'Network error': 'Error de conexión',
-      'Server error': 'Error del servidor'
+      'Invalid password': 'Contraseña incorrecta',
+      'Email already registered': 'Este email ya está registrado',
+      'Weak password': 'La contraseña es muy débil',
+      'Invalid credentials': 'Credenciales inválidas',
+      'Too many requests': 'Demasiados intentos. Inténtalo más tarde'
     }
-    
-    return errorMessages[error] || error || 'Ha ocurrido un error inesperado'
+
+    // Buscar coincidencias parciales
+    for (const [key, value] of Object.entries(errorMessages)) {
+      if (error.toLowerCase().includes(key.toLowerCase())) {
+        return value
+      }
+    }
+
+    return error || 'Ha ocurrido un error inesperado'
   }
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
     setError('')
-    setSuccess('')
+
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    console.log('Intentando login con:', { email })
 
     try {
-      console.log('Intentando iniciar sesión con:', email)
-      
-      if (!email || !password) {
-        setError('Por favor, completa todos los campos')
-        return
-      }
-
       const result = await signIn(email, password)
       console.log('Resultado del login:', result)
 
       if (result?.error) {
         console.error('Error en login:', result.error)
-        setError(translateError(result.error.message))
+        setError(translateError(result.error.message || result.error))
         return
       }
 
       if (result?.user) {
         console.log('Login exitoso, redirigiendo...')
-        setSuccess('Inicio de sesión exitoso')
-        
-        // Redirigir después de un breve delay
-        setTimeout(() => {
-          if (items.length > 0) {
-            router.push('/cart')
-          } else {
-            router.push(redirect || '/')
-          }
-        }, 1000)
+        // Redirigir según si hay items en el carrito
+        if (items.length > 0) {
+          router.push('/cart')
+        } else {
+          router.push(redirect)
+        }
+      } else {
+        setError('Error de autenticación. Inténtalo de nuevo.')
       }
     } catch (err: any) {
       console.error('Error capturado en handleSignIn:', err)
-      setError(translateError(err.message || 'Error al iniciar sesión'))
+      setError(translateError(err.message || 'Error de conexión'))
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
     setError('')
-    setSuccess('')
+
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirmPassword') as string
+
+    console.log('Intentando registro con:', { email })
+
+    // Validaciones
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden')
+      setIsLoading(false)
+      return
+    }
+
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres')
+      setIsLoading(false)
+      return
+    }
 
     try {
-      console.log('Intentando registrar usuario:', email)
-
-      if (!email || !password || !confirmPassword) {
-        setError('Por favor, completa todos los campos')
-        return
-      }
-
-      if (password !== confirmPassword) {
-        setError('Las contraseñas no coinciden')
-        return
-      }
-
-      if (password.length < 6) {
-        setError('La contraseña debe tener al menos 6 caracteres')
-        return
-      }
-
       const result = await signUp(email, password)
       console.log('Resultado del registro:', result)
 
       if (result?.error) {
         console.error('Error en registro:', result.error)
-        setError(translateError(result.error.message))
+        setError(translateError(result.error.message || result.error))
         return
       }
 
       if (result?.user) {
         console.log('Registro exitoso')
-        setSuccess('Registro exitoso. Por favor, verifica tu email para activar tu cuenta.')
-        
-        // Limpiar formulario
-        setEmail('')
-        setPassword('')
-        setConfirmPassword('')
+        // Mostrar mensaje de confirmación
+        setError('')
+        alert('Registro exitoso. Revisa tu email para confirmar tu cuenta.')
+      } else {
+        setError('Error en el registro. Inténtalo de nuevo.')
       }
     } catch (err: any) {
       console.error('Error capturado en handleSignUp:', err)
-      setError(translateError(err.message || 'Error al registrarse'))
+      setError(translateError(err.message || 'Error de conexión'))
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -156,111 +158,156 @@ export default function AuthPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Accede a tu cuenta
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            O crea una nueva cuenta
+          </p>
         </div>
 
         {error && (
-          <Alert className="border-red-200 bg-red-50">
-            <AlertDescription className="text-red-800">
-              {error}
-            </AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
-        {success && (
-          <Alert className="border-green-200 bg-green-50">
-            <AlertDescription className="text-green-800">
-              {success}
-            </AlertDescription>
-          </Alert>
-        )}
+        <Tabs defaultValue="signin" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
+            <TabsTrigger value="signup">Registrarse</TabsTrigger>
+          </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Autenticación</CardTitle>
-            <CardDescription>
-              Inicia sesión o crea una nueva cuenta
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
-                <TabsTrigger value="signup">Registrarse</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="signin">
+          <TabsContent value="signin">
+            <Card>
+              <CardHeader>
+                <CardTitle>Iniciar Sesión</CardTitle>
+                <CardDescription>
+                  Ingresa tus credenciales para acceder
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
                     <Label htmlFor="signin-email">Email</Label>
                     <Input
                       id="signin-email"
+                      name="email"
                       type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       required
-                      disabled={loading}
+                      placeholder="tu@email.com"
                     />
                   </div>
                   <div>
                     <Label htmlFor="signin-password">Contraseña</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signin-password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Tu contraseña"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Iniciar Sesión
                   </Button>
                 </form>
-              </TabsContent>
-              
-              <TabsContent value="signup">
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="signup">
+            <Card>
+              <CardHeader>
+                <CardTitle>Crear Cuenta</CardTitle>
+                <CardDescription>
+                  Crea una nueva cuenta para empezar
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div>
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
                       id="signup-email"
+                      name="email"
                       type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       required
-                      disabled={loading}
+                      placeholder="tu@email.com"
                     />
                   </div>
                   <div>
                     <Label htmlFor="signup-password">Contraseña</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div>
-                    <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      disabled={loading}
-                    />
+                    <Label htmlFor="signup-confirm-password">Confirmar Contraseña</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-confirm-password"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Repite tu contraseña"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Registrando...' : 'Registrarse'}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Crear Cuenta
                   </Button>
                 </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )
