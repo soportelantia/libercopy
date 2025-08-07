@@ -8,19 +8,7 @@ import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase/client"
-import {
-  AlertCircle,
-  ArrowLeft,
-  FileText,
-  Truck,
-  MapPin,
-  Phone,
-  User,
-  Download,
-  Clock,
-  Mail,
-  Building,
-} from "lucide-react"
+import { AlertCircle, ArrowLeft, FileText, Truck, MapPin, Phone, User, Download, Clock, Mail, Building } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import Footer from "@/components/footer"
@@ -154,18 +142,44 @@ export default function OrderDetailsPage() {
 
       console.log("Items data:", itemsData)
 
-      // Obtener el historial de estados
-      const { data: historyData, error: historyError } = await supabase
-        .from("order_status_history")
-        .select("*")
-        .eq("order_id", orderId)
-        .order("created_at", { ascending: false })
+      // Obtener el historial de estados con mejor manejo de errores
+      try {
+        const { data: historyData, error: historyError } = await supabase
+          .from("order_status_history")
+          .select("*")
+          .eq("order_id", orderId)
+          .order("created_at", { ascending: false })
 
-      if (historyError) {
-        console.warn("No se pudo cargar el historial de estados:", historyError)
-        setStatusHistory([])
-      } else {
-        setStatusHistory(historyData || [])
+        if (historyError) {
+          console.warn("Error loading order status history:", historyError)
+          // Si hay error, crear un historial básico con el estado actual del pedido
+          setStatusHistory([
+            {
+              id: `default-${orderId}`,
+              order_id: orderId,
+              status: orderData.status,
+              comment: "Estado actual del pedido",
+              created_at: orderData.created_at,
+              created_by: orderData.user_id
+            }
+          ])
+        } else {
+          console.log("Status history data:", historyData)
+          setStatusHistory(historyData || [])
+        }
+      } catch (historyError) {
+        console.error("Error fetching status history:", historyError)
+        // Crear historial básico en caso de error
+        setStatusHistory([
+          {
+            id: `default-${orderId}`,
+            order_id: orderId,
+            status: orderData.status,
+            comment: "Estado actual del pedido",
+            created_at: orderData.created_at,
+            created_by: orderData.user_id
+          }
+        ])
       }
 
       setOrder({

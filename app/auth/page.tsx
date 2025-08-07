@@ -1,314 +1,396 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAuth } from '@/contexts/auth-context'
-import { useCart } from '@/hooks/use-cart'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useAuth } from "@/contexts/auth-context"
+import { useCart } from "@/hooks/use-cart"
+import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
+import Link from "next/link"
+import Navbar from "@/components/navbar"
+import Footer from "@/components/footer"
 
 export default function AuthPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const { signIn, signUp, user } = useAuth()
+  const { signIn, signUp, user, isLoading: authLoading } = useAuth()
   const { items } = useCart()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/'
+  const redirect = searchParams.get("redirect")
 
-  // Si ya está autenticado, redirigir
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  // Estados para login
+  const [loginEmail, setLoginEmail] = useState("")
+  const [loginPassword, setLoginPassword] = useState("")
+
+  // Estados para registro
+  const [registerEmail, setRegisterEmail] = useState("")
+  const [registerPassword, setRegisterPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+
+  // Redirigir si ya está autenticado
   useEffect(() => {
-    if (user) {
+    if (!authLoading && user) {
       if (items.length > 0) {
-        router.push('/cart')
+        router.push("/cart")
       } else {
-        router.push(redirect)
+        router.push(redirect || "/")
       }
     }
-  }, [user, router, redirect, items])
+  }, [user, authLoading, router, redirect, items.length])
 
   const translateError = (error: string): string => {
-    const errorMessages: { [key: string]: string } = {
-      'Invalid login credentials': 'Credenciales de acceso inválidas',
-      'Email not confirmed': 'Email no confirmado. Revisa tu bandeja de entrada',
-      'User already registered': 'El usuario ya está registrado',
-      'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres',
-      'Invalid email': 'Email inválido',
-      'Signup requires a valid password': 'El registro requiere una contraseña válida',
-      'User not found': 'Usuario no encontrado',
-      'Invalid password': 'Contraseña incorrecta',
-      'Email already registered': 'Este email ya está registrado',
-      'Weak password': 'La contraseña es muy débil',
-      'Invalid credentials': 'Credenciales inválidas',
-      'Too many requests': 'Demasiados intentos. Inténtalo más tarde'
+    const errorTranslations: Record<string, string> = {
+      "Invalid login credentials": "Credenciales de acceso incorrectas",
+      "Email not confirmed": "Email no confirmado. Revisa tu bandeja de entrada",
+      "User already registered": "El usuario ya está registrado",
+      "Password should be at least 6 characters": "La contraseña debe tener al menos 6 caracteres",
+      "Invalid email": "Email inválido",
+      "Email already registered": "Este email ya está registrado",
+      "Passwords do not match": "Las contraseñas no coinciden",
+      "All fields are required": "Todos los campos son obligatorios",
+      "Network error": "Error de conexión. Inténtalo de nuevo",
+      "Server error": "Error del servidor. Inténtalo más tarde"
     }
 
-    // Buscar coincidencias parciales
-    for (const [key, value] of Object.entries(errorMessages)) {
-      if (error.toLowerCase().includes(key.toLowerCase())) {
-        return value
-      }
-    }
-
-    return error || 'Ha ocurrido un error inesperado'
+    return errorTranslations[error] || error
   }
 
-  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
-
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    console.log('Intentando login con:', { email })
+    setError(null)
 
     try {
-      const result = await signIn(email, password)
-      console.log('Resultado del login:', result)
+      console.log("Intentando login con:", loginEmail)
+
+      if (!loginEmail || !loginPassword) {
+        throw new Error("Todos los campos son obligatorios")
+      }
+
+      const result = await signIn(loginEmail, loginPassword)
+      console.log("Resultado del login:", result)
 
       if (result?.error) {
-        console.error('Error en login:', result.error)
-        setError(translateError(result.error.message || result.error))
-        return
+        console.error("Error en login:", result.error)
+        throw new Error(result.error.message || "Error en el login")
       }
 
       if (result?.user) {
-        console.log('Login exitoso, redirigiendo...')
-        // Redirigir según si hay items en el carrito
-        if (items.length > 0) {
-          router.push('/cart')
-        } else {
-          router.push(redirect)
-        }
+        console.log("Login exitoso, redirigiendo...")
+        // La redirección se maneja en el useEffect
       } else {
-        setError('Error de autenticación. Inténtalo de nuevo.')
+        throw new Error("No se pudo completar el login")
       }
-    } catch (err: any) {
-      console.error('Error capturado en handleSignIn:', err)
-      setError(translateError(err.message || 'Error de conexión'))
+    } catch (error: any) {
+      console.error("Error capturado en handleLogin:", error)
+      const errorMessage = error?.message || "Error desconocido en el login"
+      setError(translateError(errorMessage))
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
-
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
-
-    console.log('Intentando registro con:', { email })
-
-    // Validaciones
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden')
-      setIsLoading(false)
-      return
-    }
-
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
-      setIsLoading(false)
-      return
-    }
+    setError(null)
 
     try {
-      const result = await signUp(email, password)
-      console.log('Resultado del registro:', result)
+      console.log("Intentando registro con:", registerEmail)
+
+      if (!registerEmail || !registerPassword || !confirmPassword || !firstName || !lastName) {
+        throw new Error("Todos los campos son obligatorios")
+      }
+
+      if (registerPassword !== confirmPassword) {
+        throw new Error("Las contraseñas no coinciden")
+      }
+
+      if (registerPassword.length < 6) {
+        throw new Error("La contraseña debe tener al menos 6 caracteres")
+      }
+
+      const result = await signUp(registerEmail, registerPassword, firstName, lastName)
+      console.log("Resultado del registro:", result)
 
       if (result?.error) {
-        console.error('Error en registro:', result.error)
-        setError(translateError(result.error.message || result.error))
-        return
+        console.error("Error en registro:", result.error)
+        throw new Error(result.error.message || "Error en el registro")
       }
 
       if (result?.user) {
-        console.log('Registro exitoso')
-        // Mostrar mensaje de confirmación
-        setError('')
-        alert('Registro exitoso. Revisa tu email para confirmar tu cuenta.')
+        console.log("Registro exitoso, redirigiendo...")
+        // La redirección se maneja en el useEffect
       } else {
-        setError('Error en el registro. Inténtalo de nuevo.')
+        throw new Error("No se pudo completar el registro")
       }
-    } catch (err: any) {
-      console.error('Error capturado en handleSignUp:', err)
-      setError(translateError(err.message || 'Error de conexión'))
+    } catch (error: any) {
+      console.error("Error capturado en handleRegister:", error)
+      const errorMessage = error?.message || "Error desconocido en el registro"
+      setError(translateError(errorMessage))
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (authLoading) {
+    return (
+      <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center" style={{ marginTop: "80px" }}>
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <span className="text-gray-600">Cargando...</span>
+          </div>
+        </div>
+      </main>
+    )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Accede a tu cuenta
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            O crea una nueva cuenta
-          </p>
+    <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <Navbar />
+
+      <div className="flex-1 flex items-center justify-center px-4 py-12" style={{ marginTop: "80px" }}>
+        <div className="w-full max-w-md">
+          <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-0">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Bienvenido
+              </CardTitle>
+              <CardDescription>Inicia sesión o crea una cuenta nueva</CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              {error && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+                  <TabsTrigger value="register">Registrarse</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="login" className="space-y-4">
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email">Email</Label>
+                      <Input
+                        id="login-email"
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="login-password">Contraseña</Label>
+                      <div className="relative">
+                        <Input
+                          id="login-password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Tu contraseña"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          required
+                          disabled={isLoading}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          disabled={isLoading}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Iniciando sesión...
+                        </>
+                      ) : (
+                        "Iniciar Sesión"
+                      )}
+                    </Button>
+
+                    <div className="text-center">
+                      <Link
+                        href="/reset-password"
+                        className="text-sm text-blue-600 hover:text-purple-600 underline"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </Link>
+                    </div>
+                  </form>
+                </TabsContent>
+
+                <TabsContent value="register" className="space-y-4">
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="first-name">Nombre</Label>
+                        <Input
+                          id="first-name"
+                          type="text"
+                          placeholder="Tu nombre"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="last-name">Apellidos</Label>
+                        <Input
+                          id="last-name"
+                          type="text"
+                          placeholder="Tus apellidos"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="register-email">Email</Label>
+                      <Input
+                        id="register-email"
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={registerEmail}
+                        onChange={(e) => setRegisterEmail(e.target.value)}
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="register-password">Contraseña</Label>
+                      <div className="relative">
+                        <Input
+                          id="register-password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Mínimo 6 caracteres"
+                          value={registerPassword}
+                          onChange={(e) => setRegisterPassword(e.target.value)}
+                          required
+                          disabled={isLoading}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          disabled={isLoading}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+                      <div className="relative">
+                        <Input
+                          id="confirm-password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Repite tu contraseña"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          disabled={isLoading}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          disabled={isLoading}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creando cuenta...
+                        </>
+                      ) : (
+                        "Crear Cuenta"
+                      )}
+                    </Button>
+
+                    <p className="text-xs text-gray-500 text-center">
+                      Al registrarte, aceptas nuestros{" "}
+                      <Link href="/condiciones-compra" className="text-blue-600 hover:text-purple-600 underline">
+                        términos y condiciones
+                      </Link>{" "}
+                      y{" "}
+                      <Link href="/politica-privacidad" className="text-blue-600 hover:text-purple-600 underline">
+                        política de privacidad
+                      </Link>
+                      .
+                    </p>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
-            <TabsTrigger value="signup">Registrarse</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="signin">
-            <Card>
-              <CardHeader>
-                <CardTitle>Iniciar Sesión</CardTitle>
-                <CardDescription>
-                  Ingresa tus credenciales para acceder
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div>
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input
-                      id="signin-email"
-                      name="email"
-                      type="email"
-                      required
-                      placeholder="tu@email.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="signin-password">Contraseña</Label>
-                    <div className="relative">
-                      <Input
-                        id="signin-password"
-                        name="password"
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        placeholder="Tu contraseña"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Iniciar Sesión
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="signup">
-            <Card>
-              <CardHeader>
-                <CardTitle>Crear Cuenta</CardTitle>
-                <CardDescription>
-                  Crea una nueva cuenta para empezar
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div>
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      name="email"
-                      type="email"
-                      required
-                      placeholder="tu@email.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="signup-password">Contraseña</Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-password"
-                        name="password"
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        placeholder="Mínimo 6 caracteres"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="signup-confirm-password">Confirmar Contraseña</Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-confirm-password"
-                        name="confirmPassword"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        required
-                        placeholder="Repite tu contraseña"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Crear Cuenta
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
       </div>
-    </div>
+
+      <Footer />
+    </main>
   )
 }
