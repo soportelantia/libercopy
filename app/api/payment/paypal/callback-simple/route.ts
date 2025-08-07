@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Preparar datos de actualización
     const updateData: any = {
-      status: isSuccessful ? "processing" : "payment_failed",
+      status: isSuccessful ? "completed" : "payment_failed",
       updated_at: new Date().toISOString(),
     }
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       const { error: simpleUpdateError } = await supabaseAdmin
         .from("orders")
         .update({
-          status: isSuccessful ? "processing" : "payment_failed",
+          status: isSuccessful ? "completed" : "payment_failed",
           updated_at: new Date().toISOString(),
         })
         .eq("id", orderId)
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
 
     const responseMessage = isSuccessful ? "Pago procesado exitosamente - Pedido en proceso" : "Pago fallido"
 
-    console.log(`Callback processing completed for order ${orderId}: ${responseMessage}`)
+    console.log(`Callback completed for order ${orderId}: ${responseMessage}`)
 
     return NextResponse.json({
       success: true,
