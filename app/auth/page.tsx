@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Mail, Lock, CheckCircle, X, ArrowLeft, User } from 'lucide-react'
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useCart } from "@/hooks/use-cart"
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login")
@@ -46,7 +47,8 @@ export default function AuthPage() {
   const { signIn, signUp, signInWithGoogle, user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get("redirect") || "/auth"
+  const redirectTo = searchParams.get("redirect") || "/"
+  const { items } = useCart()
   
   
   useEffect(() => {
@@ -97,7 +99,12 @@ export default function AuthPage() {
         return
       }
 
-      router.push(redirectTo)
+      // Verificar si hay items en el carrito para redirigir apropiadamente
+      if (items && items.length > 0) {
+        router.push("/cart")
+      } else {
+        router.push(redirectTo)
+      }
     } catch (error: any) {
       console.error("Error en login:", error)
       let errorMessage = "Error al iniciar sesión"
@@ -210,7 +217,12 @@ export default function AuthPage() {
         return
       }
       
-      router.push(redirectTo)
+      // Verificar si hay items en el carrito para redirigir apropiadamente
+      if (items && items.length > 0) {
+        router.push("/cart")
+      } else {
+        router.push(redirectTo)
+      }
     } catch (error: any) {
       console.error("Error en Google Sign In:", error)
       let errorMessage = "Error al iniciar sesión con Google"
