@@ -180,7 +180,7 @@ export default function AuthPage() {
       let errorMessage = "Error inesperado al crear la cuenta"
       
       if (error.message) {
-        if (error.message.includes("User already registered")) {
+        if (error.message.includes("has already been registered")) {
           errorMessage = "Ya existe una cuenta con ese email."
         } else if (error.message.includes("Password should be at least")) {
           errorMessage = "La contraseña debe tener al menos 6 caracteres."
