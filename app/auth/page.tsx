@@ -225,7 +225,7 @@ export default function AuthPage() {
       }
     } catch (error: any) {
       console.error("Error en Google Sign In:", error)
-      let errorMessage = "Error al iniciar sesión con Google"
+      let errorMessage = ""
       
       if (error.message) {
         if (error.message.includes("popup_closed_by_user")) {
