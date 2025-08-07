@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     if (error && error.code !== "PGRST116") {
       // PGRST116 = no rows found
       console.error("❌ Error en consulta de perfiles:", error)
+      console.error("Key: ",process.env.SUPABASE_SERVICE_ROLE_KEY!)
       return NextResponse.json({ error: "Error al consultar email" }, { status: 500 })
     }
 
