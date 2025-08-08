@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, FileText, ShoppingBag, ArrowRight, Edit, Plus, Minus } from "lucide-react"
+import { Trash2, FileText, ShoppingBag, ArrowRight, Edit, Plus, Minus } from 'lucide-react'
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import Footer from "@/components/footer"
@@ -24,7 +24,7 @@ export default function CartPage() {
     <main className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-blue-50 overflow-x-hidden">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12" style={{marginTop: '40px'}}>
+      <div className="container mx-auto px-4 py-12 overflow-x-hidden" style={{marginTop: '40px'}}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold gradient-text mb-4">Tu carrito de compra</h1>
@@ -49,7 +49,7 @@ export default function CartPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-8 overflow-x-hidden">
               <div className="lg:col-span-2 space-y-6">
                 <Card className="border-0 shadow-xl">
                   <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-xl">
@@ -194,7 +194,7 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
   return (
     <Card className="border-2 border-gray-100 hover:border-blue-200 transition-all card-hover w-full">
       <CardContent className="p-6">
-        <div className="flex items-start space-x-4 w-full overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4 w-full overflow-hidden">
           <div className="w-12 h-12 bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
             <FileText className="h-6 w-6 text-blue-600" />
           </div>
@@ -202,7 +202,7 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-900 mb-2 truncate">{displayName}</h3>
 
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-600 mb-4 break-words">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600 mb-4 break-words">
               {pageCount !== "N/A" && (
                 <div className="flex items-center">
                   <span className="font-medium">Páginas:</span>
@@ -237,8 +237,8 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center space-x-3">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center space-x-3 w-full sm:w-auto">
                 <span className="text-sm font-medium text-gray-700">Copias:</span>
                 <div className="flex items-center border-2 border-gray-200 rounded-lg">
                   <button
@@ -263,7 +263,7 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4 flex-shrink-0">
+              <div className="flex items-center justify-between sm:justify-end space-x-4 flex-shrink-0 w-full sm:w-auto">
                 <span className="text-xl font-bold text-blue-600">
                   {(item.price * quantity).toFixed(2)}€
                 </span>

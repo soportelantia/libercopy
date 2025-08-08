@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase/client"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, CreditCard, MapPin, Home, Phone } from "lucide-react"
+import { ArrowLeft, CreditCard, MapPin, Home, Phone } from 'lucide-react'
 import { CheckoutSteps } from "@/components/checkout-steps"
 import { calcularGastosEnvio } from "@/lib/location-service"
 import { PayPalPayment } from "@/components/paypal-payment"
@@ -443,10 +443,10 @@ export default function CheckoutSummaryPage() {
   const total = subtotal + shippingCost
 
   return (
-    <main className="flex min-h-screen flex-col bg-white">
+    <main className="flex min-h-screen flex-col bg-white overflow-x-hidden">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-12 overflow-x-hidden">
         <CheckoutSteps currentStep={3} />
 
         <div className="mb-6">
@@ -458,7 +458,7 @@ export default function CheckoutSummaryPage() {
 
         <h1 className="text-2xl font-bold text-[#2E5FEB] mb-8 text-center">Paso 3: Confirma tu pedido</h1>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-8 overflow-x-hidden">
           <div className="lg:col-span-2 space-y-6">
             {/* Artículos del pedido */}
             <Card>
@@ -481,7 +481,7 @@ export default function CheckoutSummaryPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm overflow-x-hidden">
                         <div>
                           <span className="font-medium text-gray-700">Tamaño:</span>
                           <p className="text-gray-600">{item.options?.paperSize?.toUpperCase() || "A4"}</p>
@@ -536,7 +536,7 @@ export default function CheckoutSummaryPage() {
                   Método de pago seleccionado
                 </h3>
 
-                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-gray-200 rounded-lg gap-4">
                   <div className="flex items-center">
                     {paymentMethod === "paypal" ? (
                       <>
@@ -572,7 +572,7 @@ export default function CheckoutSummaryPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => router.push("/checkout/payment")}
-                    className="text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white"
+                    className="text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white w-full sm:w-auto"
                     disabled={isCreatingOrder}
                   >
                     Cambiar
@@ -593,8 +593,8 @@ export default function CheckoutSummaryPage() {
                   Envío seleccionado
                 </h3>
 
-                <div className="flex items-start justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex-1">
+                <div className="flex flex-col sm:flex-row items-start justify-between p-4 border border-gray-200 rounded-lg gap-4">
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     {shippingData.type === "pickup" ? (
                       <div className="text-sm space-y-2">
                         <div className="font-medium text-gray-900">
@@ -647,7 +647,7 @@ export default function CheckoutSummaryPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => router.push("/checkout/shipping")}
-                    className="ml-4 text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white"
+                    className="ml-0 sm:ml-4 text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white w-full sm:w-auto"
                     disabled={isCreatingOrder}
                   >
                     Cambiar
@@ -659,7 +659,7 @@ export default function CheckoutSummaryPage() {
 
           {/* Resumen del pedido */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-4">
+            <Card className="lg:sticky lg:top-4">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Resumen del pedido</h3>
 
