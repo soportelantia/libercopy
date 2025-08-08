@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
    Homepage 
   <url>
-    <loc>https://libercopy.com/</loc>
+    <loc>https://libercopy.es/</loc>
     <lastmod>2024-01-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -10,58 +10,52 @@
 
    Main Services 
   <url>
-    <loc>https://libercopy.com/imprimir</loc>
+    <loc>https://libercopy.es/imprimir</loc>
     <lastmod>2024-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://libercopy.com/encuadernar</loc>
+    <loc>https://libercopy.es/encuadernar</loc>
     <lastmod>2024-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
-  </url>
-
-   Shopping 
-  <url>
-    <loc>https://libercopy.com/cart</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://libercopy.com/checkout</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <url>
-    <loc>https://libercopy.com/checkout/shipping</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <url>
-    <loc>https://libercopy.com/checkout/summary</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <url>
-    <loc>https://libercopy.com/checkout/payment</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
   </url>
 
    Blog 
   <url>
-    <loc>https://libercopy.com/blog</loc>
+    <loc>https://libercopy.es/blog</loc>
+    <lastmod>2024-01-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://libercopy.es/blog/como-imprimir-apuntes-online</loc>
+    <lastmod>2024-01-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://libercopy.es/blog/tecnicas-estudio-efectivas</loc>
+    <lastmod>2024-01-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://libercopy.es/blog/opositores-impresion-apuntes</loc>
+    <lastmod>2024-01-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://libercopy.es/blog/memes-estudiantes-divertidos</loc>
+    <lastmod>2024-01-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://libercopy.es/blog/comparativa-imprimir-casa-vs-online</loc>
     <lastmod>2024-01-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -69,43 +63,37 @@
 
    Information Pages 
   <url>
-    <loc>https://libercopy.com/sobre-nosotros</loc>
+    <loc>https://libercopy.es/sobre-nosotros</loc>
     <lastmod>2024-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://libercopy.com/contacto</loc>
+    <loc>https://libercopy.es/contacto</loc>
     <lastmod>2024-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://libercopy.com/faq</loc>
+    <loc>https://libercopy.es/faq</loc>
     <lastmod>2024-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
-  <url>
-    <loc>https://libercopy.com/shipping</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
 
    Legal Pages 
   <url>
-    <loc>https://libercopy.com/aviso-legal</loc>
+    <loc>https://libercopy.es/aviso-legal</loc>
     <lastmod>2024-01-08</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
 
   <url>
-    <loc>https://libercopy.com/politica-privacidad</loc>
+    <loc>https://libercopy.es/politica-privacidad</loc>
     <lastmod>2024-01-08</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
@@ -118,47 +106,4 @@
     <priority>0.3</priority>
   </url>
 
-  <url>
-    <loc>https://libercopy.com/condiciones-compra</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-   Payment Success/Error Pages 
-  <url>
-    <loc>https://libercopy.com/payment/success</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
-
-  <url>
-    <loc>https://libercopy.com/payment/error</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.2</priority>
-  </url>
-
-   Auth Pages (public) 
-  <url>
-    <loc>https://libercopy.com/auth</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <url>
-    <loc>https://libercopy.com/reset-password</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
-
-  <url>
-    <loc>https://libercopy.com/update-password</loc>
-    <lastmod>2024-01-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
 </urlset>
