@@ -4,10 +4,10 @@ import { sendEmail } from '@/lib/mail-service'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, subject, message } = body
+    const { firstName, lastName, email, phone, subject, message } = body
 
     // Validar campos requeridos
-    if (!name || !email || !subject || !message) {
+    if (!firstName || !email || !subject || !message) {
       return NextResponse.json(
         { error: 'Todos los campos obligatorios deben ser completados' },
         { status: 400 }
@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
     // Preparar el contenido del email
     const emailContent = `
       <h2>Nuevo mensaje de contacto desde LiberCopy</h2>
-      <p><strong>Nombre:</strong> ${name}</p>
+      <p><strong>Nombre:</strong> ${firstName}</p>
+      <p><strong>Apellidos:</strong> ${lastName}</p>
       <p><strong>Email:</strong> ${email}</p>
       ${phone ? `<p><strong>Teléfono:</strong> ${phone}</p>` : ''}
       <p><strong>Asunto:</strong> ${subject}</p>
