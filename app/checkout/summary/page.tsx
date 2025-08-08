@@ -15,6 +15,7 @@ import { PayPalPayment } from "@/components/paypal-payment"
 import { RedsysPayment } from "@/components/redsys-payment"
 import { BizumPayment } from "@/components/bizum-payment"
 import Footer from "@/components/footer"
+
 export default function CheckoutSummaryPage() {
   const router = useRouter()
   const { cart, getTotalPrice } = useCart()
@@ -443,11 +444,13 @@ export default function CheckoutSummaryPage() {
   const total = subtotal + shippingCost
 
   return (
-    <main className="flex min-h-screen flex-col bg-white overflow-x-hidden">
+    <div className="flex min-h-screen flex-col bg-white w-full overflow-x-hidden">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12 overflow-x-hidden">
-        <CheckoutSteps currentStep={3} />
+      <div className="w-full max-w-7xl mx-auto px-4 py-12">
+        <div className="w-full">
+          <CheckoutSteps currentStep={3} />
+        </div>
 
         <div className="mb-6">
           <Button variant="ghost" onClick={handleBack} className="text-[#2E5FEB] hover:text-[#2E5FEB]/80">
@@ -456,70 +459,74 @@ export default function CheckoutSummaryPage() {
           </Button>
         </div>
 
-        <h1 className="text-2xl font-bold text-[#2E5FEB] mb-8 text-center">Paso 3: Confirma tu pedido</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#2E5FEB] mb-8 text-center">Paso 3: Confirma tu pedido</h1>
 
-        <div className="grid lg:grid-cols-3 gap-8 overflow-x-hidden">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="w-full space-y-6 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-8">
+          <div className="w-full lg:col-span-2 space-y-6">
             {/* Artículos del pedido */}
-            <Card>
-              <CardContent className="p-6">
+            <Card className="w-full">
+              <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Artículos en tu pedido</h3>
 
                 <div className="space-y-6">
                   {(cart || []).map((item) => (
                     <div key={item.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-lg text-gray-900">{item.fileName || item.name}</h4>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-base sm:text-lg text-gray-900 break-words">{item.fileName || item.name}</h4>
                           <p className="text-sm text-gray-600 mt-1">
                             {item.pageCount || 0} páginas • {item.options?.copies || item.quantity || 1}{" "}
                             {(item.options?.copies || item.quantity || 1) === 1 ? "copia" : "copias"}
                           </p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <p className="text-lg font-bold text-[#f47d30]">{(item.price || 0).toFixed(2)}€</p>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm overflow-x-hidden">
-                        <div>
-                          <span className="font-medium text-gray-700">Tamaño:</span>
-                          <p className="text-gray-600">{item.options?.paperSize?.toUpperCase() || "A4"}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div className="space-y-2">
+                          <div>
+                            <span className="font-medium text-gray-700">Tamaño: </span>
+                            <span className="text-gray-600">{item.options?.paperSize?.toUpperCase() || "A4"}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Tipo: </span>
+                            <span className="text-gray-600">
+                              {item.options?.printType === "bw" ? "Blanco y Negro" : "Color"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Papel: </span>
+                            <span className="text-gray-600">{getPaperTypeName(item.options?.paperType)}</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Tipo:</span>
-                          <p className="text-gray-600">
-                            {item.options?.printType === "bw" ? "Blanco y Negro" : "Color"}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Papel:</span>
-                          <p className="text-gray-600">{getPaperTypeName(item.options?.paperType)}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Acabado:</span>
-                          <p className="text-gray-600">{getFinishingName(item.options?.finishing)}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Forma de impresión:</span>
-                          <p className="text-gray-600">
-                            {item.options?.printForm === "oneSided" || item.options?.printForm === "single_sided"
-                              ? "Una cara"
-                              : "Doble cara"}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Orientación:</span>
-                          <p className="text-gray-600">
-                            {item.options?.orientation === "landscape" ? "Horizontal" : "Vertical"}
-                          </p>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="font-medium text-gray-700">Acabado: </span>
+                            <span className="text-gray-600">{getFinishingName(item.options?.finishing)}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Impresión: </span>
+                            <span className="text-gray-600">
+                              {item.options?.printForm === "oneSided" || item.options?.printForm === "single_sided"
+                                ? "Una cara"
+                                : "Doble cara"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Orientación: </span>
+                            <span className="text-gray-600">
+                              {item.options?.orientation === "landscape" ? "Horizontal" : "Vertical"}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
                       {item.comments && (
                         <div className="mt-4">
-                          <span className="font-medium text-gray-700">Comentarios:</span>
-                          <p className="text-gray-600 mt-1">{item.comments}</p>
+                          <span className="font-medium text-gray-700">Comentarios: </span>
+                          <p className="text-gray-600 mt-1 break-words">{item.comments}</p>
                         </div>
                       )}
                     </div>
@@ -529,39 +536,39 @@ export default function CheckoutSummaryPage() {
             </Card>
 
             {/* Método de pago seleccionado */}
-            <Card>
-              <CardContent className="p-6">
+            <Card className="w-full">
+              <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4 flex items-center">
                   <CreditCard className="mr-2 h-5 w-5" />
                   Método de pago seleccionado
                 </h3>
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-gray-200 rounded-lg gap-4">
+                <div className="flex flex-col space-y-4 p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center">
                     {paymentMethod === "paypal" ? (
                       <>
-                        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-3">
+                        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-3 flex-shrink-0">
                           <span className="text-white text-xs font-bold">PP</span>
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium">PayPal</p>
                           <p className="text-sm text-gray-600">Pago seguro con tu cuenta PayPal</p>
                         </div>
                       </>
                     ) : paymentMethod === "bizum" ? (
                       <>
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded flex items-center justify-center mr-3">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded flex items-center justify-center mr-3 flex-shrink-0">
                           <span className="text-white text-xs font-bold">BZ</span>
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium">Bizum</p>
                           <p className="text-sm text-gray-600">Pago instantáneo con tu móvil</p>
                         </div>
                       </>
                     ) : (
                       <>
-                        <CreditCard className="mr-3 h-6 w-6 text-gray-600" />
-                        <div>
+                        <CreditCard className="mr-3 h-6 w-6 text-gray-600 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium">Tarjeta de crédito/débito</p>
                           <p className="text-sm text-gray-600">Visa, Mastercard, American Express</p>
                         </div>
@@ -572,7 +579,7 @@ export default function CheckoutSummaryPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => router.push("/checkout/payment")}
-                    className="text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white w-full sm:w-auto"
+                    className="text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white w-full sm:w-auto sm:self-end"
                     disabled={isCreatingOrder}
                   >
                     Cambiar
@@ -582,8 +589,8 @@ export default function CheckoutSummaryPage() {
             </Card>
 
             {/* Información de envío */}
-            <Card>
-              <CardContent className="p-6">
+            <Card className="w-full">
+              <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4 flex items-center">
                   {shippingData.type === "pickup" ? (
                     <MapPin className="mr-2 h-5 w-5" />
@@ -593,8 +600,8 @@ export default function CheckoutSummaryPage() {
                   Envío seleccionado
                 </h3>
 
-                <div className="flex flex-col sm:flex-row items-start justify-between p-4 border border-gray-200 rounded-lg gap-4">
-                  <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex flex-col space-y-4 p-4 border border-gray-200 rounded-lg">
+                  <div className="min-w-0 flex-1">
                     {shippingData.type === "pickup" ? (
                       <div className="text-sm space-y-2">
                         <div className="font-medium text-gray-900">
@@ -604,7 +611,7 @@ export default function CheckoutSummaryPage() {
                         {shippingData.pickupPoint?.address && (
                           <div className="flex items-start">
                             <MapPin className="mr-2 h-4 w-4 mt-0.5 flex-shrink-0 text-gray-500" />
-                            <span className="text-gray-600">{shippingData.pickupPoint.address}</span>
+                            <span className="text-gray-600 break-words">{shippingData.pickupPoint.address}</span>
                           </div>
                         )}
                         {shippingData.pickupPoint?.phone && (
@@ -626,8 +633,8 @@ export default function CheckoutSummaryPage() {
                         </div>
                         <div className="flex items-start">
                           <Home className="mr-2 h-4 w-4 mt-0.5 flex-shrink-0 text-gray-500" />
-                          <div className="text-gray-600">
-                            <div>{shippingData.address?.address_line}</div>
+                          <div className="text-gray-600 min-w-0 flex-1">
+                            <div className="break-words">{shippingData.address?.address_line}</div>
                             <div>
                               {shippingData.address?.postal_code}{" "}
                               {shippingData.address?.municipality_name || shippingData.address?.municipality}
@@ -647,7 +654,7 @@ export default function CheckoutSummaryPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => router.push("/checkout/shipping")}
-                    className="ml-0 sm:ml-4 text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white w-full sm:w-auto"
+                    className="text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white w-full sm:w-auto sm:self-end"
                     disabled={isCreatingOrder}
                   >
                     Cambiar
@@ -658,9 +665,9 @@ export default function CheckoutSummaryPage() {
           </div>
 
           {/* Resumen del pedido */}
-          <div className="lg:col-span-1">
-            <Card className="lg:sticky lg:top-4">
-              <CardContent className="p-6">
+          <div className="w-full lg:col-span-1">
+            <Card className="w-full lg:sticky lg:top-4">
+              <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Resumen del pedido</h3>
 
                 <div className="space-y-3 text-sm">
@@ -684,7 +691,7 @@ export default function CheckoutSummaryPage() {
                   </div>
                 </div>
 
-                {!showPayPal && !showRedsys && (
+                {!showPayPal && !showRedsys && !showBizum && (
                   <Button
                     className="w-full mt-6 bg-[#2E5FEB] hover:bg-[#6d1a26]"
                     onClick={handleContinue}
@@ -706,8 +713,8 @@ export default function CheckoutSummaryPage() {
 
             {/* Componente PayPal */}
             {showPayPal && paymentMethod === "paypal" && orderId && (
-              <Card key={`paypal-${paymentComponentKey.current}`}>
-                <CardContent className="p-6">
+              <Card key={`paypal-${paymentComponentKey.current}`} className="w-full mt-6">
+                <CardContent className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Procesar pago con PayPal</h3>
                   <PayPalPayment
                     orderId={orderId}
@@ -741,8 +748,8 @@ export default function CheckoutSummaryPage() {
             {showRedsys &&
               (paymentMethod === "redsys" || paymentMethod === "tarjeta" || paymentMethod === "card") &&
               orderId && (
-                <Card key={`redsys-${paymentComponentKey.current}`}>
-                  <CardContent className="p-6">
+                <Card key={`redsys-${paymentComponentKey.current}`} className="w-full mt-6">
+                  <CardContent className="p-4 sm:p-6">
                     <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Procesar pago con tarjeta</h3>
                     <RedsysPayment
                       orderId={orderId}
@@ -756,8 +763,8 @@ export default function CheckoutSummaryPage() {
 
             {/* Componente Bizum */}
             {showBizum && paymentMethod === "bizum" && orderId && (
-              <Card key={`bizum-${paymentComponentKey.current}`}>
-                <CardContent className="p-6">
+              <Card key={`bizum-${paymentComponentKey.current}`} className="w-full mt-6">
+                <CardContent className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Procesar pago con Bizum</h3>
                   <BizumPayment
                     orderId={orderId}
@@ -778,6 +785,6 @@ export default function CheckoutSummaryPage() {
       </div>
       {/* Footer */}
       <Footer />
-    </main>
+    </div>
   )
 }
