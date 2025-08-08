@@ -12,6 +12,7 @@ import { AlertCircle, ArrowLeft, FileText, Truck, MapPin, Phone, User, Download,
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import Footer from "@/components/footer"
+
 type OrderItem = {
   id: string
   file_name: string
@@ -389,6 +390,21 @@ export default function OrderDetailsPage() {
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
   }
 
+  // Función para truncar nombres de archivo
+  const truncateFileName = (fileName: string, maxLength: number = 30) => {
+    if (!fileName || fileName.length <= maxLength) return fileName
+    
+    const extension = fileName.split('.').pop()
+    const nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'))
+    
+    if (extension && nameWithoutExtension) {
+      const truncatedName = nameWithoutExtension.substring(0, maxLength - extension.length - 4) + '...'
+      return `${truncatedName}.${extension}`
+    }
+    
+    return fileName.substring(0, maxLength - 3) + '...'
+  }
+
   // Función para renderizar la dirección de envío estática
   const renderShippingAddress = (address: OrderShippingAddress) => {
     if (!address) return null
@@ -398,41 +414,41 @@ export default function OrderDetailsPage() {
         {/* Nombre del destinatario */}
         <div className="flex items-center">
           <User className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-          <span className="font-medium text-gray-800">{address.recipient_name}</span>
+          <span className="font-medium text-gray-800 break-words min-w-0">{address.recipient_name}</span>
         </div>
 
         {/* Empresa (si existe) */}
         {address.company && (
           <div className="flex items-center">
             <Building className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-            <span className="text-gray-700">{address.company}</span>
+            <span className="text-gray-700 break-words min-w-0">{address.company}</span>
           </div>
         )}
 
         {/* Dirección completa */}
         <div className="flex items-start">
           <MapPin className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0 mt-0.5" />
-          <div className="flex-1 space-y-1">
-            <div className="text-gray-700">{address.address_line_1}</div>
-            {address.address_line_2 && <div className="text-gray-600 text-sm">{address.address_line_2}</div>}
-            <div className="text-gray-700">
+          <div className="flex-1 space-y-1 min-w-0">
+            <div className="text-gray-700 break-words">{address.address_line_1}</div>
+            {address.address_line_2 && <div className="text-gray-600 text-sm break-words">{address.address_line_2}</div>}
+            <div className="text-gray-700 break-words">
               <span className="font-mono font-medium">{address.postal_code}</span> {address.city}
             </div>
-            <div className="text-gray-600">{address.province}</div>
-            <div className="text-gray-600">{address.country}</div>
+            <div className="text-gray-600 break-words">{address.province}</div>
+            <div className="text-gray-600 break-words">{address.country}</div>
           </div>
         </div>
 
         {/* Información de contacto */}
         <div className="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0 pt-2 border-t border-gray-100">
           {address.phone && (
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0">
               <Phone className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-              <span className="text-gray-700">{address.phone}</span>
+              <span className="text-gray-700 break-words">{address.phone}</span>
             </div>
           )}
           {address.email && (
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0">
               <Mail className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
               <span className="text-gray-700 break-all">{address.email}</span>
             </div>
@@ -446,7 +462,7 @@ export default function OrderDetailsPage() {
               <p className="text-sm text-gray-600">
                 <span className="font-medium text-gray-700">Notas de entrega:</span>
               </p>
-              <p className="text-sm text-gray-700 mt-1">{address.delivery_notes}</p>
+              <p className="text-sm text-gray-700 mt-1 break-words">{address.delivery_notes}</p>
             </div>
           </div>
         )}
@@ -456,18 +472,18 @@ export default function OrderDetailsPage() {
 
   if (isLoading || authLoading) {
     return (
-      <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 w-full overflow-x-hidden">
         <Navbar />
         <div className="container mx-auto px-4 py-12 flex justify-center" style={{ marginTop: "80px" }}>
           <div className="animate-pulse text-gray-600">Cargando...</div>
         </div>
-      </main>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 w-full overflow-x-hidden">
         <Navbar />
         <div className="container mx-auto px-4 py-12" style={{ marginTop: "80px" }}>
           <Link href="/account/orders" className="flex items-center text-blue-600 hover:text-purple-600 mb-6">
@@ -481,13 +497,13 @@ export default function OrderDetailsPage() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         </div>
-      </main>
+      </div>
     )
   }
 
   if (!order) {
     return (
-      <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 w-full overflow-x-hidden">
         <Navbar />
         <div className="container mx-auto px-4 py-12" style={{ marginTop: "80px" }}>
           <Link href="/account/orders" className="flex items-center text-blue-600 hover:text-purple-600 mb-6">
@@ -500,7 +516,7 @@ export default function OrderDetailsPage() {
             <p className="text-gray-500">No se encontró el pedido solicitado.</p>
           </div>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -511,80 +527,84 @@ export default function OrderDetailsPage() {
   const taxAmount = subtotal * 0.21
 
   return (
-    <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 w-full overflow-x-hidden">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12" style={{ marginTop: "80px" }}>
+      <div className="container mx-auto px-4 py-12 w-full" style={{ marginTop: "80px" }}>
         <Link href="/account/orders" className="flex items-center text-blue-600 hover:text-purple-600 mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver a mis pedidos
         </Link>
 
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto w-full">
           <div className="flex flex-col md:flex-row justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent break-words">
                 Detalles del pedido
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-sm sm:text-base break-words">
                 Pedido #{order.id.substring(0, 8)} • {new Date(order.created_at).toLocaleDateString("es-ES")}
               </p>
             </div>
-            <div className="mt-2 md:mt-0">
+            <div className="mt-2 md:mt-0 flex-shrink-0">
               <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${statusInfo.color}`}>
                 {statusInfo.text}
               </span>
             </div>
           </div>
 
-          <div className="space-y-6 mb-8">
+          <div className="space-y-6 mb-8 w-full">
             {/* Primera fila: Estado del pedido y Resumen del pago */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-200/50 w-full">
                 <div className="flex items-center mb-4">
-                  <Truck className="h-5 w-5 text-blue-600 mr-2" />
+                  <Truck className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
                   <h2 className="font-semibold text-gray-800">Estado del pedido</h2>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">
-                  <span className="font-medium">Estado actual:</span> {statusInfo.text}
-                </p>
-                <p className="text-sm text-gray-600 mb-2">
-                  <span className="font-medium">Fecha del pedido:</span>{" "}
-                  {new Date(order.created_at).toLocaleDateString("es-ES")}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Método de pago:</span> {getPaymentMethodName(order.payment_method)}
-                </p>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p className="break-words">
+                    <span className="font-medium">Estado actual:</span> {statusInfo.text}
+                  </p>
+                  <p className="break-words">
+                    <span className="font-medium">Fecha del pedido:</span>{" "}
+                    {new Date(order.created_at).toLocaleDateString("es-ES")}
+                  </p>
+                  <p className="break-words">
+                    <span className="font-medium">Método de pago:</span> {getPaymentMethodName(order.payment_method)}
+                  </p>
+                </div>
               </div>
 
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-200/50 w-full">
                 <div className="flex items-center mb-4">
-                  <User className="h-5 w-5 text-blue-600 mr-2" />
+                  <User className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
                   <h2 className="font-semibold text-gray-800">Resumen del pago</h2>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">
-                  <span className="font-medium">Subtotal:</span> {subtotal.toFixed(2)}€
-                </p>
-                <p className="text-sm text-gray-600 mb-1">
-                  <span className="font-medium">Gastos de envío:</span>{" "}
-                  {shippingCost > 0 ? `${shippingCost.toFixed(2)}€` : "Gratis"}
-                </p>
-                <p className="text-sm text-gray-600 mb-1">
-                  <span className="font-medium">IVA (21%):</span> {taxAmount.toFixed(2)}€
-                </p>
-                <p className="text-sm font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  <span className="font-medium">Total:</span> {orderTotal.toFixed(2)}€
-                </p>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p>
+                    <span className="font-medium">Subtotal:</span> {subtotal.toFixed(2)}€
+                  </p>
+                  <p>
+                    <span className="font-medium">Gastos de envío:</span>{" "}
+                    {shippingCost > 0 ? `${shippingCost.toFixed(2)}€` : "Gratis"}
+                  </p>
+                  <p>
+                    <span className="font-medium">IVA (21%):</span> {taxAmount.toFixed(2)}€
+                  </p>
+                  <p className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <span className="font-medium">Total:</span> {orderTotal.toFixed(2)}€
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Segunda fila: Dirección de envío (ancho completo) */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-200/50 w-full">
               <div className="flex items-center mb-4">
-                <MapPin className="h-5 w-5 text-blue-600 mr-2" />
+                <MapPin className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
                 <h2 className="font-semibold text-lg text-gray-800">Dirección de envío</h2>
               </div>
-              <div className="max-w-none">
+              <div className="w-full">
                 {order.shipping_address ? (
                   renderShippingAddress(order.shipping_address)
                 ) : (
@@ -601,44 +621,44 @@ export default function OrderDetailsPage() {
           </div>
 
           {(order.tracking_number || order.shipping_company || order.shipping_notes || order.tracking_url) && (
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50 mb-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-200/50 mb-6 w-full">
               <div className="flex items-center mb-4">
-                <Truck className="h-5 w-5 text-blue-600 mr-2" />
+                <Truck className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
                 <h2 className="font-semibold text-gray-800">Detalles del envío</h2>
               </div>
               <div className="text-sm text-gray-600 space-y-2">
                 {order.shipping_company && (
-                  <p>
+                  <p className="break-words">
                     <span className="font-medium">Empresa de mensajería:</span> {order.shipping_company}
                   </p>
                 )}
                 {order.tracking_number && (
-                  <p>
+                  <p className="break-words">
                     <span className="font-medium">Número de seguimiento:</span>
-                    <span className="font-mono bg-gray-100 px-2 py-1 rounded ml-2">{order.tracking_number}</span>
+                    <span className="font-mono bg-gray-100 px-2 py-1 rounded ml-2 break-all">{order.tracking_number}</span>
                   </p>
                 )}
                 {order.tracking_url && (
-                  <p>
+                  <p className="break-words">
                     <span className="font-medium">Seguimiento:</span>
                     <a
                       href={order.tracking_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-purple-600 underline ml-2"
+                      className="text-blue-600 hover:text-purple-600 underline ml-2 break-all"
                     >
                       Rastrear envío
                     </a>
                   </p>
                 )}
                 {order.estimated_delivery_date && (
-                  <p>
+                  <p className="break-words">
                     <span className="font-medium">Fecha estimada de entrega:</span>{" "}
                     {new Date(order.estimated_delivery_date).toLocaleDateString("es-ES")}
                   </p>
                 )}
                 {order.shipping_notes && (
-                  <p>
+                  <p className="break-words">
                     <span className="font-medium">Notas del envío:</span> {order.shipping_notes}
                   </p>
                 )}
@@ -646,22 +666,24 @@ export default function OrderDetailsPage() {
             </div>
           )}
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50 mb-6">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-200/50 mb-6 w-full overflow-hidden">
             <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
               Elementos del pedido
             </h2>
 
-            <div className="space-y-4">
+            <div className="space-y-4 w-full">
               {order.items.map((item) => (
-                <div key={item.id} className="border-b border-gray-100 pb-4">
-                  <div className="flex items-start">
-                    <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-2 rounded-xl mr-3">
+                <div key={item.id} className="border-b border-gray-100 pb-4 w-full">
+                  <div className="flex flex-col sm:flex-row items-start w-full">
+                    <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-2 rounded-xl mr-0 sm:mr-3 mb-3 sm:mb-0 flex-shrink-0">
                       <FileText className="h-6 w-6 text-blue-600" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium text-gray-800">{item.file_name}</h3>
-                        <div className="flex items-center space-x-2">
+                    <div className="flex-1 min-w-0 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 w-full">
+                        <h3 className="font-medium text-gray-800 break-words min-w-0 mb-2 sm:mb-0">
+                          {truncateFileName(item.file_name)}
+                        </h3>
+                        <div className="flex items-center space-x-2 flex-shrink-0">
                           <span className="text-xs text-gray-500">{formatFileSize(item.file_size || 0)}</span>
                           {item.file_url && (
                             <Button
@@ -677,45 +699,45 @@ export default function OrderDetailsPage() {
                           )}
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-xs text-gray-600 mt-1">
-                        <p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1 text-xs text-gray-600 mt-1 w-full">
+                        <p className="break-words">
                           <span className="font-medium">Páginas:</span> {item.page_count || 0}
                         </p>
-                        <p>
+                        <p className="break-words">
                           <span className="font-medium">Copias:</span> {item.copies || 1}
                         </p>
-                        <p>
+                        <p className="break-words">
                           <span className="font-medium">Tamaño:</span>{" "}
                           {getReadableOption("paper_size", item.paper_size)}
                         </p>
-                        <p>
+                        <p className="break-words">
                           <span className="font-medium">Papel:</span> {getReadableOption("paper_type", item.paper_type)}
                         </p>
-                        <p>
+                        <p className="break-words">
                           <span className="font-medium">Impresión:</span>{" "}
                           {getReadableOption("print_type", item.print_type)}
                         </p>
-                        <p>
+                        <p className="break-words">
                           <span className="font-medium">Caras:</span> {getReadableOption("print_form", item.print_form)}
                         </p>
-                        <p>
+                        <p className="break-words">
                           <span className="font-medium">Orientación:</span> {item.orientation}
                         </p>
-                        <p>
+                        <p className="break-words">
                           <span className="font-medium">Páginas por cara:</span>{" "}
                           {getReadableOption("pages_per_side", item.pages_per_side)}
                         </p>
-                        <p>
+                        <p className="break-words">
                           <span className="font-medium">Acabado:</span> {getReadableOption("finishing", item.finishing)}
                         </p>
                       </div>
                       {item.comments && (
-                        <p className="text-xs text-gray-600 mt-2">
+                        <p className="text-xs text-gray-600 mt-2 break-words">
                           <span className="font-medium">Comentarios:</span> {item.comments}
                         </p>
                       )}
                     </div>
-                    <div className="text-right ml-4">
+                    <div className="text-right ml-0 sm:ml-4 mt-2 sm:mt-0 flex-shrink-0 w-full sm:w-auto">
                       <p className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         {((item.price || 0) * (item.copies || 1)).toFixed(2)}€
                       </p>
@@ -728,7 +750,7 @@ export default function OrderDetailsPage() {
               ))}
             </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-100">
+            <div className="mt-6 pt-4 border-t border-gray-100 w-full">
               <div className="flex justify-between items-center">
                 <span className="font-bold text-lg text-gray-800">Total</span>
                 <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -739,21 +761,21 @@ export default function OrderDetailsPage() {
           </div>
 
           {/* Historial de estados */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200/50 mb-6">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-200/50 mb-6 w-full">
             <div className="flex items-center mb-4">
-              <Clock className="h-5 w-5 text-blue-600 mr-2" />
+              <Clock className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
               <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Historial del pedido
               </h2>
             </div>
 
             {statusHistory.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-4 w-full">
                 {statusHistory.map((history, index) => {
                   const statusInfo = getStatusInfo(history.status)
                   return (
-                    <div key={history.id} className="flex items-start">
-                      <div className="flex flex-col items-center mr-4">
+                    <div key={history.id} className="flex items-start w-full">
+                      <div className="flex flex-col items-center mr-4 flex-shrink-0">
                         <div
                           className={`w-3 h-3 rounded-full ${
                             index === 0 ? "bg-gradient-to-r from-blue-600 to-purple-600" : "bg-gray-300"
@@ -761,18 +783,18 @@ export default function OrderDetailsPage() {
                         />
                         {index < statusHistory.length - 1 && <div className="w-px h-8 bg-gray-200 mt-2" />}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
+                      <div className="flex-1 min-w-0 w-full">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1">
                           <span
-                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}
+                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium border ${statusInfo.color} mb-1 sm:mb-0`}
                           >
                             {statusInfo.text}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 flex-shrink-0">
                             {new Date(history.created_at).toLocaleString("es-ES")}
                           </span>
                         </div>
-                        {history.comment && <p className="text-sm text-gray-600">{history.comment}</p>}
+                        {history.comment && <p className="text-sm text-gray-600 break-words">{history.comment}</p>}
                       </div>
                     </div>
                   )
@@ -787,18 +809,18 @@ export default function OrderDetailsPage() {
           </div>
 
           {order.status === "pending" && (
-            <div className="flex flex-col md:flex-row gap-4 justify-end">
+            <div className="flex flex-col sm:flex-row gap-4 justify-end w-full">
               <Button
                 variant="outline"
                 onClick={handleCancelOrder}
                 disabled={isCancelling}
-                className="rounded-xl hover:bg-red-50 hover:border-red-300 hover:text-red-600 bg-transparent"
+                className="rounded-xl hover:bg-red-50 hover:border-red-300 hover:text-red-600 bg-transparent w-full sm:w-auto"
               >
                 {isCancelling ? "Cancelando..." : "Cancelar pedido"}
               </Button>
               <Button
                 onClick={handlePayOrder}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 w-full sm:w-auto"
               >
                 Pagar ahora
               </Button>
@@ -810,6 +832,6 @@ export default function OrderDetailsPage() {
       {/* Footer */}
       <Footer />
       <Toaster />
-    </main>
+    </div>
   )
 }
