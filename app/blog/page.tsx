@@ -119,8 +119,8 @@ async function BlogContent({ searchParams }: BlogPageProps) {
                       {search || category ? "Resultados de búsqueda" : "Últimos posts"}
                     </h2>
                     <p className="text-gray-600">
-                      {postsData.total} post{postsData.total !== 1 ? "s" : ""} encontrado
-                      {postsData.total !== 1 ? "s" : ""}
+                      {postsData.filteredTotal} post{postsData.filteredTotal !== 1 ? "s" : ""} encontrado
+                      {postsData.filteredTotal !== 1 ? "s" : ""}
                     </p>
                   </div>
 
@@ -133,7 +133,7 @@ async function BlogContent({ searchParams }: BlogPageProps) {
                   <BlogPagination
                     currentPage={postsData.page}
                     totalPages={postsData.totalPages}
-                    total={postsData.total}
+                    total={postsData.filteredTotal}
                     limit={postsData.limit}
                   />
                 </>
@@ -146,6 +146,7 @@ async function BlogContent({ searchParams }: BlogPageProps) {
                   <div className="text-sm text-gray-500 mt-4">
                     <p>Debug info:</p>
                     <p>Total posts: {postsData.total}</p>
+                    <p>Filtered total: {postsData.filteredTotal}</p>
                     <p>Current page: {postsData.page}</p>
                     <p>Search params: {JSON.stringify({ search, category, tag })}</p>
                   </div>

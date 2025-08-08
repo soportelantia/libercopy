@@ -10,7 +10,8 @@ export class BlogService {
     console.log("BlogService.getPosts called with params:", params)
 
     try {
-      let query = supabase
+      // Construir la query base
+      let baseQuery = supabase
         .from("blog_posts")
         .select(`
           *,
@@ -20,13 +21,13 @@ export class BlogService {
           )
         `)
         .eq("status", "published")
-        .order("published_at", { ascending: false })
 
-      // Aplicar filtros
+      // Aplicar filtros de búsqueda
       if (search) {
-        query = query.or(`title.ilike.%${search}%,excerpt.ilike.%${search}%,content.ilike.%${search}%`)
+        baseQuery = baseQuery.or(`title.ilike.%${search}%,excerpt.ilike.%${search}%,content.ilike.%${search}%`)
       }
 
+      // Aplicar filtro de categoría
       if (category) {
         const { data: categoryData, error: categoryError } = await supabase
           .from("blog_categories")
@@ -37,47 +38,44 @@ export class BlogService {
         if (categoryError) {
           console.error("Error fetching category:", categoryError)
         } else if (categoryData) {
-          query = query.eq("category_id", categoryData.id)
+          baseQuery = baseQuery.eq("category_id", categoryData.id)
         }
       }
 
-      // Obtener total de posts para paginación
-      const { count, error: countError } = await query.select("*", { count: "exact", head: true })
-      
-      if (countError) {
-        console.error("Error getting count:", countError)
-        throw countError
+      // Obtener todos los posts que coinciden con los filtros (sin paginación)
+      const { data: allFilteredPosts, error: allPostsError } = await baseQuery
+        .order("published_at", { ascending: false })
+
+      if (allPostsError) {
+        console.error("Error fetching all filtered posts:", allPostsError)
+        throw allPostsError
       }
 
-      const total = count || 0
-      console.log("Total posts found:", total)
-
-      // Obtener posts con paginación
-      const { data: posts, error } = await query.range(offset, offset + limit - 1)
-
-      if (error) {
-        console.error("Error fetching blog posts:", error)
-        throw error
-      }
-
-      console.log("Raw posts data:", posts)
+      console.log("All filtered posts before tag filtering:", allFilteredPosts?.length || 0)
 
       // Transformar datos para incluir tags correctamente
-      const transformedPosts: BlogPostWithRelations[] = (posts || []).map((post) => ({
+      let transformedPosts: BlogPostWithRelations[] = (allFilteredPosts || []).map((post) => ({
         ...post,
         tags: post.tags?.map((pt: any) => pt.tag).filter(Boolean) || [],
       }))
 
-      console.log("Transformed posts:", transformedPosts)
-
-      // Filtrar por tag si se especifica
-      let filteredPosts = transformedPosts
+      // Filtrar por tag si se especifica (esto se hace después porque es una relación many-to-many)
       if (tag) {
-        filteredPosts = transformedPosts.filter((post) => 
+        transformedPosts = transformedPosts.filter((post) => 
           post.tags.some((t) => t.slug === tag)
         )
-        console.log("Posts filtered by tag:", filteredPosts)
+        console.log("Posts after tag filtering:", transformedPosts.length)
       }
+
+      // Calcular el total después de todos los filtros
+      const filteredTotal = transformedPosts.length
+      const totalPages = Math.ceil(filteredTotal / limit)
+
+      // Aplicar paginación manualmente
+      const paginatedPosts = transformedPosts.slice(offset, offset + limit)
+
+      console.log("Final paginated posts:", paginatedPosts.length)
+      console.log("Filtered total:", filteredTotal)
 
       // Obtener categorías y tags para filtros
       const [categoriesResult, tagsResult] = await Promise.all([
@@ -93,11 +91,12 @@ export class BlogService {
       }
 
       const result = {
-        posts: filteredPosts,
-        total,
+        posts: paginatedPosts,
+        total: filteredTotal, // Total original sin filtros
+        filteredTotal: filteredTotal, // Total después de aplicar todos los filtros
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages,
         categories: categoriesResult.data || [],
         tags: tagsResult.data || [],
       }
