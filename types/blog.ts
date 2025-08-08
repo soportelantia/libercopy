@@ -2,7 +2,7 @@ export interface BlogPost {
   id: string
   title: string
   slug: string
-  excerpt: string
+  excerpt?: string
   content: string
   featured_image?: string
   status: 'draft' | 'published' | 'archived'
@@ -12,6 +12,7 @@ export interface BlogPost {
   category_id?: string
   author_id?: string
   views_count?: number
+  reading_time?: number
   meta_title?: string
   meta_description?: string
 }
@@ -21,6 +22,7 @@ export interface BlogCategory {
   name: string
   slug: string
   description?: string
+  color?: string
   created_at: string
   updated_at: string
 }
@@ -30,7 +32,7 @@ export interface BlogTag {
   name: string
   slug: string
   created_at: string
-  updated_at: string
+  updated_at?: string
 }
 
 export interface BlogPostTag {
@@ -41,7 +43,7 @@ export interface BlogPostTag {
 }
 
 export interface BlogPostWithRelations extends BlogPost {
-  category?: BlogCategory
+  category: BlogCategory | null
   tags: BlogTag[]
 }
 

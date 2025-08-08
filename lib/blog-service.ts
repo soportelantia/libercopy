@@ -10,16 +10,10 @@ export class BlogService {
     console.log("BlogService.getPosts called with params:", params)
 
     try {
-      // Construir la query base
+      // Primero obtenemos los posts básicos sin relaciones complejas
       let baseQuery = supabase
         .from("blog_posts")
-        .select(`
-          *,
-          category:blog_categories(*),
-          tags:blog_post_tags(
-            tag:blog_tags(*)
-          )
-        `)
+        .select("*")
         .eq("status", "published")
 
       // Aplicar filtros de búsqueda
@@ -42,7 +36,7 @@ export class BlogService {
         }
       }
 
-      // Obtener todos los posts que coinciden con los filtros (sin paginación)
+      // Obtener todos los posts que coinciden con los filtros
       const { data: allFilteredPosts, error: allPostsError } = await baseQuery
         .order("published_at", { ascending: false })
 
@@ -53,13 +47,75 @@ export class BlogService {
 
       console.log("All filtered posts before tag filtering:", allFilteredPosts?.length || 0)
 
-      // Transformar datos para incluir tags correctamente
-      let transformedPosts: BlogPostWithRelations[] = (allFilteredPosts || []).map((post) => ({
+      if (!allFilteredPosts || allFilteredPosts.length === 0) {
+        return {
+          posts: [],
+          total: 0,
+          filteredTotal: 0,
+          page,
+          limit,
+          totalPages: 0,
+          categories: await this.getCategories(),
+          tags: await this.getTags(),
+        }
+      }
+
+      // Obtener las categorías para todos los posts
+      const categoryIds = [...new Set(allFilteredPosts.map(post => post.category_id).filter(Boolean))]
+      let categoriesMap: Record<string, BlogCategory> = {}
+      
+      if (categoryIds.length > 0) {
+        const { data: categories, error: categoriesError } = await supabase
+          .from("blog_categories")
+          .select("*")
+          .in("id", categoryIds)
+
+        if (categoriesError) {
+          console.error("Error fetching post categories:", categoriesError)
+        } else if (categories) {
+          categoriesMap = categories.reduce((acc, cat) => {
+            acc[cat.id] = cat
+            return acc
+          }, {} as Record<string, BlogCategory>)
+        }
+      }
+
+      // Obtener los tags para todos los posts
+      const postIds = allFilteredPosts.map(post => post.id)
+      let postTagsMap: Record<string, BlogTag[]> = {}
+
+      if (postIds.length > 0) {
+        const { data: postTags, error: postTagsError } = await supabase
+          .from("blog_post_tags")
+          .select(`
+            post_id,
+            blog_tags (*)
+          `)
+          .in("post_id", postIds)
+
+        if (postTagsError) {
+          console.error("Error fetching post tags:", postTagsError)
+        } else if (postTags) {
+          postTagsMap = postTags.reduce((acc, pt) => {
+            if (!acc[pt.post_id]) {
+              acc[pt.post_id] = []
+            }
+            if (pt.blog_tags) {
+              acc[pt.post_id].push(pt.blog_tags as BlogTag)
+            }
+            return acc
+          }, {} as Record<string, BlogTag[]>)
+        }
+      }
+
+      // Transformar datos para incluir relaciones
+      let transformedPosts: BlogPostWithRelations[] = allFilteredPosts.map((post) => ({
         ...post,
-        tags: post.tags?.map((pt: any) => pt.tag).filter(Boolean) || [],
+        category: post.category_id ? categoriesMap[post.category_id] || null : null,
+        tags: postTagsMap[post.id] || [],
       }))
 
-      // Filtrar por tag si se especifica (esto se hace después porque es una relación many-to-many)
+      // Filtrar por tag si se especifica
       if (tag) {
         transformedPosts = transformedPosts.filter((post) => 
           post.tags.some((t) => t.slug === tag)
@@ -79,26 +135,19 @@ export class BlogService {
 
       // Obtener categorías y tags para filtros
       const [categoriesResult, tagsResult] = await Promise.all([
-        supabase.from("blog_categories").select("*").order("name"),
-        supabase.from("blog_tags").select("*").order("name"),
+        this.getCategories(),
+        this.getTags(),
       ])
-
-      if (categoriesResult.error) {
-        console.error("Error fetching categories:", categoriesResult.error)
-      }
-      if (tagsResult.error) {
-        console.error("Error fetching tags:", tagsResult.error)
-      }
 
       const result = {
         posts: paginatedPosts,
-        total: filteredTotal, // Total original sin filtros
-        filteredTotal: filteredTotal, // Total después de aplicar todos los filtros
+        total: filteredTotal,
+        filteredTotal: filteredTotal,
         page,
         limit,
         totalPages,
-        categories: categoriesResult.data || [],
-        tags: tagsResult.data || [],
+        categories: categoriesResult,
+        tags: tagsResult,
       }
 
       console.log("Final result:", result)
@@ -115,13 +164,7 @@ export class BlogService {
     try {
       const { data: post, error } = await supabase
         .from("blog_posts")
-        .select(`
-          *,
-          category:blog_categories(*),
-          tags:blog_post_tags(
-            tag:blog_tags(*)
-          )
-        `)
+        .select("*")
         .eq("slug", slug)
         .eq("status", "published")
         .single()
@@ -133,6 +176,37 @@ export class BlogService {
 
       if (!post) return null
 
+      // Obtener la categoría del post
+      let category: BlogCategory | null = null
+      if (post.category_id) {
+        const { data: categoryData, error: categoryError } = await supabase
+          .from("blog_categories")
+          .select("*")
+          .eq("id", post.category_id)
+          .single()
+
+        if (categoryError) {
+          console.error("Error fetching post category:", categoryError)
+        } else {
+          category = categoryData
+        }
+      }
+
+      // Obtener los tags del post
+      const { data: postTags, error: postTagsError } = await supabase
+        .from("blog_post_tags")
+        .select(`
+          blog_tags (*)
+        `)
+        .eq("post_id", post.id)
+
+      let tags: BlogTag[] = []
+      if (postTagsError) {
+        console.error("Error fetching post tags:", postTagsError)
+      } else if (postTags) {
+        tags = postTags.map(pt => pt.blog_tags as BlogTag).filter(Boolean)
+      }
+
       // Incrementar contador de visualizaciones
       await supabase
         .from("blog_posts")
@@ -142,7 +216,8 @@ export class BlogService {
       // Transformar datos
       return {
         ...post,
-        tags: post.tags?.map((pt: any) => pt.tag).filter(Boolean) || [],
+        category,
+        tags,
       }
     } catch (error) {
       console.error("BlogService.getPostBySlug error:", error)
@@ -155,13 +230,7 @@ export class BlogService {
     try {
       let query = supabase
         .from("blog_posts")
-        .select(`
-          *,
-          category:blog_categories(*),
-          tags:blog_post_tags(
-            tag:blog_tags(*)
-          )
-        `)
+        .select("*")
         .eq("status", "published")
         .neq("id", postId)
         .order("published_at", { ascending: false })
@@ -178,9 +247,56 @@ export class BlogService {
         return []
       }
 
-      return (posts || []).map((post) => ({
+      if (!posts || posts.length === 0) {
+        return []
+      }
+
+      // Obtener categorías para los posts relacionados
+      const categoryIds = [...new Set(posts.map(post => post.category_id).filter(Boolean))]
+      let categoriesMap: Record<string, BlogCategory> = {}
+      
+      if (categoryIds.length > 0) {
+        const { data: categories, error: categoriesError } = await supabase
+          .from("blog_categories")
+          .select("*")
+          .in("id", categoryIds)
+
+        if (!categoriesError && categories) {
+          categoriesMap = categories.reduce((acc, cat) => {
+            acc[cat.id] = cat
+            return acc
+          }, {} as Record<string, BlogCategory>)
+        }
+      }
+
+      // Obtener tags para los posts relacionados
+      const postIds = posts.map(post => post.id)
+      let postTagsMap: Record<string, BlogTag[]> = {}
+
+      const { data: postTags, error: postTagsError } = await supabase
+        .from("blog_post_tags")
+        .select(`
+          post_id,
+          blog_tags (*)
+        `)
+        .in("post_id", postIds)
+
+      if (!postTagsError && postTags) {
+        postTagsMap = postTags.reduce((acc, pt) => {
+          if (!acc[pt.post_id]) {
+            acc[pt.post_id] = []
+          }
+          if (pt.blog_tags) {
+            acc[pt.post_id].push(pt.blog_tags as BlogTag)
+          }
+          return acc
+        }, {} as Record<string, BlogTag[]>)
+      }
+
+      return posts.map((post) => ({
         ...post,
-        tags: post.tags?.map((pt: any) => pt.tag).filter(Boolean) || [],
+        category: post.category_id ? categoriesMap[post.category_id] || null : null,
+        tags: postTagsMap[post.id] || [],
       }))
     } catch (error) {
       console.error("BlogService.getRelatedPosts error:", error)
