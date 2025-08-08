@@ -101,6 +101,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
     const result = await mg.messages.create(DOMAIN!, {
       from: FROM_EMAIL,
       to: [to],
+      bcc: ["soporte@libercopy.es"],
       subject,
       html,
       text: text || html.replace(/<[^>]*>/g, ""), // Fallback text version
