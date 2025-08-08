@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Toaster } from "@/components/ui/toaster"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase/client"
-import { AlertCircle, ArrowLeft, Package, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react"
+import { AlertCircle, ArrowLeft, Package, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import Footer from "@/components/footer"
+
 type Order = {
   id: string
   created_at: string
@@ -139,6 +140,22 @@ export default function OrdersPage() {
       default:
         return { text: status, color: "bg-gray-100 text-gray-800 border-gray-200" }
     }
+  }
+
+  // Función para truncar nombres de archivo
+  const truncateFileName = (fileName: string, maxLength: number = 40) => {
+    if (!fileName) return "Archivo sin nombre"
+    if (fileName.length <= maxLength) return fileName
+    
+    const extension = fileName.split('.').pop()
+    const nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'))
+    
+    if (extension && nameWithoutExtension) {
+      const truncatedName = nameWithoutExtension.substring(0, maxLength - extension.length - 4) + "..."
+      return `${truncatedName}.${extension}`
+    }
+    
+    return fileName.substring(0, maxLength - 3) + "..."
   }
 
   const handlePageChange = (page: number) => {
@@ -321,18 +338,20 @@ export default function OrdersPage() {
                         key={order.id}
                         className="border border-gray-200 rounded-2xl p-6 hover:border-blue-300 hover:shadow-lg transition-all duration-300 bg-white/50"
                       >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <p className="font-semibold text-gray-800">Pedido #{order.id.substring(0, 8)}</p>
-                            <p className="text-sm text-gray-500">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-3 sm:space-y-0">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-800 break-words">
+                              Pedido #{order.id.substring(0, 8)}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
                               {new Date(order.created_at).toLocaleDateString("es-ES")}
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className="flex flex-col sm:items-end space-y-2">
                             <p className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                               {orderTotal.toFixed(2)}€
                             </p>
-                            <span className={`text-xs px-3 py-1 rounded-full border ${statusInfo.color}`}>
+                            <span className={`text-xs px-3 py-1 rounded-full border ${statusInfo.color} inline-block`}>
                               {statusInfo.text}
                             </span>
                           </div>
@@ -341,11 +360,11 @@ export default function OrdersPage() {
                           <p className="text-sm font-medium mb-2 text-gray-700">Elementos:</p>
                           <ul className="text-sm text-gray-600 space-y-1">
                             {(order.items || []).slice(0, 2).map((item) => (
-                              <li key={item.id} className="flex justify-between">
-                                <span>
-                                  {item.file_name || "Archivo sin nombre"} (x{item.copies || 1})
+                              <li key={item.id} className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                                <span className="break-words min-w-0 flex-1">
+                                  {truncateFileName(item.file_name)} (x{item.copies || 1})
                                 </span>
-                                <span className="font-medium">
+                                <span className="font-medium text-right sm:ml-4 flex-shrink-0">
                                   {((item.price || 0) * (item.copies || 1)).toFixed(2)}€
                                 </span>
                               </li>
