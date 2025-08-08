@@ -1,331 +1,368 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle, AlertCircle } from 'lucide-react'
+import type React from "react"
+import Navbar from "@/components/navbar"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { MapPin, Mail, Clock, Send, MessageSquare, HelpCircle, Printer, BookOpen, CheckCircle } from 'lucide-react'
+import Link from "next/link"
+import Footer from "@/components/footer"
 
 export default function ContactPageClient() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: ''
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<{
-    type: 'success' | 'error' | null
-    message: string
-  }>({ type: null, message: '' })
-
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [error, setError] = useState("")
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
     setIsSubmitting(true)
-    setSubmitStatus({ type: null, message: '' })
 
     try {
-      // Validar campos requeridos
-      if (!formData.name || !formData.email || !formData.subject || !formData.message) {
-        setSubmitStatus({
-          type: 'error',
-          message: 'Por favor, completa todos los campos obligatorios'
-        })
-        return
-      }
-
-      // Validar formato de email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(formData.email)) {
-        setSubmitStatus({
-          type: 'error',
-          message: 'Por favor, introduce un email válido'
-        })
-        return
-      }
-
-      // Enviar datos a la API
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       })
 
       const result = await response.json()
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Error al enviar el mensaje')
+      if (result.success) {
+        setIsSubmitted(true)
+        setTimeout(() => {
+          setIsSubmitted(false)
+          setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            subject: "",
+            message: "",
+          })
+        }, 5000)
+      } else {
+        setError(result.message || 'Error al enviar el mensaje')
       }
-
-      // Éxito
-      setSubmitStatus({
-        type: 'success',
-        message: '¡Mensaje enviado correctamente! Te responderemos pronto.'
-      })
-
-      // Limpiar formulario
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: ''
-      })
-
-    } catch (error: any) {
-      console.error('Error enviando mensaje:', error)
-      setSubmitStatus({
-        type: 'error',
-        message: error.message || 'Error al enviar el mensaje. Inténtalo de nuevo.'
-      })
+    } catch (error) {
+      console.error('Error submitting form:', error)
+      setError('Error al enviar el mensaje. Inténtalo de nuevo.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const contactInfo = [
+    {
+      icon: MapPin,
+      title: "Nuestra Oficina",
+      content: "Plaza Magdalena 9, 3º Planta",
+      subtitle: "41001 Sevilla, España",
+      action: "Ver en Google Maps",
+      href: "https://maps.google.com/?q=Plaza+Magdalena+9,+Sevilla",
+    },
+    {
+      icon: Mail,
+      title: "Email",
+      content: "info@libercopy.es",
+      subtitle: "Respuesta en 24 horas",
+      action: "Enviar email",
+      href: "mailto:info@libercopy.es",
+    },
+    {
+      icon: Clock,
+      title: "Horarios",
+      content: "Lunes a Viernes: 9:00 - 18:00",
+      action: null,
+      href: null,
+    },
+  ]
+
+  const quickLinks = [
+    {
+      icon: HelpCircle,
+      title: "Preguntas Frecuentes",
+      description: "Encuentra respuestas rápidas",
+      href: "/faq",
+      color: "from-green-500 to-emerald-600",
+    },
+    {
+      icon: Printer,
+      title: "Servicios de Impresión",
+      description: "Conoce nuestros servicios",
+      href: "/imprimir",
+      color: "from-blue-500 to-cyan-600",
+    },
+    {
+      icon: BookOpen,
+      title: "Encuadernación",
+      description: "Opciones de acabado",
+      href: "/encuadernar",
+      color: "from-purple-500 to-violet-600",
+    },
+  ]
+
+  const reasons = [
+    {
+      icon: CheckCircle,
+      title: "Atención Personalizada",
+      description: "Cada proyecto es único y merece atención especializada",
+    },
+    {
+      icon: CheckCircle,
+      title: "Respuesta Rápida",
+      description: "Contestamos todas las consultas en menos de 24 horas",
+    },
+    {
+      icon: CheckCircle,
+      title: "Asesoramiento Experto",
+      description: "Te ayudamos a elegir la mejor opción para tu proyecto",
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Contacta con nosotros
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            ¿Tienes alguna pregunta o necesitas ayuda? Estamos aquí para ayudarte.
-            Contáctanos y te responderemos lo antes posible.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-          {/* Información de contacto */}
-          <div className="space-y-8">
-            <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center text-2xl font-bold text-gray-900">
-                  <Mail className="mr-3 h-6 w-6 text-blue-600" />
-                  Información de contacto
-                </CardTitle>
-                <CardDescription>
-                  Puedes contactarnos a través de cualquiera de estos medios
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <MapPin className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Dirección</h3>
-                    <p className="text-gray-600">
-                      Calle Principal, 123<br />
-                      28001 Madrid, España
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <Phone className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Teléfono</h3>
-                    <p className="text-gray-600">+34 900 123 456</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <Mail className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Email</h3>
-                    <p className="text-gray-600">info@libercopy.es</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <Clock className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Horario de atención</h3>
-                    <p className="text-gray-600">
-                      Lunes a Viernes: 9:00 - 18:00<br />
-                      Sábados: 10:00 - 14:00<br />
-                      Domingos: Cerrado
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl border-0">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2">¿Necesitas ayuda urgente?</h3>
-                <p className="mb-4 opacity-90">
-                  Si tienes una consulta urgente, no dudes en llamarnos directamente.
-                  Nuestro equipo estará encantado de ayudarte.
+   <main className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-blue-50">
+      <Navbar />
+    
+        <section className="relative py-20 md:py-32 overflow-hidden" style={{paddingBottom: "4rem"}}>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
+          <div className="container mx-auto px-4 relative">
+            <div className="container mx-auto px-4">
+              {/* Header */}
+              <div className="text-center mb-16">
+                <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Contacto
+                </Badge>
+                <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
+                  ¿Necesitas ayuda?
+                </h1>
+                <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                  Estamos aquí para ayudarte con cualquier consulta sobre nuestros servicios de impresión y encuadernación.
+                  Contáctanos y te responderemos lo antes posible.
                 </p>
-                <Button variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100">
-                  <Phone className="mr-2 h-4 w-4" />
-                  Llamar ahora
-                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+       
+        <section className="relative py-20 overflow-hidden" style={{paddingBottom: '0px'}}>
+        <div className="container mx-auto px-4 relative">
+        <div className="grid lg:grid-cols-3 gap-8 mb-16">
+          {/* Contact Information */}
+          <div className="lg:col-span-1 space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Información de Contacto</h2>
+
+            {contactInfo.map((info, index) => {
+              const Icon = info.icon
+              return (
+                <Card
+                  key={index}
+                  className="group hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-200"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 mb-1">{info.title}</h3>
+                        <p className="text-gray-700 font-medium">{info.content}</p>
+                        <p className="text-sm text-gray-500">{info.subtitle}</p>
+                        {info.action && info.href && (
+                          <a
+                            href={info.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            {info.action}
+                            <Send className="w-3 h-3 ml-1" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+
+            {/* Why Contact Us */}
+            <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-100">
+              <CardHeader>
+                <CardTitle className="text-lg text-gray-900">¿Por qué contactarnos?</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {reasons.map((reason, index) => {
+                  const Icon = reason.icon
+                  return (
+                    <div key={index} className="flex items-start space-x-3">
+                      <Icon className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-medium text-gray-900 text-sm">{reason.title}</h4>
+                        <p className="text-xs text-gray-600">{reason.description}</p>
+                      </div>
+                    </div>
+                  )
+                })}
               </CardContent>
             </Card>
           </div>
 
-          {/* Formulario de contacto */}
-          <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-0">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-900">
-                Envíanos un mensaje
-              </CardTitle>
-              <CardDescription>
-                Completa el formulario y te responderemos en menos de 24 horas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {submitStatus.type && (
-                <Alert className={`mb-6 ${
-                  submitStatus.type === 'success' 
-                    ? 'border-green-200 bg-green-50' 
-                    : 'border-red-200 bg-red-50'
-                }`}>
-                  {submitStatus.type === 'success' ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-red-600" />
+          {/* Contact Form */}
+          <div className="lg:col-span-2">
+            <Card className="shadow-xl border-2 border-gray-100">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+                  <CardTitle className="text-2xl flex items-center">
+                    <Send className="w-6 h-6 mr-3" />
+                    Envíanos un mensaje
+                  </CardTitle>
+                  <CardDescription className="text-blue-100">
+                    Completa el formulario y nos pondremos en contacto contigo
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-8">
+                  {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-red-700 text-sm">{error}</p>
+                    </div>
                   )}
-                  <AlertDescription className={
-                    submitStatus.type === 'success' ? 'text-green-800' : 'text-red-800'
-                  }>
-                    {submitStatus.message}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre completo *
-                    </label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Tu nombre completo"
-                      required
-                      disabled={isSubmitting}
-                      className="rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Email *
-                    </label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="tu@email.com"
-                      required
-                      disabled={isSubmitting}
-                      className="rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Teléfono (opcional)
-                  </label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="+34 600 000 000"
-                    disabled={isSubmitting}
-                    className="rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                    Asunto *
-                  </label>
-                  <Input
-                    id="subject"
-                    name="subject"
-                    type="text"
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    placeholder="¿En qué podemos ayudarte?"
-                    required
-                    disabled={isSubmitting}
-                    className="rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                    Mensaje *
-                  </label>
-                  <Textarea
-                    id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    placeholder="Describe tu consulta o mensaje..."
-                    required
-                    disabled={isSubmitting}
-                    rows={6}
-                    className="rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 resize-none"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl py-3 font-medium transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Enviando mensaje...
-                    </>
+                  
+                  {isSubmitted ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle className="w-8 h-8 text-green-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">¡Mensaje enviado!</h3>
+                      <p className="text-gray-600">Te responderemos lo antes posible.</p>
+                    </div>
                   ) : (
-                    <>
-                      <Send className="mr-2 h-4 w-4" />
-                      Enviar mensaje
-                    </>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                          <Input id="firstName" name="firstName" type="text" required value={formData.firstName} onChange={handleInputChange} />
+                        </div>
+                        <div>
+                          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">Apellidos *</label>
+                          <Input id="lastName" name="lastName" type="text" required value={formData.lastName} onChange={handleInputChange} />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                          <Input id="email" name="email" type="email" required value={formData.email} onChange={handleInputChange} />
+                        </div>
+                        <div>
+                          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                          <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">Asunto *</label>
+                        <Input id="subject" name="subject" type="text" required value={formData.subject} onChange={handleInputChange} />
+                      </div>
+                      <div>
+                        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">Mensaje *</label>
+                        <Textarea id="message" name="message" required rows={6} value={formData.message} onChange={handleInputChange} />
+                      </div>
+                      
+                      <Button type="submit" disabled={isSubmitting} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-medium">
+                        {isSubmitting ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-2" />
+                            Enviar mensaje
+                          </>
+                        )}
+                      </Button>
+                    </form>
                   )}
-                </Button>
-
-                <p className="text-xs text-gray-500 text-center">
-                  * Campos obligatorios. Al enviar este formulario, aceptas nuestra{' '}
-                  <a href="/politica-privacidad" className="text-blue-600 hover:text-purple-600 underline">
-                    política de privacidad
-                  </a>
-                  .
-                </p>
-              </form>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+          </div>
         </div>
-      </div>
-    </div>
+        </div>
+        </section>
+        <section className="relative py-20 overflow-hidden" style={{paddingTop: '0px'},{paddingBottom: '0px'}}>
+        {/* Quick Links */}
+        <div className="container mx-auto px-4 relative">
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">Enlaces rápidos</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {quickLinks.map((link, index) => {
+              const Icon = link.icon
+              return (
+                <Link key={index} href={link.href}>
+                  <Card className="group hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-2 hover:border-blue-200 cursor-pointer">
+                    <CardContent className="p-6 text-center">
+                      <div
+                        className={`w-16 h-16 bg-gradient-to-r ${link.color} rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200`}
+                      >
+                        <Icon className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{link.title}</h3>
+                      <p className="text-gray-600 text-sm">{link.description}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+        </div>
+        </section>
+        {/* Map Section */}
+        <section className="relative py-20 overflow-hidden" style={{paddingTop: '0px'},{paddingBottom: '0px'}}>
+        <div className="container mx-auto px-4 relative">
+        <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+          <CardContent className="p-8 text-center">
+            <MapPin className="w-12 h-12 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Visítanos</h2>
+            <p className="text-blue-100 mb-4">
+              Estamos ubicados en el centro de Sevilla, en Plaza Magdalena 9, 3º Planta
+            </p>
+            <a
+              href="https://maps.google.com/?q=Plaza+Magdalena+9,+Sevilla"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center bg-white text-blue-600 px-6 py-3 rounded-xl font-medium hover:bg-blue-50 transition-colors"
+            >
+              <MapPin className="w-4 h-4 mr-2" />
+              Ver en Google Maps
+            </a>
+          </CardContent>
+        </Card>
+        </div>
+        </section>
+   
+    {/* Footer */}
+      <Footer />
+    </main>
   )
 }
