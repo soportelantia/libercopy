@@ -21,10 +21,14 @@ INSERT INTO discount_codes (code, percentage, start_date, end_date, max_uses, cu
 -- Habilitar RLS
 ALTER TABLE discount_codes ENABLE ROW LEVEL SECURITY;
 
--- Política para permitir lectura a usuarios autenticados
-CREATE POLICY "Allow read access to discount codes" ON discount_codes
-  FOR SELECT USING (auth.role() = 'authenticated');
+-- Política para permitir lectura pública de códigos activos
+CREATE POLICY "Allow public read access to active discount codes" ON discount_codes
+  FOR SELECT USING (is_active = true);
 
--- Política para permitir actualización de uso de códigos
-CREATE POLICY "Allow update current_uses" ON discount_codes
-  FOR UPDATE USING (auth.role() = 'authenticated');
+-- Política para permitir actualización del service role
+CREATE POLICY "Allow service role full access to discount codes" ON discount_codes
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Crear índices para mejor rendimiento
+CREATE INDEX IF NOT EXISTS idx_discount_codes_code ON discount_codes(code);
+CREATE INDEX IF NOT EXISTS idx_discount_codes_active_dates ON discount_codes(is_active, start_date, end_date);

@@ -3,199 +3,179 @@ import { createClient } from "@supabase/supabase-js"
 
 export async function POST(request: NextRequest) {
   try {
-    // Obtener el token de autorización del header
-    const authHeader = request.headers.get("authorization")
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Token de autorización requerido" }, { status: 401 })
-    }
-
-    const token = authHeader.replace("Bearer ", "")
-
-    // Crear cliente de Supabase con el token del usuario
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    })
-
-    // Verificar el usuario
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      console.error("Auth error:", authError)
-      return NextResponse.json({ error: "Usuario no autorizado" }, { status: 401 })
-    }
-
-    // Obtener datos del request
     const body = await request.json()
-    const { items, subtotal, shippingCost, total, shipping, payment } = body
+    const {
+      user_id,
+      items,
+      shipping_address,
+      payment_method,
+      subtotal,
+      shipping_cost,
+      total,
+      discount_code,
+      discount_percentage,
+      discount_amount,
+    } = body
 
-    console.log("Creating order for user:", user.id)
-
-    // Validar datos requeridos
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: "Items requeridos" }, { status: 400 })
+    if (!user_id || !items || items.length === 0) {
+      return NextResponse.json({ error: "Datos de pedido incompletos" }, { status: 400 })
     }
 
-    if (!total || typeof total !== "number") {
-      return NextResponse.json({ error: "Total requerido" }, { status: 400 })
-    }
-
-    // Usar el service role key para operaciones de base de datos
-    const adminSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+    // Usar el service role para operaciones de base de datos
+    const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
     // Crear el pedido principal
     const orderData = {
-      user_id: user.id,
+      user_id,
       status: "pending",
       subtotal: subtotal || 0,
-      shipping_cost: shippingCost || 0,
-      total: total,
-      payment_method: payment?.method || "paypal",
+      shipping_cost: shipping_cost || 0,
+      discount_code: discount_code || null,
+      discount_percentage: discount_percentage || 0,
+      discount_amount: discount_amount || 0,
+      total: total || 0,
+      payment_method: payment_method || "paypal",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
 
-    const { data: order, error: orderError } = await adminSupabase.from("orders").insert(orderData).select().single()
+    const { data: order, error: orderError } = await supabaseAdmin.from("orders").insert(orderData).select().single()
 
     if (orderError) {
-      console.error("Error creating order:", orderError)
-      return NextResponse.json(
-        {
-          error: "Error al crear el pedido",
-          details: orderError.message,
-        },
-        { status: 500 },
-      )
+      console.error("Order creation error:", orderError)
+      return NextResponse.json({ error: "Error al crear el pedido" }, { status: 500 })
+    }
+
+    // Si se aplicó un descuento, actualizar el contador de usos
+    if (discount_code) {
+      const { error: updateError } = await supabaseAdmin
+        .from("discount_codes")
+        .update({
+          current_uses: supabaseAdmin.raw("current_uses + 1"),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("code", discount_code)
+
+      if (updateError) {
+        console.warn("Warning: Could not update discount code usage:", updateError)
+      }
     }
 
     // Crear los items del pedido
-    const orderItems = items.map((item) => ({
-      order_id: order.id,
-      file_name: item.fileName || item.name || "archivo",
-      page_count: item.pageCount || 0,
-      copies: item.options?.copies || item.quantity || 1,
-      paper_size: item.options?.paperSize || "a4",
-      print_type: item.options?.printType || "bw",
-      paper_type: item.options?.paperType || "standard",
-      finishing: item.options?.finishing || "none",
-      price: item.price || 0,
-      comments: item.comments || null,
-      file_url: item.fileUrl || null,
-      created_at: new Date().toISOString(),
-    }))
+    if (items && items.length > 0) {
+      const orderItems = items.map((item: any) => ({
+        order_id: order.id,
+        file_name: item.fileName || item.name || "archivo",
+        page_count: item.pageCount || 0,
+        copies: item.copies || item.quantity || 1,
+        paper_size: item.paperSize || "a4",
+        print_type: item.printType || "bw",
+        paper_type: item.paperType || "standard",
+        finishing: item.finishing || "none",
+        price: item.price || 0,
+        comments: item.comments || null,
+        file_url: item.fileUrl || null,
+        file_size: item.fileSize || 0,
+        print_form: item.printForm || "single_sided",
+        orientation: item.orientation || "portrait",
+        pages_per_side: item.pagesPerSide || 1,
+        created_at: new Date().toISOString(),
+      }))
 
-    const { error: itemsError } = await adminSupabase.from("order_items").insert(orderItems)
+      const { error: itemsError } = await supabaseAdmin.from("order_items").insert(orderItems)
 
-    if (itemsError) {
-      console.error("Error creating order items:", itemsError)
-      await adminSupabase.from("orders").delete().eq("id", order.id)
-      return NextResponse.json(
-        {
-          error: "Error al crear los items del pedido",
-          details: itemsError.message,
-        },
-        { status: 500 },
-      )
+      if (itemsError) {
+        console.error("Order items creation error:", itemsError)
+        // Eliminar el pedido si falla la creación de items
+        await supabaseAdmin.from("orders").delete().eq("id", order.id)
+        return NextResponse.json({ error: "Error al crear los items del pedido" }, { status: 500 })
+      }
     }
 
-    // Crear la dirección de envío si existe - MEJORADO CON DEBUG
-    if (shipping && (shipping.address || shipping.pickupPoint)) {
-      let shippingAddress
-
-      console.log("🚚 Processing shipping data:", {
-        shippingType: shipping.type,
-        hasAddress: !!shipping.address,
-        hasPickupPoint: !!shipping.pickupPoint,
-        shippingData: shipping,
-      })
-
-      if (shipping.type === "home" && shipping.address) {
-        // Envío a domicilio
-        shippingAddress = {
-          order_id: order.id,
-          recipient_name: shipping.address.recipient_name || shipping.address.name || "Cliente",
-          company: shipping.address.company || null,
-          address_line_1: shipping.address.address_line_1 || shipping.address.address_line || "",
-          address_line_2: shipping.address.address_line_2 || null,
-          city: shipping.address.city || shipping.address.municipality_name || shipping.address.municipality || "",
-          postal_code: shipping.address.postal_code || "",
-          province: shipping.address.province_name || shipping.address.province || "",
-          country: shipping.address.country || "España",
-          phone: shipping.address.phone || null,
-          email: shipping.address.email || null,
-          delivery_notes: shipping.address.delivery_notes || null,
-          shipping_type: "delivery",
-          created_at: new Date().toISOString(),
-        }
-      } else if (shipping.type === "pickup" && shipping.pickupPoint) {
-        // Punto de recogida
-        shippingAddress = {
-          order_id: order.id,
-          recipient_name: "Cliente",
-          company: null,
-          address_line_1: shipping.pickupPoint.address || shipping.pickupPoint.name || "Punto de recogida",
-          address_line_2: null,
-          city: "Sevilla",
-          postal_code: "41001",
-          province: "Sevilla",
-          country: "España",
-          phone: shipping.pickupPoint.phone || null,
-          email: null,
-          delivery_notes: null,
-          shipping_type: "pickup",
-          created_at: new Date().toISOString(),
-        }
+    // Crear la dirección de envío si se proporciona
+    if (shipping_address) {
+      const shippingData = {
+        order_id: order.id,
+        recipient_name: shipping_address.recipient_name || "Cliente",
+        address_line_1: shipping_address.address_line_1 || shipping_address.address_line || "",
+        address_line: shipping_address.address_line || shipping_address.address_line_1 || "",
+        postal_code: shipping_address.postal_code || "",
+        city: shipping_address.city || shipping_address.municipality || "Sevilla",
+        municipality: shipping_address.municipality || shipping_address.city || "Sevilla",
+        state: shipping_address.state || shipping_address.province || "Sevilla",
+        province: shipping_address.province || shipping_address.state || "Sevilla",
+        country: shipping_address.country || "España",
+        phone: shipping_address.phone || null,
+        email: shipping_address.email || null,
+        shipping_type: shipping_address.shipping_type || "delivery",
+        created_at: new Date().toISOString(),
       }
 
-      if (shippingAddress) {
-        console.log("💾 Inserting shipping address:", shippingAddress)
+      const { error: shippingError } = await supabaseAdmin.from("order_shipping_addresses").insert(shippingData)
 
-        const { data: insertedAddress, error: shippingError } = await adminSupabase
-          .from("order_shipping_addresses")
-          .insert(shippingAddress)
-          .select()
-          .single()
-
-        if (shippingError) {
-          console.error("❌ Shipping address error:", shippingError)
-          // No fallar el pedido por esto
-        } else {
-          console.log("✅ Shipping address created successfully:", insertedAddress)
-        }
-      } else {
-        console.log("⚠️ No shipping address data to insert")
+      if (shippingError) {
+        console.warn("Warning: Could not save shipping address:", shippingError)
       }
-    } else {
-      console.log("⚠️ No shipping data provided")
     }
 
     // Crear historial de estado
-    await adminSupabase.from("order_status_history").insert({
+    const historyData = {
       order_id: order.id,
       status: "pending",
-      notes: "Pedido creado",
       created_at: new Date().toISOString(),
-    })
+    }
+
+    const { error: historyError } = await supabaseAdmin.from("order_status_history").insert(historyData)
+
+    if (historyError) {
+      console.warn("Warning: Could not create order history:", historyError)
+    }
 
     return NextResponse.json({
       success: true,
-      orderId: order.id,
-      order: order,
+      order: {
+        id: order.id,
+        status: order.status,
+        total: order.total,
+        discount_applied: !!discount_code,
+        discount_amount: discount_amount || 0,
+      },
     })
   } catch (error) {
-    console.error("Error in orders API:", error)
-    return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+    console.error("Error creating order:", error)
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get("user_id")
+
+    if (!userId) {
+      return NextResponse.json({ error: "User ID requerido" }, { status: 400 })
+    }
+
+    const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
+    const { data: orders, error } = await supabaseAdmin
+      .from("orders")
+      .select(`
+        *,
+        order_items(*),
+        order_shipping_addresses(*)
+      `)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching orders:", error)
+      return NextResponse.json({ error: "Error al obtener pedidos" }, { status: 500 })
+    }
+
+    return NextResponse.json({ orders })
+  } catch (error) {
+    console.error("Error in GET orders:", error)
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
   }
 }
