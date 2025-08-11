@@ -6,9 +6,8 @@ import { useRouter } from "next/navigation"
 import { PayPalPayment } from "@/components/paypal-payment"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, FileText, Package, Tag, Check, X } from "lucide-react"
+import { ArrowLeft, FileText, Package } from "lucide-react"
 
 // Funciones auxiliares para mostrar los detalles
 const getSizeName = (size: string) => {
@@ -56,12 +55,6 @@ const getFinishingName = (finishing: string) => {
   return finishingMap[finishing] || finishing || "Sin acabado"
 }
 
-interface DiscountCode {
-  code: string
-  percentage: number
-  amount: number
-}
-
 export default function CheckoutPage() {
   const { cart, getTotalPrice, clearCart } = useCart()
   const router = useRouter()
@@ -69,70 +62,15 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Discount code states
-  const [discountCode, setDiscountCode] = useState("")
-  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null)
-  const [isValidatingDiscount, setIsValidatingDiscount] = useState(false)
-  const [discountError, setDiscountError] = useState<string | null>(null)
-
   // Calcular el total de forma segura
   const cartTotal = getTotalPrice() || 0
-  const discountAmount = appliedDiscount ? (cartTotal * appliedDiscount.percentage) / 100 : 0
-  const subtotalWithDiscount = cartTotal - discountAmount
-  const totalWithIVA = subtotalWithDiscount * 1.21
+  const totalWithIVA = cartTotal * 1.21
 
   useEffect(() => {
     if (cart.length === 0) {
       router.push("/")
     }
   }, [cart, router])
-
-  const validateDiscountCode = async () => {
-    if (!discountCode.trim()) {
-      setDiscountError("Introduce un código de descuento")
-      return
-    }
-
-    setIsValidatingDiscount(true)
-    setDiscountError(null)
-
-    try {
-      const response = await fetch("/api/discount-codes/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code: discountCode.trim() }),
-      })
-
-      const data = await response.json()
-
-      if (data.valid) {
-        const discountAmount = (cartTotal * data.percentage) / 100
-        setAppliedDiscount({
-          code: data.code,
-          percentage: data.percentage,
-          amount: discountAmount,
-        })
-        setDiscountError(null)
-      } else {
-        setDiscountError(data.error || "Código de descuento no válido")
-        setAppliedDiscount(null)
-      }
-    } catch (error) {
-      console.error("Error validating discount code:", error)
-      setDiscountError("Error al validar el código de descuento")
-      setAppliedDiscount(null)
-    } finally {
-      setIsValidatingDiscount(false)
-    }
-  }
-
-  const removeDiscountCode = () => {
-    setAppliedDiscount(null)
-    setDiscountCode("")
-    setDiscountError(null)
-  }
 
   const createOrder = async () => {
     setIsCreatingOrder(true)
@@ -146,9 +84,7 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           items: cart,
-          subtotal: cartTotal,
-          total: subtotalWithDiscount,
-          discountCode: appliedDiscount?.code,
+          total: cartTotal,
           paymentMethod: "paypal",
         }),
       })
@@ -266,64 +202,6 @@ export default function CheckoutPage() {
               </CardContent>
             </Card>
 
-            {/* Código de descuento */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Tag className="h-5 w-5" />
-                  Código de descuento
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {!appliedDiscount ? (
-                  <div className="space-y-3">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Introduce tu código de descuento"
-                        value={discountCode}
-                        onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                        onKeyPress={(e) => e.key === "Enter" && validateDiscountCode()}
-                        className="flex-1"
-                      />
-                      <Button
-                        onClick={validateDiscountCode}
-                        disabled={isValidatingDiscount || !discountCode.trim()}
-                        variant="outline"
-                      >
-                        {isValidatingDiscount ? "Validando..." : "Aplicar"}
-                      </Button>
-                    </div>
-                    {discountError && (
-                      <div className="flex items-center gap-2 text-red-600 text-sm">
-                        <X className="h-4 w-4" />
-                        {discountError}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-600" />
-                        <span className="text-green-800 font-medium">Código {appliedDiscount.code} aplicado</span>
-                      </div>
-                      <Button
-                        onClick={removeDiscountCode}
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="text-green-700 text-sm mt-1">
-                      Descuento del {appliedDiscount.percentage}% - Ahorras {discountAmount.toFixed(2)}€
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
             {/* Resumen de precios */}
             <Card>
               <CardHeader>
@@ -334,28 +212,19 @@ export default function CheckoutPage() {
                   <span className="text-gray-600">Subtotal:</span>
                   <span className="font-medium">{cartTotal.toFixed(2)}€</span>
                 </div>
-                {appliedDiscount && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Descuento ({appliedDiscount.percentage}%):</span>
-                    <span className="font-medium">-{discountAmount.toFixed(2)}€</span>
-                  </div>
-                )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Envío:</span>
                   <span className="font-medium text-green-600">Gratis</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">IVA (21%):</span>
-                  <span className="font-medium">{(subtotalWithDiscount * 0.21).toFixed(2)}€</span>
+                  <span className="font-medium">{(cartTotal * 0.21).toFixed(2)}€</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total:</span>
                   <span>{totalWithIVA.toFixed(2)}€</span>
                 </div>
-                {appliedDiscount && (
-                  <div className="text-sm text-green-600 text-right">Has ahorrado {discountAmount.toFixed(2)}€</div>
-                )}
               </CardContent>
             </Card>
           </div>
@@ -391,9 +260,6 @@ export default function CheckoutPage() {
                         <strong>Pedido creado:</strong> #{orderId.substring(0, 8)}
                       </p>
                       <p className="text-blue-600 text-sm mt-1">Procede con el pago usando PayPal</p>
-                      {appliedDiscount && (
-                        <p className="text-green-600 text-sm mt-1">✓ Descuento {appliedDiscount.code} aplicado</p>
-                      )}
                     </div>
 
                     <PayPalPayment
@@ -417,7 +283,6 @@ export default function CheckoutPage() {
                 <p>• Recibirás un email de confirmación</p>
                 <p>• El pedido se procesará una vez confirmado el pago</p>
                 <p>• Tiempo estimado de entrega: 2-3 días laborables</p>
-                {appliedDiscount && <p className="text-green-600">• Descuento aplicado: {appliedDiscount.code}</p>}
               </CardContent>
             </Card>
           </div>

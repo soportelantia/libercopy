@@ -8,13 +8,20 @@ import { supabase } from "@/lib/supabase/client"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, CreditCard, MapPin, Home, Phone } from 'lucide-react'
+import { Input } from "@/components/ui/input"
+import { ArrowLeft, CreditCard, MapPin, Home, Phone, Tag, X, Check } from "lucide-react"
 import { CheckoutSteps } from "@/components/checkout-steps"
 import { calcularGastosEnvio } from "@/lib/location-service"
 import { PayPalPayment } from "@/components/paypal-payment"
 import { RedsysPayment } from "@/components/redsys-payment"
 import { BizumPayment } from "@/components/bizum-payment"
 import Footer from "@/components/footer"
+
+interface DiscountCode {
+  code: string
+  percentage: number
+  id: string
+}
 
 export default function CheckoutSummaryPage() {
   const router = useRouter()
@@ -31,6 +38,12 @@ export default function CheckoutSummaryPage() {
   const orderCreationRef = useRef(false)
   const paymentComponentKey = useRef(0)
   const [showBizum, setShowBizum] = useState(false)
+
+  // Estados para códigos de descuento
+  const [discountCode, setDiscountCode] = useState("")
+  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null)
+  const [discountLoading, setDiscountLoading] = useState(false)
+  const [discountError, setDiscountError] = useState("")
 
   useEffect(() => {
     console.log("=== CHECKOUT SUMMARY PAGE INIT ===")
@@ -63,6 +76,10 @@ export default function CheckoutSummaryPage() {
         if (data.payment?.method && !savedPayment) {
           setPaymentMethod(data.payment.method)
           console.log("Payment method from checkoutData:", data.payment.method)
+        }
+        // Cargar código de descuento aplicado si existe
+        if (data.discount) {
+          setAppliedDiscount(data.discount)
         }
       } catch (e) {
         console.error("Error parsing checkoutData:", e)
@@ -99,6 +116,59 @@ export default function CheckoutSummaryPage() {
     }
   }, [loading, shippingData, cart, router])
 
+  // Función para validar código de descuento
+  const validateDiscountCode = useCallback(async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Por favor, introduce un código de descuento")
+      return
+    }
+
+    setDiscountLoading(true)
+    setDiscountError("")
+
+    try {
+      const response = await fetch("/api/discount-codes/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code: discountCode.trim() }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setAppliedDiscount(data.discount)
+        setDiscountCode("")
+        setDiscountError("")
+
+        // Guardar en sessionStorage
+        const checkoutData = JSON.parse(sessionStorage.getItem("checkoutData") || "{}")
+        checkoutData.discount = data.discount
+        sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData))
+      } else {
+        setDiscountError(data.error || "Código de descuento no válido")
+      }
+    } catch (error) {
+      console.error("Error validating discount code:", error)
+      setDiscountError("Error al validar el código de descuento")
+    } finally {
+      setDiscountLoading(false)
+    }
+  }, [discountCode])
+
+  // Función para remover código de descuento
+  const removeDiscountCode = useCallback(() => {
+    setAppliedDiscount(null)
+    setDiscountCode("")
+    setDiscountError("")
+
+    // Remover de sessionStorage
+    const checkoutData = JSON.parse(sessionStorage.getItem("checkoutData") || "{}")
+    delete checkoutData.discount
+    sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData))
+  }, [])
+
   const createOrderDirectly = useCallback(async () => {
     // Evitar múltiples creaciones de pedido
     if (orderCreationRef.current || isCreatingOrder) {
@@ -116,13 +186,18 @@ export default function CheckoutSummaryPage() {
 
     const subtotal = getTotalPrice() || 0
     const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvio(subtotal)
-    const total = subtotal + shippingCost
+
+    // Calcular descuento
+    const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percentage) / 100 : 0
+    const total = subtotal + shippingCost - discountAmount
 
     try {
       console.log("=== CREATING ORDER ===")
       console.log("User ID:", user.id)
       console.log("Cart items:", cart?.length || 0)
       console.log("Shipping type:", shippingData.type)
+      console.log("Subtotal:", subtotal)
+      console.log("Discount amount:", discountAmount)
       console.log("Total amount:", total)
 
       // Crear el pedido principal
@@ -131,6 +206,9 @@ export default function CheckoutSummaryPage() {
         status: "pending",
         subtotal: subtotal,
         shipping_cost: shippingCost,
+        discount_code: appliedDiscount?.code || null,
+        discount_percentage: appliedDiscount?.percentage || 0,
+        discount_amount: discountAmount,
         total: total,
         payment_method: paymentMethod,
         created_at: new Date().toISOString(),
@@ -147,6 +225,21 @@ export default function CheckoutSummaryPage() {
       }
 
       console.log("Order created successfully:", order.id)
+
+      // Si se aplicó un descuento, actualizar el contador de usos
+      if (appliedDiscount) {
+        const { error: updateError } = await supabase
+          .from("discount_codes")
+          .update({
+            current_uses: supabase.raw("current_uses + 1"),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", appliedDiscount.id)
+
+        if (updateError) {
+          console.warn("Warning: Could not update discount code usage:", updateError.message)
+        }
+      }
 
       // Crear los items del pedido
       const orderItems = (cart || []).map((item, index) => {
@@ -265,7 +358,7 @@ export default function CheckoutSummaryPage() {
       setIsCreatingOrder(false)
       orderCreationRef.current = false
     }
-  }, [user, shippingData, getTotalPrice, cart, paymentMethod])
+  }, [user, shippingData, getTotalPrice, cart, paymentMethod, appliedDiscount])
 
   const handleContinue = useCallback(async () => {
     if (!shippingData) {
@@ -280,13 +373,15 @@ export default function CheckoutSummaryPage() {
 
     const subtotal = getTotalPrice() || 0
     const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvio(subtotal)
-    const total = subtotal + shippingCost
+    const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percentage) / 100 : 0
+    const total = subtotal + shippingCost - discountAmount
 
     // Guardar datos completos para el checkout
     const checkoutData = {
       items: cart || [],
       subtotal,
       shippingCost,
+      discountAmount,
       total,
       shipping: {
         ...shippingData,
@@ -295,6 +390,7 @@ export default function CheckoutSummaryPage() {
       payment: {
         method: paymentMethod,
       },
+      discount: appliedDiscount,
     }
 
     sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData))
@@ -337,7 +433,7 @@ export default function CheckoutSummaryPage() {
       console.error("Error:", error)
       alert("Error al crear el pedido. Por favor, inténtalo de nuevo.")
     }
-  }, [shippingData, getTotalPrice, cart, paymentMethod, createOrderDirectly, isCreatingOrder])
+  }, [shippingData, getTotalPrice, cart, paymentMethod, createOrderDirectly, isCreatingOrder, appliedDiscount])
 
   const handleBack = useCallback(() => {
     router.push("/checkout/payment")
@@ -439,9 +535,10 @@ export default function CheckoutSummaryPage() {
 
   const subtotal = getTotalPrice() || 0
   const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvio(subtotal)
+  const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percentage) / 100 : 0
   const subtotalWithoutIVA = subtotal / 1.21
   const iva = subtotal - subtotalWithoutIVA
-  const total = subtotal + shippingCost
+  const total = subtotal + shippingCost - discountAmount
 
   return (
     <div className="flex min-h-screen flex-col bg-white w-full overflow-x-hidden">
@@ -473,7 +570,9 @@ export default function CheckoutSummaryPage() {
                     <div key={item.id} className="border-b border-gray-200 pb-6 last:border-b-0">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-base sm:text-lg text-gray-900 break-words">{item.fileName || item.name}</h4>
+                          <h4 className="font-semibold text-base sm:text-lg text-gray-900 break-words">
+                            {item.fileName || item.name}
+                          </h4>
                           <p className="text-sm text-gray-600 mt-1">
                             {item.pageCount || 0} páginas • {item.options?.copies || item.quantity || 1}{" "}
                             {(item.options?.copies || item.quantity || 1) === 1 ? "copia" : "copias"}
@@ -532,6 +631,63 @@ export default function CheckoutSummaryPage() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Código de descuento */}
+            <Card className="w-full">
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4 flex items-center">
+                  <Tag className="mr-2 h-5 w-5" />
+                  Código de descuento
+                </h3>
+
+                {appliedDiscount ? (
+                  <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center">
+                      <Check className="mr-2 h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-800">Código aplicado: {appliedDiscount.code}</p>
+                        <p className="text-sm text-green-600">Descuento del {appliedDiscount.percentage}%</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeDiscountCode}
+                      className="text-green-600 hover:text-green-800"
+                      disabled={isCreatingOrder}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Introduce tu código de descuento"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                        className="flex-1"
+                        disabled={discountLoading || isCreatingOrder}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            validateDiscountCode()
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={validateDiscountCode}
+                        disabled={discountLoading || !discountCode.trim() || isCreatingOrder}
+                        className="bg-[#2E5FEB] hover:bg-[#2E5FEB]/80"
+                      >
+                        {discountLoading ? "Validando..." : "Aplicar"}
+                      </Button>
+                    </div>
+                    {discountError && <p className="text-sm text-red-600">{discountError}</p>}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -683,11 +839,20 @@ export default function CheckoutSummaryPage() {
                     <span className="text-gray-600">Gastos de envío (IVA incl.):</span>
                     <span>{shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2)}€`}</span>
                   </div>
+                  {appliedDiscount && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Descuento ({appliedDiscount.percentage}%):</span>
+                      <span>-{discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
                   <div className="border-t pt-3">
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total:</span>
                       <span className="text-[#f47d30]">{total.toFixed(2)}€</span>
                     </div>
+                    {appliedDiscount && (
+                      <p className="text-sm text-green-600 mt-1">¡Has ahorrado {discountAmount.toFixed(2)}€!</p>
+                    )}
                   </div>
                 </div>
 
