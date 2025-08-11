@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Obtener datos del request
     const body = await request.json()
-    const { items, subtotal, shippingCost, total, shipping, payment } = body
+    const { items, subtotal, shippingCost, total, shipping, payment, discountCode } = body
 
     console.log("Creating order for user:", user.id)
 
@@ -49,13 +49,53 @@ export async function POST(request: NextRequest) {
     // Usar el service role key para operaciones de base de datos
     const adminSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
+    // Validate discount code if provided
+    let discountPercentage = 0
+    let discountAmount = 0
+    let validDiscountCode = null
+
+    if (discountCode && discountCode.trim()) {
+      const { data: discount, error: discountError } = await adminSupabase
+        .from("discount_codes")
+        .select("*")
+        .eq("code", discountCode.toUpperCase())
+        .eq("is_active", true)
+        .single()
+
+      if (discount && !discountError) {
+        const now = new Date()
+        const startDate = new Date(discount.start_date)
+        const endDate = new Date(discount.end_date)
+
+        if (now >= startDate && now <= endDate) {
+          if (!discount.max_uses || discount.current_uses < discount.max_uses) {
+            validDiscountCode = discount.code
+            discountPercentage = discount.percentage
+            discountAmount = (subtotal || total) * (discountPercentage / 100)
+
+            // Update usage count
+            await adminSupabase
+              .from("discount_codes")
+              .update({ current_uses: discount.current_uses + 1 })
+              .eq("id", discount.id)
+          }
+        }
+      }
+    }
+
+    // Calculate final total with discount
+    const finalTotal = total - discountAmount
+
     // Crear el pedido principal
     const orderData = {
       user_id: user.id,
       status: "pending",
       subtotal: subtotal || 0,
       shipping_cost: shippingCost || 0,
-      total: total,
+      total: finalTotal,
+      discount_code: validDiscountCode,
+      discount_percentage: discountPercentage,
+      discount_amount: discountAmount,
       payment_method: payment?.method || "paypal",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -187,6 +227,13 @@ export async function POST(request: NextRequest) {
       success: true,
       orderId: order.id,
       order: order,
+      discountApplied: validDiscountCode
+        ? {
+            code: validDiscountCode,
+            percentage: discountPercentage,
+            amount: discountAmount,
+          }
+        : null,
     })
   } catch (error) {
     console.error("Error in orders API:", error)
