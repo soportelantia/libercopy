@@ -2,20 +2,19 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Mail, Lock, CheckCircle, X, ArrowLeft, User } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, CheckCircle, X, ArrowLeft, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCart } from "@/hooks/use-cart"
 
-export default function AuthPage() {
+function AuthPageInner() {
   const [activeTab, setActiveTab] = useState("login")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -49,18 +48,16 @@ export default function AuthPage() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect") || "/"
   const { items } = useCart()
-  
-  
+
   useEffect(() => {
     const verified = searchParams.get("verified") === "1"
-    
+
     if (user && !verified) {
       router.push(redirectTo)
     }
 
     if (verified) {
       setActiveTab("login")
-      //setSuccess("Tu cuenta ha sido verificada correctamente. Ya puedes iniciar sesión.")
       setHasVerified(true) // ← guardar en estado
     }
   }, [user, router, redirectTo, searchParams])
@@ -170,7 +167,7 @@ export default function AuthPage() {
         setIsLoading(false)
         return
       }
-      
+
       const result = await signUp(registerEmail, registerPassword, registerFirstName, registerLastName)
       console.log("Resultado del registro:", result)
 
@@ -185,7 +182,7 @@ export default function AuthPage() {
     } catch (error: any) {
       console.error("Error en registro:", error)
       let errorMessage = "Error inesperado al crear la cuenta"
-      
+
       if (error.message) {
         if (error.message.includes("has already been registered")) {
           errorMessage = "Ya existe una cuenta con ese email."
@@ -197,7 +194,7 @@ export default function AuthPage() {
           errorMessage = error.message
         }
       }
-      
+
       setError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -211,12 +208,11 @@ export default function AuthPage() {
     try {
       sessionStorage.setItem("redirectAfterLogin", redirectTo)
       const result = await signInWithGoogle()
-      
+
       if (result && !result.success) {
-        //setError(result.error || "Error al iniciar sesión con Google")
         return
       }
-      
+
       // Verificar si hay items en el carrito para redirigir apropiadamente
       if (items && items.length > 0) {
         router.push("/cart")
@@ -226,7 +222,7 @@ export default function AuthPage() {
     } catch (error: any) {
       console.error("Error en Google Sign In:", error)
       let errorMessage = ""
-      
+
       if (error.message) {
         if (error.message.includes("popup_closed_by_user")) {
           errorMessage = "Inicio de sesión cancelado por el usuario."
@@ -236,7 +232,7 @@ export default function AuthPage() {
           errorMessage = error.message
         }
       }
-      
+
       setError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -262,27 +258,25 @@ export default function AuthPage() {
         <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              
               <div>
                 <div className="relative flex items-center space-x-2">
-                <img
-                  src="/libercopy-favicon.svg"
-                  alt="LiberCopy Icon"
-                  className="h-20 transform group-hover:scale-110 transition-all duration-300"
-                />
-                <img
-                  src="/libercopy-logo.svg"
-                  alt="LiberCopy - grupo lantia"
-                  className="h-20 w-auto transform group-hover:scale-105 transition-all duration-300"
-                />
-              </div>
+                  <img
+                    src="/libercopy-favicon.svg"
+                    alt="LiberCopy Icon"
+                    className="h-20 transform group-hover:scale-110 transition-all duration-300"
+                  />
+                  <img
+                    src="/libercopy-logo.svg"
+                    alt="LiberCopy - grupo lantia"
+                    className="h-20 w-auto transform group-hover:scale-105 transition-all duration-300"
+                  />
+                </div>
               </div>
             </div>
-            
           </CardHeader>
 
           <CardContent className="p-6">
-            {hasVerified  && (
+            {hasVerified && (
               <Alert className="mb-4 border-green-200 bg-green-50">
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-700">
@@ -322,8 +316,6 @@ export default function AuthPage() {
 
               <TabsContent value="login" className="space-y-4">
                 <form onSubmit={handleLogin} className="space-y-4">
-                 
-
                   <div className="space-y-2">
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -417,31 +409,31 @@ export default function AuthPage() {
 
               <TabsContent value="register" className="space-y-4">
                 <form onSubmit={handleRegister} className="space-y-4">
-                   <div className="space-y-2">
+                  <div className="space-y-2">
                     <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      type="text"
-                      placeholder="Nombre"
-                      value={registerFirstName}
-                      onChange={(e) => setRegisterFirstName(e.target.value)}
-                      required
-                      className="pl-10 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        type="text"
+                        placeholder="Nombre"
+                        value={registerFirstName}
+                        onChange={(e) => setRegisterFirstName(e.target.value)}
+                        required
+                        className="pl-10 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      type="text"
-                      placeholder="Apellidos"
-                      value={registerLastName}
-                      onChange={(e) => setRegisterLastName(e.target.value)}
-                      required
-                      className="pl-10 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        type="text"
+                        placeholder="Apellidos"
+                        value={registerLastName}
+                        onChange={(e) => setRegisterLastName(e.target.value)}
+                        required
+                        className="pl-10 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -620,5 +612,13 @@ export default function AuthPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <AuthPageInner />
+    </Suspense>
   )
 }

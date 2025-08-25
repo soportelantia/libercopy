@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Lock, AlertTriangle, CheckCircle } from "lucide-react"
 import Link from "next/link"
 
-export default function UpdatePasswordPage() {
+function UpdatePasswordPageInner() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -267,5 +267,13 @@ export default function UpdatePasswordPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function UpdatePasswordPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <UpdatePasswordPageInner />
+    </Suspense>
   )
 }

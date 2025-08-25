@@ -3,7 +3,7 @@ import { BlogService } from "@/lib/blog-service"
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const { searchParams } = request.nextUrl
 
     const params = {
       page: Number.parseInt(searchParams.get("page") || "1"),
