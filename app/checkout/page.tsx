@@ -2,21 +2,20 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useCart } from "@/hooks/use-cart"
 import { useAuth } from "@/contexts/auth-context"
 import { CheckoutSteps } from "@/components/checkout-steps"
-import { Tag, X, Check } from "lucide-react"
+import { Tag, X, Check, AlertCircle } from "lucide-react"
 
 interface DiscountCode {
+  id: string
   code: string
   percentage: number
-  message: string
 }
 
 export default function CheckoutPage() {
@@ -29,8 +28,17 @@ export default function CheckoutPage() {
   const [discountError, setDiscountError] = useState("")
   const [isValidatingDiscount, setIsValidatingDiscount] = useState(false)
 
-  // Cargar descuento aplicado desde sessionStorage
+  const subtotal = total
+  const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percentage) / 100 : 0
+  const finalTotal = subtotal - discountAmount
+
   useEffect(() => {
+    if (items.length === 0) {
+      router.push("/cart")
+      return
+    }
+
+    // Cargar descuento guardado
     const savedDiscount = sessionStorage.getItem("appliedDiscount")
     if (savedDiscount) {
       try {
@@ -40,16 +48,7 @@ export default function CheckoutPage() {
         sessionStorage.removeItem("appliedDiscount")
       }
     }
-  }, [])
-
-  // Guardar descuento aplicado en sessionStorage
-  useEffect(() => {
-    if (appliedDiscount) {
-      sessionStorage.setItem("appliedDiscount", JSON.stringify(appliedDiscount))
-    } else {
-      sessionStorage.removeItem("appliedDiscount")
-    }
-  }, [appliedDiscount])
+  }, [items.length, router])
 
   const validateDiscountCode = async () => {
     if (!discountCode.trim()) {
@@ -72,13 +71,12 @@ export default function CheckoutPage() {
       const data = await response.json()
 
       if (response.ok && data.valid) {
-        setAppliedDiscount({
-          code: data.code,
-          percentage: data.percentage,
-          message: data.message,
-        })
+        setAppliedDiscount(data.discount)
         setDiscountCode("")
         setDiscountError("")
+
+        // Guardar en sessionStorage
+        sessionStorage.setItem("appliedDiscount", JSON.stringify(data.discount))
       } else {
         setDiscountError(data.error || "Código de descuento no válido")
       }
@@ -93,34 +91,27 @@ export default function CheckoutPage() {
   const removeDiscount = () => {
     setAppliedDiscount(null)
     setDiscountError("")
+    sessionStorage.removeItem("appliedDiscount")
   }
 
-  const calculateDiscountAmount = () => {
-    if (!appliedDiscount) return 0
-    return (total * appliedDiscount.percentage) / 100
-  }
-
-  const calculateFinalTotal = () => {
-    return total - calculateDiscountAmount()
-  }
-
-  const handleContinueToShipping = () => {
-    if (!user) {
-      router.push("/auth?redirect=/checkout/shipping")
-      return
+  const handleContinue = () => {
+    // Guardar información del descuento para el siguiente paso
+    if (appliedDiscount) {
+      sessionStorage.setItem(
+        "checkoutDiscount",
+        JSON.stringify({
+          code: appliedDiscount.code,
+          percentage: appliedDiscount.percentage,
+          amount: discountAmount,
+        }),
+      )
     }
+
     router.push("/checkout/shipping")
   }
 
   if (items.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Tu carrito está vacío</h1>
-          <Button onClick={() => router.push("/imprimir")}>Comenzar a imprimir</Button>
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (
@@ -135,127 +126,118 @@ export default function CheckoutPage() {
               <CardTitle>Resumen del pedido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.map((item, index) => (
-                <div key={index} className="flex justify-between items-start">
+              {items.map((item) => (
+                <div key={item.id} className="flex justify-between items-start">
                   <div className="flex-1">
-                    <p className="font-medium">{item.fileName}</p>
-                    <p className="text-sm text-gray-600">
-                      {item.pages} páginas • {item.paperType} • {item.binding}
-                      {item.copies > 1 && ` • ${item.copies} copias`}
+                    <h4 className="font-medium">{item.fileName}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {item.copies} {item.copies === 1 ? "copia" : "copias"} • {item.pages} páginas
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                      {item.colorMode === "color" ? "Color" : "Blanco y negro"} • {item.paperSize}
+                    </p>
+                    {item.binding && <p className="text-sm text-muted-foreground">Encuadernación: {item.binding}</p>}
                   </div>
-                  <p className="font-medium">{item.price.toFixed(2)} €</p>
+                  <div className="text-right">
+                    <p className="font-medium">{item.price.toFixed(2)}€</p>
+                  </div>
                 </div>
               ))}
 
               <Separator />
 
-              {/* Código de descuento */}
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Tag className="h-4 w-4" />
-                  Código de descuento
-                </Label>
-
-                {appliedDiscount ? (
-                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-md">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-800">
-                        {appliedDiscount.code} ({appliedDiscount.percentage}% descuento)
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={removeDiscount}
-                      className="h-6 w-6 p-0 text-green-600 hover:text-green-800"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Introduce tu código"
-                      value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                      onKeyPress={(e) => e.key === "Enter" && validateDiscountCode()}
-                    />
-                    <Button
-                      onClick={validateDiscountCode}
-                      disabled={isValidatingDiscount || !discountCode.trim()}
-                      variant="outline"
-                    >
-                      {isValidatingDiscount ? "Validando..." : "Aplicar"}
-                    </Button>
-                  </div>
-                )}
-
-                {discountError && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{discountError}</AlertDescription>
-                  </Alert>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Totales */}
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span>{total.toFixed(2)} €</span>
+                  <span>Subtotal</span>
+                  <span>{subtotal.toFixed(2)}€</span>
                 </div>
 
                 {appliedDiscount && (
                   <div className="flex justify-between text-green-600">
-                    <span>Descuento ({appliedDiscount.percentage}%):</span>
-                    <span>-{calculateDiscountAmount().toFixed(2)} €</span>
+                    <span>Descuento ({appliedDiscount.percentage}%)</span>
+                    <span>-{discountAmount.toFixed(2)}€</span>
                   </div>
                 )}
 
                 <Separator />
 
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total:</span>
-                  <span>{calculateFinalTotal().toFixed(2)} €</span>
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total</span>
+                  <span>{finalTotal.toFixed(2)}€</span>
                 </div>
 
                 {appliedDiscount && (
-                  <p className="text-sm text-green-600 text-center">
-                    ¡Ahorras {calculateDiscountAmount().toFixed(2)} € con el código {appliedDiscount.code}!
-                  </p>
+                  <p className="text-sm text-green-600">¡Has ahorrado {discountAmount.toFixed(2)}€!</p>
                 )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Información del usuario */}
-        <div>
+        {/* Código de descuento y continuar */}
+        <div className="space-y-6">
+          {/* Código de descuento */}
           <Card>
             <CardHeader>
-              <CardTitle>Información de envío</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5" />
+                Código de descuento
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              {user ? (
+              {appliedDiscount ? (
                 <div className="space-y-4">
-                  <p>
-                    Conectado como: <strong>{user.email}</strong>
-                  </p>
-                  <Button onClick={handleContinueToShipping} className="w-full">
-                    Continuar con el envío
-                  </Button>
+                  <Alert className="border-green-200 bg-green-50">
+                    <Check className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <strong>Código aplicado: {appliedDiscount.code}</strong>
+                          <p className="text-sm">Descuento del {appliedDiscount.percentage}%</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeDiscount}
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-gray-600">Necesitas iniciar sesión para continuar con tu pedido.</p>
-                  <Button onClick={handleContinueToShipping} className="w-full">
-                    Iniciar sesión
-                  </Button>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Introduce tu código de descuento"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                      onKeyPress={(e) => e.key === "Enter" && validateDiscountCode()}
+                    />
+                    <Button onClick={validateDiscountCode} disabled={isValidatingDiscount || !discountCode.trim()}>
+                      {isValidatingDiscount ? "Validando..." : "Aplicar"}
+                    </Button>
+                  </div>
+
+                  {discountError && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{discountError}</AlertDescription>
+                    </Alert>
+                  )}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Continuar */}
+          <Card>
+            <CardContent className="pt-6">
+              <Button onClick={handleContinue} className="w-full" size="lg">
+                Continuar con el envío
+              </Button>
             </CardContent>
           </Card>
         </div>

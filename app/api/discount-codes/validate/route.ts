@@ -1,39 +1,40 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/admin"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 
 export async function POST(request: NextRequest) {
   try {
     const { code } = await request.json()
 
-    console.log("Validating discount code:", code)
-
     if (!code) {
       return NextResponse.json({ error: "Código de descuento requerido" }, { status: 400 })
     }
 
-    const supabase = createClient()
+    console.log("Validando código:", code)
 
     // Buscar el código de descuento
-    const { data: discountCode, error } = await supabase
+    const { data: discountCode, error: fetchError } = await supabaseAdmin
       .from("discount_codes")
       .select("*")
       .eq("code", code.toUpperCase())
       .eq("is_active", true)
       .single()
 
-    console.log("Database query result:", { discountCode, error })
-
-    if (error || !discountCode) {
-      console.log("Discount code not found or error:", error)
+    if (fetchError) {
+      console.error("Error al buscar código:", fetchError)
       return NextResponse.json({ error: "Código de descuento no válido" }, { status: 404 })
     }
 
-    // Verificar fechas de validez
+    if (!discountCode) {
+      console.log("Código no encontrado:", code)
+      return NextResponse.json({ error: "Código de descuento no válido" }, { status: 404 })
+    }
+
+    console.log("Código encontrado:", discountCode)
+
+    // Verificar fechas
     const now = new Date()
     const startDate = new Date(discountCode.start_date)
     const endDate = new Date(discountCode.end_date)
-
-    console.log("Date validation:", { now, startDate, endDate })
 
     if (now < startDate) {
       return NextResponse.json({ error: "Este código de descuento aún no está activo" }, { status: 400 })
@@ -48,16 +49,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Este código de descuento ha alcanzado su límite de usos" }, { status: 400 })
     }
 
-    console.log("Discount code validated successfully:", discountCode)
+    console.log("Código válido, devolviendo:", {
+      id: discountCode.id,
+      code: discountCode.code,
+      percentage: discountCode.percentage,
+    })
 
     return NextResponse.json({
       valid: true,
-      code: discountCode.code,
-      percentage: discountCode.percentage,
-      message: `¡Código aplicado! ${discountCode.percentage}% de descuento`,
+      discount: {
+        id: discountCode.id,
+        code: discountCode.code,
+        percentage: discountCode.percentage,
+      },
     })
   } catch (error) {
-    console.error("Error validating discount code:", error)
+    console.error("Error en validación de código de descuento:", error)
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
   }
 }
