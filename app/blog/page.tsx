@@ -7,7 +7,9 @@ import { BlogPagination } from "@/components/blog/blog-pagination"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import Navbar from "@/components/navbar"
-import { Rss } from 'lucide-react'
+import { Rss } from "lucide-react"
+import type { Metadata } from "next"
+import { generateCanonicalMetadata } from "@/lib/canonical-url"
 
 interface BlogPageProps {
   searchParams: {
@@ -18,12 +20,27 @@ interface BlogPageProps {
   }
 }
 
+export async function generateMetadata({ searchParams }: BlogPageProps): Promise<Metadata> {
+  const page = searchParams.page
+  const search = new URLSearchParams()
+
+  if (page && page !== "1") {
+    search.set("page", page)
+  }
+
+  return {
+    title: "Libercopy - Blog",
+    description: "Consejos, guías y novedades sobre impresión y encuadernación",
+    ...generateCanonicalMetadata("/blog", search),
+  }
+}
+
 function BlogPostsSkeleton() {
   return (
     <div className="w-full overflow-x-hidden">
       <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <Navbar />
-        <section className="relative py-20 md:py-32 overflow-hidden" style={{paddingBottom: "4rem"}}>
+        <section className="relative py-20 md:py-32 overflow-hidden" style={{ paddingBottom: "4rem" }}>
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
           <div className="container mx-auto px-4 relative">
             <div className="text-center mb-16">
@@ -33,7 +50,7 @@ function BlogPostsSkeleton() {
             </div>
           </div>
         </section>
-        
+
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1">
@@ -100,14 +117,14 @@ async function BlogContent({ searchParams }: BlogPageProps) {
       postsCount: postsData.posts.length,
       total: postsData.total,
       filteredTotal: postsData.filteredTotal,
-      categoriesCount: categories.length
+      categoriesCount: categories.length,
     })
 
     return (
       <div className="w-full overflow-x-hidden">
         <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
           <Navbar />
-          <section className="relative py-20 md:py-32 overflow-hidden" style={{paddingBottom: "4rem"}}>
+          <section className="relative py-20 md:py-32 overflow-hidden" style={{ paddingBottom: "4rem" }}>
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
             <div className="container mx-auto px-4 relative">
               <div className="text-center mb-16">
@@ -124,7 +141,7 @@ async function BlogContent({ searchParams }: BlogPageProps) {
               </div>
             </div>
           </section>
-          
+
           <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Sidebar con búsqueda */}
@@ -174,7 +191,7 @@ async function BlogContent({ searchParams }: BlogPageProps) {
                       <p>Current page: {postsData.page}</p>
                       <p>Search params: {JSON.stringify({ search, category, tag })}</p>
                       <p>Categories available: {categories.length}</p>
-                      <p>Database test: {testData ? 'Connected' : 'Failed'}</p>
+                      <p>Database test: {testData ? "Connected" : "Failed"}</p>
                     </div>
                   </div>
                 )}
@@ -197,7 +214,7 @@ async function BlogContent({ searchParams }: BlogPageProps) {
               <div className="text-sm text-gray-500 mt-4 p-4 bg-red-50 rounded-lg">
                 <p className="font-semibold mb-2">Error details:</p>
                 <p className="break-words">{error instanceof Error ? error.message : JSON.stringify(error)}</p>
-                <p className="mt-2">Stack: {error instanceof Error ? error.stack : 'No stack trace'}</p>
+                <p className="mt-2">Stack: {error instanceof Error ? error.stack : "No stack trace"}</p>
               </div>
             </div>
           </div>
@@ -213,9 +230,4 @@ export default function BlogPage({ searchParams }: BlogPageProps) {
       <BlogContent searchParams={searchParams} />
     </Suspense>
   )
-}
-
-export const metadata = {
-  title: "Libercopy - Blog",
-  description: "Consejos, guías y novedades sobre impresión y encuadernación",
 }

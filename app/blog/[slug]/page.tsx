@@ -1,6 +1,7 @@
 import { BlogService } from "@/lib/blog-service"
 import BlogPostClientPage from "./BlogPostClientPage"
 import type { Metadata } from "next"
+import { generateCanonicalMetadata } from "@/lib/canonical-url"
 
 interface BlogPostPageProps {
   params: {
@@ -14,6 +15,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   if (!post) {
     return {
       title: "Post no encontrado - Libercopy",
+      ...generateCanonicalMetadata(`/blog/${params.slug}`),
     }
   }
 
@@ -25,6 +27,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       description: post.excerpt || post.content.substring(0, 160),
       images: post.featured_image ? [post.featured_image] : [],
     },
+    ...generateCanonicalMetadata(`/blog/${params.slug}`),
   }
 }
 
