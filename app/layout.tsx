@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { AppProviders } from "./providers"
 import CookieConsentModal from "@/components/cookie-consent-modal"
+import CanonicalHead from "@/components/canonical-head"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
     shortcut: "/libercopy-favicon.svg",
     apple: "/libercopy-favicon.svg",
   },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://libercopy.com"),
 }
 
 export default function RootLayout({
@@ -35,6 +37,7 @@ export default function RootLayout({
         <link rel="icon" href="/libercopy-favicon.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/libercopy-favicon.svg" />
         <link rel="apple-touch-icon" href="/libercopy-favicon.svg" />
+        <CanonicalHead />
       </head>
       <body className={inter.className}>
         <AppProviders>
