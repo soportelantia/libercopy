@@ -635,9 +635,9 @@ export default function ImprimirPage() {
             </div>
 
             {/* Desktop Layout - Side by side */}
-            <div className="hidden xl:grid xl:grid-cols-3 gap-8">
+            <div className="hidden xl:block">
               {/* Left Column - Forms */}
-              <div className="xl:col-span-2 space-y-8 max-h-screen overflow-y-auto pr-4">
+              <div className="pr-80 space-y-8">
                 {/* File Upload */}
                 <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
                   <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-xl">
@@ -677,9 +677,9 @@ export default function ImprimirPage() {
                 )}
               </div>
 
-              {/* Right Column - Summary */}
-              <div className="space-y-6 sticky top-4 self-start">
-                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+              {/* Right Column - Fixed Floating Summary */}
+              <div className="fixed top-20 right-4 w-80 max-h-[calc(100vh-6rem)] overflow-y-auto z-40 space-y-6">
+                <Card className="border-0 shadow-xl bg-white/95 backdrop-blur-sm">
                   <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-xl">
                     <CardTitle className="flex items-center space-x-2">
                       <Calculator className="h-6 w-6 text-purple-600" />
@@ -806,7 +806,7 @@ export default function ImprimirPage() {
 
                 {/* Cart Preview */}
                 {cart.length > 0 && (
-                  <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+                  <Card className="border-0 shadow-lg bg-white/95 backdrop-blur-sm">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold flex items-center">
@@ -833,7 +833,7 @@ export default function ImprimirPage() {
                 )}
 
                 {/* Services Info - Desktop (moved below cart preview, no sticky) */}
-                <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+                <Card className="border-0 shadow-lg bg-white/95 backdrop-blur-sm">
                   <CardContent className="p-6">
                     <h3 className="font-semibold text-gray-800 mb-4 flex items-center">
                       <Star className="h-4 w-4 mr-2 text-yellow-500" />
