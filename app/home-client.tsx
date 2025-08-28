@@ -69,8 +69,6 @@ export default function HomeClientPage() {
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Imprime tus Apuntes y Documentos
               </span>
-              <br />
-              con LiberCopy
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
               De forma rápida y económica desde 0,02€
