@@ -559,7 +559,7 @@ export default function CheckoutSummaryPage() {
         <h1 className="text-xl sm:text-2xl font-bold text-[#2E5FEB] mb-8 text-center">Paso 3: Confirma tu pedido</h1>
 
         <div className="w-full space-y-6 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-8">
-          <div className="w-full lg:col-span-2 space-y-6">
+          <div className="w-full lg:col-span-2 space-y-6 overflow-y-auto max-h-screen pr-4">
             {/* Artículos del pedido */}
             <Card className="w-full">
               <CardContent className="p-4 sm:p-6">
