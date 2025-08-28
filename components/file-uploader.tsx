@@ -487,9 +487,23 @@ function FileUploader({ files, onUpdateFiles, onUpdatePageCount, disabled = fals
   }
 
   const getPdfPageCount = async (arrayBuffer: ArrayBuffer): Promise<number> => {
-    const { getPdfPageCountFromArrayBuffer } = await import('@/utils/getPdfPageCount');
-    return await getPdfPageCountFromArrayBuffer(arrayBuffer);
-  };
+    const uint8Array = new Uint8Array(arrayBuffer)
+    const pdfText = new TextDecoder("utf-8").decode(uint8Array)
+
+    const regex = /\/Type\s*\/Page[^s]/g
+    const matches = pdfText.match(regex)
+
+    if (matches && matches.length > 0) {
+      return matches.length
+    }
+
+    const countMatch = pdfText.match(/\/Count\s+(\d+)/)
+    if (countMatch && countMatch[1]) {
+      return Number.parseInt(countMatch[1], 10)
+    }
+
+    return Math.max(1, Math.round(arrayBuffer.byteLength / 100000))
+  }
 
   const removeFile = (index: number) => {
     if (disabled) return

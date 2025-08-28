@@ -146,9 +146,6 @@ importers:
       next-themes:
         specifier: latest
         version: 0.4.6(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
-      pdf-lib:
-        specifier: latest
-        version: 1.17.1
       react:
         specifier: ^18
         version: 18.0.0
@@ -350,12 +347,6 @@ packages:
 
   '@paypal/sdk-constants@1.0.155':
     resolution: {integrity: sha512-kETprri+6j9eBOXKXH3IStiGmgTXcIUL7ST3DTOuDXmnneQUUq1m3rHm1md9bNahC4qWay/EdKy3d/fB8MUZcA==}
-
-  '@pdf-lib/standard-fonts@1.0.0':
-    resolution: {integrity: sha512-hU30BK9IUN/su0Mn9VdlVKsWBS6GyhVfqjwl1FjZN4TxP6cCw0jP2w7V3Hf5uX7M0AZJ16vey9yE0ny7Sa59ZA==}
-
-  '@pdf-lib/upng@1.0.1':
-    resolution: {integrity: sha512-dQK2FUMQtowVP00mtIksrlZhdFXQZPC+taih1q4CvPZ5vqdxR/LKBaFg0oAfzd1GlHZXXSPdQfzQnt+ViGvEIQ==}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -1740,9 +1731,6 @@ packages:
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
 
-  pako@1.0.11:
-    resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
-
   path-key@3.1.1:
     resolution: {integrity: sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==}
     engines: {node: '>=8'}
@@ -1753,9 +1741,6 @@ packages:
   path-scurry@1.11.1:
     resolution: {integrity: sha512-Xa4Nw17FS9ApQFJ9umLiJS4orGjm7ZzwUrwamcGQuHSzDyth9boKDaycYdDcZDuqYATXw4HFXgaqWTctW/v1HA==}
     engines: {node: '>=16 || 14 >=14.18'}
-
-  pdf-lib@1.17.1:
-    resolution: {integrity: sha512-V/mpyJAoTsN4cnP31vc0wfNA1+p20evqqnap0KLoRUN0Yk/p3wN52DOEsL4oBFcLdb76hlpKPtzJIgo67j/XLw==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -2076,9 +2061,6 @@ packages:
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
-  tslib@1.14.1:
-    resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
-
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -2329,14 +2311,6 @@ snapshots:
   '@paypal/sdk-constants@1.0.155':
     dependencies:
       hi-base32: 0.5.1
-
-  '@pdf-lib/standard-fonts@1.0.0':
-    dependencies:
-      pako: 1.0.11
-
-  '@pdf-lib/upng@1.0.1':
-    dependencies:
-      pako: 1.0.11
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
@@ -3773,8 +3747,6 @@ snapshots:
 
   package-json-from-dist@1.0.1: {}
 
-  pako@1.0.11: {}
-
   path-key@3.1.1: {}
 
   path-parse@1.0.7: {}
@@ -3783,13 +3755,6 @@ snapshots:
     dependencies:
       lru-cache: 10.4.3
       minipass: 7.1.2
-
-  pdf-lib@1.17.1:
-    dependencies:
-      '@pdf-lib/standard-fonts': 1.0.0
-      '@pdf-lib/upng': 1.0.1
-      pako: 1.0.11
-      tslib: 1.14.1
 
   picocolors@1.1.1: {}
 
@@ -4118,8 +4083,6 @@ snapshots:
   tr46@0.0.3: {}
 
   ts-interface-checker@0.1.13: {}
-
-  tslib@1.14.1: {}
 
   tslib@2.8.1: {}
 
