@@ -33,6 +33,17 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-3MM7JTV9PB"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-3MM7JTV9PB');
+            `,
+          }}
+        />
         <link rel="icon" href="/libercopy-favicon.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/libercopy-favicon.svg" />
         <link rel="apple-touch-icon" href="/libercopy-favicon.svg" />
