@@ -565,7 +565,7 @@ export default function CheckoutSummaryPage() {
               <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Artículos en tu pedido</h3>
 
-                <div className="space-y-6 lg:max-h-96 lg:overflow-y-auto lg:pr-2">
+                <div className="space-y-6 lg:max-h-[60vh] lg:overflow-y-auto lg:pr-2 lg:scrollbar-thin lg:scrollbar-thumb-gray-300 lg:scrollbar-track-gray-100">
                   {(cart || []).map((item) => (
                     <div key={item.id} className="border-b border-gray-200 pb-6 last:border-b-0">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
@@ -822,7 +822,7 @@ export default function CheckoutSummaryPage() {
 
           {/* Resumen del pedido */}
           <div className="w-full lg:col-span-1">
-            <Card className="w-full lg:sticky lg:top-4 lg:self-start">
+            <Card className="w-full lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)]">
               <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Resumen del pedido</h3>
 
