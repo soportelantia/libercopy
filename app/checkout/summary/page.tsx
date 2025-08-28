@@ -559,13 +559,13 @@ export default function CheckoutSummaryPage() {
         <h1 className="text-xl sm:text-2xl font-bold text-[#2E5FEB] mb-8 text-center">Paso 3: Confirma tu pedido</h1>
 
         <div className="w-full space-y-6 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-8">
-          <div className="w-full lg:col-span-2 space-y-6 overflow-y-auto max-h-screen pr-4">
-            {/* Artículos del pedido */}
+          {/* Artículos del pedido */}
+          <div className="w-full lg:col-span-2 space-y-6">
             <Card className="w-full">
               <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Artículos en tu pedido</h3>
 
-                <div className="space-y-6 lg:max-h-[60vh] lg:overflow-y-auto lg:pr-2 lg:scrollbar-thin lg:scrollbar-thumb-gray-300 lg:scrollbar-track-gray-100">
+                <div className="space-y-6 lg:max-h-[70vh] lg:overflow-y-auto lg:pr-3 lg:scrollbar-thin lg:scrollbar-thumb-gray-400 lg:scrollbar-track-gray-100 lg:hover:scrollbar-thumb-gray-500">
                   {(cart || []).map((item) => (
                     <div key={item.id} className="border-b border-gray-200 pb-6 last:border-b-0">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
@@ -822,8 +822,8 @@ export default function CheckoutSummaryPage() {
 
           {/* Resumen del pedido */}
           <div className="w-full lg:col-span-1">
-            <Card className="w-full lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)]">
-              <CardContent className="p-4 sm:p-6">
+            <Card className="w-full lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-hidden">
+              <CardContent className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-full">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Resumen del pedido</h3>
 
                 <div className="space-y-3 text-sm">
