@@ -55,6 +55,7 @@
     "mailgun.js": "latest",
     "next": "14.2.16",
     "next-themes": "latest",
+    "pdf-lib": "latest",
     "react": "^18",
     "react-day-picker": "latest",
     "react-dom": "^18",
