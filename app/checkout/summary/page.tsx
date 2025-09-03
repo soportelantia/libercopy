@@ -228,16 +228,35 @@ export default function CheckoutSummaryPage() {
 
       // Si se aplicó un descuento, actualizar el contador de usos
       if (appliedDiscount) {
-        const { error: updateError } = await supabase
-          .from("discount_codes")
-          .update({
-            current_uses: supabase.raw("current_uses + 1"),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", appliedDiscount.id)
+        try {
+          // Primero obtener el valor actual
+          const { data: currentDiscount, error: fetchError } = await supabase
+            .from("discount_codes")
+            .select("current_uses")
+            .eq("id", appliedDiscount.id)
+            .single()
 
-        if (updateError) {
-          console.warn("Warning: Could not update discount code usage:", updateError.message)
+          if (fetchError) {
+            console.warn("Warning: Could not fetch current discount usage:", fetchError.message)
+          } else {
+            // Actualizar con el nuevo valor
+            const newUsageCount = (currentDiscount.current_uses || 0) + 1
+            const { error: updateError } = await supabase
+              .from("discount_codes")
+              .update({
+                current_uses: newUsageCount,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", appliedDiscount.id)
+
+            if (updateError) {
+              console.warn("Warning: Could not update discount code usage:", updateError.message)
+            } else {
+              console.log("Discount code usage updated successfully:", newUsageCount)
+            }
+          }
+        } catch (discountError) {
+          console.warn("Warning: Error updating discount code usage:", discountError)
         }
       }
 
