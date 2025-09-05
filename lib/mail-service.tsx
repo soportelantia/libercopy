@@ -45,19 +45,22 @@ if (isServer && isMailgunConfigured) {
 
 // Función para calcular el total del pedido correctamente
 function calculateOrderTotal(orderData: any): number {
-  // Si ya existe total_amount y es mayor que 0, usarlo
-  if (orderData.total_amount && orderData.total_amount > 0) {
-    return orderData.total_amount
-  }
-
-  // Si no, calcular desde los items + gastos de envío
+  // Calcular el subtotal de los items
   const itemsTotal =
     orderData.order_items?.reduce((sum: number, item: any) => {
-      return sum + (item.price || 0)
+      return sum + (item.price || 0) * (item.copies || 1)
     }, 0) || 0
 
+  // Agregar gastos de envío
   const shippingCost = orderData.shipping_cost || 0
-  return itemsTotal + shippingCost
+  let total = itemsTotal + shippingCost
+
+  // Aplicar descuento si existe
+  if (orderData.discount_amount && orderData.discount_amount > 0) {
+    total = total - orderData.discount_amount
+  }
+
+  return total
 }
 
 interface SendEmailParams {
