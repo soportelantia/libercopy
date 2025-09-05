@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Toaster } from "@/components/ui/toaster"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase/client"
-import { AlertCircle, ArrowLeft, Package, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Package, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import Footer from "@/components/footer"
@@ -24,6 +24,9 @@ type Order = {
     price: number | null
   }[]
   shipping_cost: number | null
+  discount_code: string | null
+  discount_percentage: number | null
+  discount_amount: number | null
 }
 
 const ORDERS_PER_PAGE = 10
@@ -143,19 +146,29 @@ export default function OrdersPage() {
   }
 
   // Función para truncar nombres de archivo
-  const truncateFileName = (fileName: string, maxLength: number = 40) => {
+  const truncateFileName = (fileName: string, maxLength = 40) => {
     if (!fileName) return "Archivo sin nombre"
     if (fileName.length <= maxLength) return fileName
-    
-    const extension = fileName.split('.').pop()
-    const nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'))
-    
+
+    const extension = fileName.split(".").pop()
+    const nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf("."))
+
     if (extension && nameWithoutExtension) {
       const truncatedName = nameWithoutExtension.substring(0, maxLength - extension.length - 4) + "..."
       return `${truncatedName}.${extension}`
     }
-    
+
     return fileName.substring(0, maxLength - 3) + "..."
+  }
+
+  // Función para calcular el subtotal antes del descuento
+  const calculateSubtotal = (order: Order) => {
+    const itemsTotal = order.items.reduce((sum, item) => {
+      const price = item.price || 0
+      const copies = item.copies || 1
+      return sum + price * copies
+    }, 0)
+    return itemsTotal
   }
 
   const handlePageChange = (page: number) => {
@@ -346,6 +359,11 @@ export default function OrdersPage() {
                             <p className="text-sm text-gray-500 mt-1">
                               {new Date(order.created_at).toLocaleDateString("es-ES")}
                             </p>
+                            {order.discount_code && (
+                              <p className="text-sm text-green-600 mt-1 font-medium">
+                                Descuento aplicado: {order.discount_code} (-{order.discount_amount?.toFixed(2)}€)
+                              </p>
+                            )}
                           </div>
                           <div className="flex flex-col sm:items-end space-y-2">
                             <p className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -360,7 +378,10 @@ export default function OrdersPage() {
                           <p className="text-sm font-medium mb-2 text-gray-700">Elementos:</p>
                           <ul className="text-sm text-gray-600 space-y-1">
                             {(order.items || []).slice(0, 2).map((item) => (
-                              <li key={item.id} className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                              <li
+                                key={item.id}
+                                className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0"
+                              >
                                 <span className="break-words min-w-0 flex-1">
                                   {truncateFileName(item.file_name)} (x{item.copies || 1})
                                 </span>
@@ -375,6 +396,24 @@ export default function OrdersPage() {
                               </li>
                             )}
                           </ul>
+                          {order.discount_code && (
+                            <div className="mt-3 pt-3 border-t border-gray-100 space-y-1 text-sm">
+                              <div className="flex justify-between text-gray-600">
+                                <span>Subtotal:</span>
+                                <span>{calculateSubtotal(order).toFixed(2)}€</span>
+                              </div>
+                              <div className="flex justify-between text-green-600">
+                                <span>Descuento ({order.discount_code}):</span>
+                                <span>-{order.discount_amount?.toFixed(2)}€</span>
+                              </div>
+                              {(order.shipping_cost || 0) > 0 && (
+                                <div className="flex justify-between text-gray-600">
+                                  <span>Envío:</span>
+                                  <span>{order.shipping_cost?.toFixed(2)}€</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="mt-4 flex justify-end">
                           <Link href={`/account/orders/${order.id}`}>

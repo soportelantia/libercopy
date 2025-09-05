@@ -8,7 +8,19 @@ import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase/client"
-import { AlertCircle, ArrowLeft, FileText, Truck, MapPin, Phone, User, Download, Clock, Mail, Building } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  FileText,
+  Truck,
+  MapPin,
+  Phone,
+  User,
+  Download,
+  Clock,
+  Mail,
+  Building,
+} from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import Footer from "@/components/footer"
@@ -72,6 +84,9 @@ type Order = {
   estimated_delivery_date: string | null
   tracking_url: string | null
   payment_method?: string | null
+  discount_code: string | null
+  discount_percentage: number | null
+  discount_amount: number | null
   items: OrderItem[]
   status_history: OrderStatusHistory[]
   shipping_address: OrderShippingAddress | null
@@ -161,8 +176,8 @@ export default function OrderDetailsPage() {
               status: orderData.status,
               comment: "Estado actual del pedido",
               created_at: orderData.created_at,
-              created_by: orderData.user_id
-            }
+              created_by: orderData.user_id,
+            },
           ])
         } else {
           console.log("Status history data:", historyData)
@@ -178,8 +193,8 @@ export default function OrderDetailsPage() {
             status: orderData.status,
             comment: "Estado actual del pedido",
             created_at: orderData.created_at,
-            created_by: orderData.user_id
-          }
+            created_by: orderData.user_id,
+          },
         ])
       }
 
@@ -211,7 +226,17 @@ export default function OrderDetailsPage() {
 
     // Incluir gastos de envío en el cálculo
     const shippingCost = order.shipping_cost || 0
-    return itemsTotal + shippingCost
+    const discountAmount = order.discount_amount || 0
+    return itemsTotal + shippingCost - discountAmount
+  }
+
+  // Función para calcular subtotal antes de descuento y gastos de envío
+  const calculateSubtotal = (order: Order) => {
+    return order.items.reduce((sum, item) => {
+      const price = item.price || 0
+      const copies = item.copies || 1
+      return sum + price * copies
+    }, 0)
   }
 
   const handleCancelOrder = async () => {
@@ -391,18 +416,18 @@ export default function OrderDetailsPage() {
   }
 
   // Función para truncar nombres de archivo
-  const truncateFileName = (fileName: string, maxLength: number = 30) => {
+  const truncateFileName = (fileName: string, maxLength = 30) => {
     if (!fileName || fileName.length <= maxLength) return fileName
-    
-    const extension = fileName.split('.').pop()
-    const nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'))
-    
+
+    const extension = fileName.split(".").pop()
+    const nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf("."))
+
     if (extension && nameWithoutExtension) {
-      const truncatedName = nameWithoutExtension.substring(0, maxLength - extension.length - 4) + '...'
+      const truncatedName = nameWithoutExtension.substring(0, maxLength - extension.length - 4) + "..."
       return `${truncatedName}.${extension}`
     }
-    
-    return fileName.substring(0, maxLength - 3) + '...'
+
+    return fileName.substring(0, maxLength - 3) + "..."
   }
 
   // Función para renderizar la dirección de envío estática
@@ -430,7 +455,9 @@ export default function OrderDetailsPage() {
           <MapPin className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 space-y-1 min-w-0">
             <div className="text-gray-700 break-words">{address.address_line_1}</div>
-            {address.address_line_2 && <div className="text-gray-600 text-sm break-words">{address.address_line_2}</div>}
+            {address.address_line_2 && (
+              <div className="text-gray-600 text-sm break-words">{address.address_line_2}</div>
+            )}
             <div className="text-gray-700 break-words">
               <span className="font-mono font-medium">{address.postal_code}</span> {address.city}
             </div>
@@ -523,8 +550,9 @@ export default function OrderDetailsPage() {
   const statusInfo = getStatusInfo(order.status)
   const orderTotal = calculateOrderTotal(order)
   const shippingCost = order.shipping_cost || 0
-  const subtotal = orderTotal - shippingCost
-  const taxAmount = subtotal * 0.21
+  const subtotal = calculateSubtotal(order)
+  const discountAmount = order.discount_amount || 0
+  const taxAmount = (subtotal - discountAmount) * 0.21
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 w-full overflow-x-hidden">
@@ -582,8 +610,14 @@ export default function OrderDetailsPage() {
                 </div>
                 <div className="space-y-1 text-sm text-gray-600">
                   <p>
-                    <span className="font-medium">Subtotal:</span> {subtotal.toFixed(2)}€
+                    <span className="font-medium">Subtotal:</span> {calculateSubtotal(order).toFixed(2)}€
                   </p>
+                  {order.discount_code && (
+                    <p className="text-green-600">
+                      <span className="font-medium">Descuento ({order.discount_code}):</span> -
+                      {order.discount_amount?.toFixed(2)}€
+                    </p>
+                  )}
                   <p>
                     <span className="font-medium">Gastos de envío:</span>{" "}
                     {shippingCost > 0 ? `${shippingCost.toFixed(2)}€` : "Gratis"}
@@ -591,9 +625,11 @@ export default function OrderDetailsPage() {
                   <p>
                     <span className="font-medium">IVA (21%):</span> {taxAmount.toFixed(2)}€
                   </p>
-                  <p className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    <span className="font-medium">Total:</span> {orderTotal.toFixed(2)}€
-                  </p>
+                  <div className="border-t border-gray-200 pt-1 mt-2">
+                    <p className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      <span className="font-medium">Total:</span> {orderTotal.toFixed(2)}€
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -635,7 +671,9 @@ export default function OrderDetailsPage() {
                 {order.tracking_number && (
                   <p className="break-words">
                     <span className="font-medium">Número de seguimiento:</span>
-                    <span className="font-mono bg-gray-100 px-2 py-1 rounded ml-2 break-all">{order.tracking_number}</span>
+                    <span className="font-mono bg-gray-100 px-2 py-1 rounded ml-2 break-all">
+                      {order.tracking_number}
+                    </span>
                   </p>
                 )}
                 {order.tracking_url && (
@@ -751,11 +789,31 @@ export default function OrderDetailsPage() {
             </div>
 
             <div className="mt-6 pt-4 border-t border-gray-100 w-full">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-lg text-gray-800">Total</span>
-                <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {orderTotal.toFixed(2)}€
-                </span>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                  <span>Subtotal elementos:</span>
+                  <span>{calculateSubtotal(order).toFixed(2)}€</span>
+                </div>
+                {order.discount_code && (
+                  <div className="flex justify-between items-center text-sm text-green-600">
+                    <span>Descuento ({order.discount_code}):</span>
+                    <span>-{order.discount_amount?.toFixed(2)}€</span>
+                  </div>
+                )}
+                {shippingCost > 0 && (
+                  <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>Gastos de envío:</span>
+                    <span>{shippingCost.toFixed(2)}€</span>
+                  </div>
+                )}
+                <div className="border-t border-gray-200 pt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-lg text-gray-800">Total</span>
+                    <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      {orderTotal.toFixed(2)}€
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
