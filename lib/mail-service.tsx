@@ -203,7 +203,6 @@ export function getWelcomeEmail(firstName: string, url: string) {
   }
 }
 
-
 // Plantilla de recuperación de contraseña
 export function getPasswordResetEmail(resetUrl: string, email?: string) {
   const content = `
@@ -246,6 +245,9 @@ export function getOrderConfirmationEmail(orderData: any) {
     shippingAddressesCount: orderData.order_shipping_addresses?.length || 0,
     shippingAddressesData: orderData.order_shipping_addresses,
     hasLegacyShippingAddress: !!orderData.shipping_address,
+    discountCode: orderData.discount_code,
+    discountPercentage: orderData.discount_percentage,
+    discountAmount: orderData.discount_amount,
   })
 
   // DEBUG DETALLADO de los datos recibidos
@@ -263,50 +265,27 @@ export function getOrderConfirmationEmail(orderData: any) {
   // También verificar si hay datos en shipping_address (legacy)
   console.log("- orderData.shipping_address:", orderData.shipping_address)
 
-  const { id, shipping_address, status, order_items } = orderData
+  const { id, shipping_address, status, order_items, discount_code, discount_percentage, discount_amount } = orderData
 
   const isPaid = status === "completed" || status === "processing"
   const statusText = isPaid ? "Pagado" : "Pendiente de pago"
 
-  // Función para obtener el nombre legible de las opciones
-  const getReadableOption = (key: string, value: string) => {
-    const options: Record<string, Record<string, string>> = {
-      paper_size: { a4: "A4", a3: "A3" },
-      paper_type: { normal: "Normal", cardstock: "Cartulina", photo: "Fotográfico" },
-      paper_weight: {
-        "80gsm": "80 g/m²",
-        "90gsm": "90 g/m²",
-        "100gsm": "100 g/m²",
-        "120gsm": "120 g/m²",
-        "160gsm": "160 g/m²",
-        "200gsm": "200 g/m²",
-        "250gsm": "250 g/m²",
-        "300gsm": "300 g/m²",
-      },
-      print_type: { bw: "Blanco y negro", color: "Color", colorPro: "Color PRO" },
-      print_form: { oneSided: "Una cara", doubleSided: "Doble cara" },
-      orientation: { portrait: "Vertical", landscape: "Horizontal" },
-      pages_per_side: { one: "Una página por cara", multiple: "Múltiples páginas por cara" },
-      finishing: {
-        none: "Sin acabado",
-        stapled: "Grapado",
-        twoHoles: "Dos taladros",
-        laminated: "Plastificado",
-        bound: "Encuadernado",
-        fourHoles: "Cuatro taladros",
-      },
-    }
+  const hasDiscount = discount_code && (discount_percentage > 0 || discount_amount > 0)
 
-    return options[key]?.[value] || value
-  }
+  const itemsTotal =
+    order_items?.reduce((sum: number, item: any) => {
+      return sum + (item.price || 0) * (item.copies || 1)
+    }, 0) || 0
 
-  // Obtener información de dirección de envío mejorada - CON DEBUG
+  const shippingCost = orderData.shipping_cost || 0
+  const subtotalBeforeDiscount = itemsTotal + shippingCost
+  const finalTotal = calculateOrderTotal(orderData)
+
   let addressInfo = ""
 
   console.log("🏠 Processing shipping address data...")
   console.log("🏠 orderData.order_shipping_addresses:", orderData.order_shipping_addresses)
 
-  // Primero intentar con order_shipping_addresses (nueva estructura)
   if (
     orderData.order_shipping_addresses &&
     Array.isArray(orderData.order_shipping_addresses) &&
@@ -329,9 +308,7 @@ export function getOrderConfirmationEmail(orderData: any) {
     ${shippingAddr.delivery_notes ? `<p style="margin: 10px 0 5px 0; padding: 8px; background-color: #fff3cd; border-radius: 4px; font-size: 14px;"><strong>Notas de entrega:</strong> ${shippingAddr.delivery_notes}</p>` : ""}
   </div>
 `
-  }
-  // Fallback a shipping_address si existe (legacy)
-  else if (orderData.shipping_address) {
+  } else if (orderData.shipping_address) {
     console.log("⚠️ Using legacy shipping_address data:", orderData.shipping_address)
     const shipping_address = orderData.shipping_address
     addressInfo = `
@@ -359,7 +336,6 @@ export function getOrderConfirmationEmail(orderData: any) {
 
   console.log("🏠 Address info generated:", addressInfo ? "✅ Generated" : "❌ Empty")
 
-  // Lista de elementos del pedido con todas las características
   const itemsList =
     order_items
       ?.map(
@@ -422,7 +398,8 @@ export function getOrderConfirmationEmail(orderData: any) {
       <h3 style="margin: 0 0 15px 0; color: #2563eb;">📋 Resumen del pedido</h3>
       <p style="margin: 8px 0;"><strong>Número de pedido:</strong> <span style="font-family: monospace; background-color: #e9ecef; padding: 4px 8px; border-radius: 4px;">#${id.substring(0, 8)}</span></p>
       <p style="margin: 8px 0;"><strong>Estado:</strong> <span style="color: ${isPaid ? "#22c55e" : "#f59e0b"}; font-weight: bold;">${statusText}</span></p>
-      <p style="margin: 8px 0;"><strong>Total:</strong> <span style="font-size: 18px; font-weight: bold; color: #2563eb;">${calculateOrderTotal(orderData).toFixed(2)}€</span> <span style="font-size: 12px; color: #666;">(IVA incluido)</span></p>
+      ${hasDiscount ? `<p style="margin: 8px 0;"><strong>Código de descuento:</strong> <span style="font-family: monospace; background-color: #d1edff; color: #0984e3; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${discount_code}</span> <span style="color: #22c55e; font-weight: bold;">(-${discount_percentage}%)</span></p>` : ""}
+      <p style="margin: 8px 0;"><strong>Total:</strong> <span style="font-size: 18px; font-weight: bold; color: #2563eb;">${finalTotal.toFixed(2)}€</span> <span style="font-size: 12px; color: #666;">(IVA incluido)</span></p>
     </div>
     
     ${addressInfo}
@@ -435,14 +412,28 @@ export function getOrderConfirmationEmail(orderData: any) {
       <table style="width: 100%; border-collapse: collapse; margin: 15px 0; border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden;">
         ${itemsList}
         ${
-          orderData.shipping_cost > 0
+          shippingCost > 0
             ? `
         <tr style="background-color: #f8f9fa;">
           <td style="padding: 15px; border-bottom: 1px solid #e9ecef;">
             <strong>🚚 Gastos de envío</strong>
           </td>
           <td style="padding: 15px; border-bottom: 1px solid #e9ecef; text-align: right;">
-            <strong>${orderData.shipping_cost.toFixed(2)}€</strong>
+            <strong>${shippingCost.toFixed(2)}€</strong>
+          </td>
+        </tr>
+        `
+            : ""
+        }
+        ${
+          hasDiscount
+            ? `
+        <tr style="background-color: #f8f9fa;">
+          <td style="padding: 15px; border-bottom: 1px solid #e9ecef;">
+            <strong style="color: #22c55e;">🎟️ Descuento aplicado (${discount_code} - ${discount_percentage}%)</strong>
+          </td>
+          <td style="padding: 15px; border-bottom: 1px solid #e9ecef; text-align: right;">
+            <strong style="color: #22c55e;">-${discount_amount.toFixed(2)}€</strong>
           </td>
         </tr>
         `
@@ -451,7 +442,7 @@ export function getOrderConfirmationEmail(orderData: any) {
         <tr style="background-color: #2563eb; color: white;">
           <td style="padding: 20px; font-weight: bold; font-size: 16px;">💰 TOTAL</td>
           <td style="padding: 20px; text-align: right; font-weight: bold; font-size: 18px;">
-            ${calculateOrderTotal(orderData).toFixed(2)}€
+            ${finalTotal.toFixed(2)}€
           </td>
         </tr>
       </table>
@@ -492,4 +483,36 @@ export function getOrderConfirmationEmail(orderData: any) {
     subject: `LiberCopy - Confirmación de pedido #${id.substring(0, 8)}`,
     html: getEmailTemplate("Confirmación de pedido", content),
   }
+}
+
+// Función para obtener el nombre legible de las opciones
+function getReadableOption(key: string, value: string) {
+  const options: Record<string, Record<string, string>> = {
+    paper_size: { a4: "A4", a3: "A3" },
+    paper_type: { normal: "Normal", cardstock: "Cartulina", photo: "Fotográfico" },
+    paper_weight: {
+      "80gsm": "80 g/m²",
+      "90gsm": "90 g/m²",
+      "100gsm": "100 g/m²",
+      "120gsm": "120 g/m²",
+      "160gsm": "160 g/m²",
+      "200gsm": "200 g/m²",
+      "250gsm": "250 g/m²",
+      "300gsm": "300 g/m²",
+    },
+    print_type: { bw: "Blanco y negro", color: "Color", colorPro: "Color PRO" },
+    print_form: { oneSided: "Una cara", doubleSided: "Doble cara" },
+    orientation: { portrait: "Vertical", landscape: "Horizontal" },
+    pages_per_side: { one: "Una página por cara", multiple: "Múltiples páginas por cara" },
+    finishing: {
+      none: "Sin acabado",
+      stapled: "Grapado",
+      twoHoles: "Dos taladros",
+      laminated: "Plastificado",
+      bound: "Encuadernado",
+      fourHoles: "Cuatro taladros",
+    },
+  }
+
+  return options[key]?.[value] || value
 }
