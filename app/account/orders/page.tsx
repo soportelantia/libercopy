@@ -119,10 +119,15 @@ export default function OrdersPage() {
       return sum + price * copies
     }, 0)
 
+    let totalWithDiscount = itemsTotal
+    if (order.discount_amount && order.discount_amount > 0) {
+      totalWithDiscount = itemsTotal - order.discount_amount
+    }
+
     // Agregar gastos de envío si existen
     const shippingCost = order.shipping_cost || 0
 
-    return itemsTotal + shippingCost
+    return totalWithDiscount + shippingCost
   }
 
   // Función para obtener el texto y color del estado
