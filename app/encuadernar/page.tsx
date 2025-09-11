@@ -22,7 +22,7 @@ export default function EncuadernarPage() {
     {
       name: "Miguel Blanco",
       role: "Asesor jurídico",
-      text: "Utilizo sus servicios para imprimir presentaciones con grapado. La calidad es excelente y siempre cumplen con los plazos. Mis clientes quedan impresionados con el resultado.",
+      text: "Utilizo sus servicios para imprimir presentaciones con grapado. La calidad es excelente y siempre cumplen con los plazos.",
       rating: 5,
     },
     
