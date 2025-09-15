@@ -424,7 +424,7 @@ const faqData: FAQItem[] = [
           <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200">
             <div className="flex items-center space-x-2 mb-2">
               <Truck className="h-5 w-5 text-blue-500" />
-              <Badge variant="secondary">2.99</Badge>
+              <Badge variant="secondary">3.99</Badge>
             </div>
             <h4 className="font-semibold text-blue-800">Pedidos &lt; 25€</h4>
             <p className="text-sm text-blue-700">Tarifa fija de envío</p>
