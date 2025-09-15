@@ -43,14 +43,7 @@ const pickupPoints: PickupPoint[] = [
     address: "Calle Ejemplo 123, 41001 Sevilla",
     hours: "L-V: 9:00-18:00, S: 9:00-14:00",
     phone: "954 123 456",
-  },
-  {
-    id: "centro",
-    name: "Local Centro Sevilla",
-    address: "Plaza Nueva 45, 41001 Sevilla",
-    hours: "L-V: 10:00-20:00, S: 10:00-15:00",
-    phone: "954 654 321",
-  },
+  }
 ]
 
 export default function ShippingPage() {
@@ -63,7 +56,7 @@ export default function ShippingPage() {
   const [selectedAddress, setSelectedAddress] = useState<string>("")
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<string>("")
 
-  const shippingCost = shippingType === "home" ? 2.99 : 0
+  const shippingCost = shippingType === "home" ? 3.99 : 0
   const totalPrice = getTotalPrice() || 0
   const subtotal = totalPrice / 1.21
   const iva = totalPrice - subtotal
