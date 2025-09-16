@@ -44,13 +44,6 @@ const pickupPoints: PickupPoint[] = [
     hours: "L-V: 9:00-18:00",
     phone: "955 28 61 25",
   },
-  {
-    id: "centro",
-    name: "LiberCopy - Lantia Publishing Sevilla",
-    address: "Plaza Magdalena 9, 3º Planta, 41001 Sevilla",
-    hours: "L-V: 8:00-18:00",
-    phone: "810 10 14 20",
-  },
 ]
 
 export default function ShippingPage() {
@@ -63,7 +56,7 @@ export default function ShippingPage() {
   const [selectedAddress, setSelectedAddress] = useState<string>("")
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<string>("")
 
-  const shippingCost = shippingType === "home" ? 2.99 : 0
+  const shippingCost = shippingType === "home" ? 3.99 : 0
   const totalPrice = getTotalPrice() || 0
   const subtotal = totalPrice / 1.21
   const iva = totalPrice - subtotal
