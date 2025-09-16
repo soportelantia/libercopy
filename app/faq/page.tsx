@@ -20,6 +20,7 @@ import {
   AlertCircle,
   Info,
   Zap,
+  Clock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -806,8 +807,8 @@ export default function FAQPage() {
                 <p className="text-sm text-white/80">info@libercopy.es</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
-                <Phone className="h-8 w-8 mx-auto mb-3" />
-                <h3 className="font-semibold mb-2">Teléfono</h3>
+                <Clock className="h-8 w-8 mx-auto mb-3" />
+                <h3 className="font-semibold mb-2">Horario</h3>
                 <p className="text-sm text-white/80">Lun-Vie 9:00-18:00</p>
               </div>
             </div>
