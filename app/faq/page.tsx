@@ -456,13 +456,13 @@ const faqData: FAQItem[] = [
             <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               24-48h
             </div>
-            <p className="text-sm text-gray-600">días laborables</p>
+            <p className="text-sm text-gray-600">Recibe tu pedido en 24 o 48 horas a partir de la confirmación de pago, siempre y cuando se realice antes de las 14:00h de Lunes a Jueves, no computándose como días hábiles los Sábados, Domingos, festivos locales, autonómicos y nacionales</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-3 bg-green-50 rounded-lg">
-            
-            <p className="text-xs text-green-700">Recibe tu pedido en 24 o 48 horas a partir de la confirmación de pago, siempre y cuando se realice antes de las 14:00h de Lunes a Jueves, no computándose como días hábiles los Sábados, Domingos, festivos locales, autonómicos y nacionales</p>
+            <h5 className="font-semibold text-green-800 text-sm">Pedidos urgentes</h5>
+            <p className="text-xs text-green-700">Contacta con nosotros para opciones de entrega express</p>
           </div>
           <div className="p-3 bg-orange-50 rounded-lg">
             <h5 className="font-semibold text-orange-800 text-sm">Seguimiento</h5>
