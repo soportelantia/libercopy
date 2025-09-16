@@ -200,7 +200,7 @@ export default function ShippingPage() {
                     <RadioGroupItem value="home" id="home" />
                     <Label htmlFor="home" className="text-lg font-medium cursor-pointer">
                       <Home className="inline mr-2 h-5 w-5" />
-                      Envío a domicilio (+2.99€)
+                      Envío a domicilio (+3.99€)
                     </Label>
                   </div>
 
