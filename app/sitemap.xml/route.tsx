@@ -1,9 +1,11 @@
-import { getSupabaseServer } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
+
+export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
-    const supabase = getSupabaseServer()
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
     // Obtener posts del blog publicados
     const { data: blogPosts, error } = await supabase
