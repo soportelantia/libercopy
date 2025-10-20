@@ -204,7 +204,7 @@ export default function TerminosSorteo() {
               </section>
 
               <div className="text-sm text-gray-500 pt-8 border-t">
-                <p>Última actualización: Enero 2025</p>
+                <p>Última actualización: Octubre 2025</p>
                 <p className="mt-2">
                   Para cualquier consulta sobre el sorteo, puede contactar con nosotros en info@libercopy.es
                 </p>
