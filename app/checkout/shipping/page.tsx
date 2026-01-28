@@ -159,12 +159,18 @@ export default function ShippingPage() {
 
     if (shippingType === "home") {
       const address = addresses.find((addr) => addr.id === selectedAddress)
+      console.log("[v0] Saving address in handleContinue:", address)
+      console.log("[v0] Selected address ID:", selectedAddress)
+      console.log("[v0] Address province:", address?.province)
+      console.log("[v0] Shipping cost being saved:", shippingCost)
       shippingData.address = address
     } else {
       const pickupPoint = pickupPoints.find((point) => point.id === selectedPickupPoint)
       shippingData.pickupPoint = pickupPoint
     }
 
+    console.log("[v0] Complete shipping data being saved:", JSON.stringify(shippingData, null, 2))
+    
     // Guardar selección en sessionStorage
     sessionStorage.setItem("checkoutData", JSON.stringify({ shipping: shippingData }))
     router.push("/checkout/payment")
