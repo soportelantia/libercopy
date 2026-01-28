@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Home, MapPin, Clock, Phone } from "lucide-react"
 import { CheckoutSteps } from "@/components/checkout-steps"
 import Footer from "@/components/footer"
+import { calcularGastosEnvioPorProvincia } from "@/lib/location-service"
+
 type Address = {
   id: string
   name: string
@@ -63,7 +65,17 @@ export default function ShippingPage() {
   const [selectedAddress, setSelectedAddress] = useState<string>("")
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<string>("")
 
-  const shippingCost = shippingType === "home" ? 2.99 : 0
+  // Calcular el costo de envío según la dirección seleccionada
+  const getShippingCost = () => {
+    if (shippingType === "pickup") return 0
+    
+    const address = addresses.find((addr) => addr.id === selectedAddress)
+    if (!address?.province) return 3.99 // Precio por defecto si no hay provincia
+    
+    return calcularGastosEnvioPorProvincia(address.province)
+  }
+
+  const shippingCost = getShippingCost()
   const totalPrice = getTotalPrice() || 0
   const subtotal = totalPrice / 1.21
   const iva = totalPrice - subtotal
@@ -207,9 +219,19 @@ export default function ShippingPage() {
                     <RadioGroupItem value="home" id="home" />
                     <Label htmlFor="home" className="text-lg font-medium cursor-pointer">
                       <Home className="inline mr-2 h-5 w-5" />
-                      Envío a domicilio (+2.99€)
+                      Envío a domicilio ({shippingType === "home" && selectedAddress ? `+${shippingCost.toFixed(2)}€` : 'desde +3.99€'})
                     </Label>
                   </div>
+                  
+                  {shippingType === "home" && (
+                    <div className="text-sm text-gray-600 ml-6 mb-3 p-3 bg-blue-50 rounded-md border border-blue-100">
+                      <p className="font-medium text-gray-700 mb-1">Tarifas de envío:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Península: 3.99€</li>
+                        <li>Canarias, Ceuta y Melilla: 19.99€</li>
+                      </ul>
+                    </div>
+                  )}
 
                   {shippingType === "home" && (
                     <div className="ml-6">

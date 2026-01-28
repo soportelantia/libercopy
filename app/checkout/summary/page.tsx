@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, CreditCard, MapPin, Home, Phone } from "lucide-react"
 import { CheckoutSteps } from "@/components/checkout-steps"
-import { calcularGastosEnvio } from "@/lib/location-service"
+import { calcularGastosEnvioPorProvincia } from "@/lib/location-service"
 import { PayPalPayment } from "@/components/paypal-payment"
 import { RedsysPayment } from "@/components/redsys-payment"
 import { BizumPayment } from "@/components/bizum-payment"
@@ -114,7 +114,8 @@ export default function CheckoutSummaryPage() {
     setIsCreatingOrder(true)
 
     const subtotal = getTotalPrice() || 0
-    const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvio(subtotal)
+    const provinciaId = shippingData?.address?.province || ""
+    const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId)
     const total = subtotal + shippingCost
 
     try {
@@ -278,7 +279,8 @@ export default function CheckoutSummaryPage() {
     }
 
     const subtotal = getTotalPrice() || 0
-    const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvio(subtotal)
+    const provinciaId = shippingData?.address?.province || ""
+    const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId)
     const total = subtotal + shippingCost
 
     // Guardar datos completos para el checkout
@@ -437,7 +439,8 @@ export default function CheckoutSummaryPage() {
   }
 
   const subtotal = getTotalPrice() || 0
-  const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvio(subtotal)
+  const provinciaId = shippingData?.address?.province || ""
+  const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId)
   const subtotalWithoutIVA = subtotal / 1.21
   const iva = subtotal - subtotalWithoutIVA
   const total = subtotal + shippingCost
