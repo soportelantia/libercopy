@@ -1,9 +1,28 @@
+export interface BlogPost {
+  id: string
+  title: string
+  slug: string
+  excerpt?: string
+  content: string
+  featured_image?: string
+  status: 'draft' | 'published' | 'archived'
+  published_at?: string
+  created_at: string
+  updated_at: string
+  category_id?: string
+  author_id?: string
+  views_count?: number
+  reading_time?: number
+  meta_title?: string
+  meta_description?: string
+}
+
 export interface BlogCategory {
   id: string
   name: string
   slug: string
   description?: string
-  color: string
+  color?: string
   created_at: string
   updated_at: string
 }
@@ -13,33 +32,14 @@ export interface BlogTag {
   name: string
   slug: string
   created_at: string
+  updated_at?: string
 }
 
-export interface BlogPost {
+export interface BlogPostTag {
   id: string
-  title: string
-  slug: string
-  excerpt?: string
-  content: string
-  featured_image?: string
-  author_id?: string
-  category_id?: string
-  status: "draft" | "published" | "archived"
-  published_at?: string
-  views_count: number
-  reading_time: number
-  meta_title?: string
-  meta_description?: string
+  post_id: string
+  tag_id: string
   created_at: string
-  updated_at: string
-
-  // Relaciones
-  category?: BlogCategory
-  tags?: BlogTag[]
-  author?: {
-    id: string
-    email: string
-  }
 }
 
 export interface BlogPostWithRelations extends BlogPost {
@@ -58,6 +58,7 @@ export interface BlogSearchParams {
 export interface BlogSearchResult {
   posts: BlogPostWithRelations[]
   total: number
+  filteredTotal: number
   page: number
   limit: number
   totalPages: number

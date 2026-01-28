@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Mail, Clock, Send, MessageSquare, HelpCircle, Printer, BookOpen, CheckCircle } from "lucide-react"
+import { MapPin, Mail, Clock, Send, MessageSquare, HelpCircle, Printer, BookOpen, CheckCircle } from 'lucide-react'
 import Link from "next/link"
 import Footer from "@/components/footer"
 
@@ -23,6 +23,7 @@ export default function ContactPageClient() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [error, setError] = useState("")
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -32,33 +33,44 @@ export default function ContactPageClient() {
     }))
   }
 
- 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    
-
-    
-
-    // Aquí puedes enviar el token y formData al backend si lo deseas
-
+    setError("")
     setIsSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsSubmitting(false)
-    setIsSubmitted(true)
 
-    setTimeout(() => {
-      setIsSubmitted(false)
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        subject: "",
-        message: "",
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       })
-    }, 3000)
+
+      const result = await response.json()
+
+      if (result.success) {
+        setIsSubmitted(true)
+        setTimeout(() => {
+          setIsSubmitted(false)
+          setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            subject: "",
+            message: "",
+          })
+        }, 5000)
+      } else {
+        setError(result.message || 'Error al enviar el mensaje')
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error)
+      setError('Error al enviar el mensaje. Inténtalo de nuevo.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const contactInfo = [
@@ -231,6 +243,12 @@ export default function ContactPageClient() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-8">
+                  {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-red-700 text-sm">{error}</p>
+                    </div>
+                  )}
+                  
                   {isSubmitted ? (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

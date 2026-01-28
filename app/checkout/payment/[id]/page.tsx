@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase/client"
@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, CreditCard } from "lucide-react"
 import PayPalPayment from "@/components/paypal-payment"
 import Footer from "@/components/footer"
-export default function PaymentProcessPage() {
+
+function PaymentProcessPageInner() {
   const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
@@ -110,7 +111,7 @@ export default function PaymentProcessPage() {
                 <h2 className="text-xl font-semibold mb-2">Error en el pago</h2>
                 <p className="text-gray-600 mb-4">{error}</p>
                 <div className="space-y-2">
-                  <Button onClick={handleBack} variant="outline" className="w-full">
+                  <Button onClick={handleBack} variant="outline" className="w-full bg-transparent">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Volver al resumen
                   </Button>
@@ -205,5 +206,13 @@ export default function PaymentProcessPage() {
       {/* Footer */}
       <Footer />
     </main>
+  )
+}
+
+export default function PaymentProcessPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <PaymentProcessPageInner />
+    </Suspense>
   )
 }

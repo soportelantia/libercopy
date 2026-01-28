@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Suspense } from "react"
 
 interface BlogPaginationProps {
   currentPage: number
@@ -11,7 +12,7 @@ interface BlogPaginationProps {
   limit: number
 }
 
-export function BlogPagination({ currentPage, totalPages, total, limit }: BlogPaginationProps) {
+function BlogPaginationInner({ currentPage, totalPages, total, limit }: BlogPaginationProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -105,5 +106,13 @@ export function BlogPagination({ currentPage, totalPages, total, limit }: BlogPa
         </Button>
       </div>
     </div>
+  )
+}
+
+export function BlogPagination({ currentPage, totalPages, total, limit }: BlogPaginationProps) {
+  return (
+    <Suspense fallback={null}>
+      <BlogPaginationInner currentPage={currentPage} totalPages={totalPages} total={total} limit={limit} />
+    </Suspense>
   )
 }

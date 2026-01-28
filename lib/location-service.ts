@@ -46,5 +46,5 @@ export async function getMunicipalitiesByProvince(provinceId: string): Promise<M
 
 // Función para calcular los gastos de envío (mantenemos esta función del archivo original)
 export const calcularGastosEnvio = (subtotal: number): number => {
-  return subtotal < 25 ? 2.99 : 0
+  return subtotal < 25 ? 3.99 : 0
 }

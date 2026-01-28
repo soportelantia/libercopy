@@ -330,5 +330,5 @@ export const municipiosPorProvincia: Record<string, { id: string; nombre: string
 
 // Función para calcular los gastos de envío
 export const calcularGastosEnvio = (subtotal: number): number => {
-  return subtotal < 25 ? 2.99 : 0
+  return subtotal < 25 ? 3.99 : 0
 }

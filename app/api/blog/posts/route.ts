@@ -1,9 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { BlogService } from "@/lib/blog-service"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const { searchParams } = request.nextUrl
 
     const params = {
       page: Number.parseInt(searchParams.get("page") || "1"),

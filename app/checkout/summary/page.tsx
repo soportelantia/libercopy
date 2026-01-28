@@ -8,13 +8,21 @@ import { supabase } from "@/lib/supabase/client"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, CreditCard, MapPin, Home, Phone } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { ArrowLeft, CreditCard, MapPin, Home, Phone, Tag, X, Check } from "lucide-react"
 import { CheckoutSteps } from "@/components/checkout-steps"
 import { calcularGastosEnvio } from "@/lib/location-service"
 import { PayPalPayment } from "@/components/paypal-payment"
 import { RedsysPayment } from "@/components/redsys-payment"
 import { BizumPayment } from "@/components/bizum-payment"
 import Footer from "@/components/footer"
+
+interface DiscountCode {
+  code: string
+  percentage: number
+  id: string
+}
+
 export default function CheckoutSummaryPage() {
   const router = useRouter()
   const { cart, getTotalPrice } = useCart()
@@ -30,6 +38,12 @@ export default function CheckoutSummaryPage() {
   const orderCreationRef = useRef(false)
   const paymentComponentKey = useRef(0)
   const [showBizum, setShowBizum] = useState(false)
+
+  // Estados para códigos de descuento
+  const [discountCode, setDiscountCode] = useState("")
+  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null)
+  const [discountLoading, setDiscountLoading] = useState(false)
+  const [discountError, setDiscountError] = useState("")
 
   useEffect(() => {
     console.log("=== CHECKOUT SUMMARY PAGE INIT ===")
@@ -62,6 +76,10 @@ export default function CheckoutSummaryPage() {
         if (data.payment?.method && !savedPayment) {
           setPaymentMethod(data.payment.method)
           console.log("Payment method from checkoutData:", data.payment.method)
+        }
+        // Cargar código de descuento aplicado si existe
+        if (data.discount) {
+          setAppliedDiscount(data.discount)
         }
       } catch (e) {
         console.error("Error parsing checkoutData:", e)
@@ -98,6 +116,59 @@ export default function CheckoutSummaryPage() {
     }
   }, [loading, shippingData, cart, router])
 
+  // Función para validar código de descuento
+  const validateDiscountCode = useCallback(async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Por favor, introduce un código de descuento")
+      return
+    }
+
+    setDiscountLoading(true)
+    setDiscountError("")
+
+    try {
+      const response = await fetch("/api/discount-codes/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code: discountCode.trim() }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setAppliedDiscount(data.discount)
+        setDiscountCode("")
+        setDiscountError("")
+
+        // Guardar en sessionStorage
+        const checkoutData = JSON.parse(sessionStorage.getItem("checkoutData") || "{}")
+        checkoutData.discount = data.discount
+        sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData))
+      } else {
+        setDiscountError(data.error || "Código de descuento no válido")
+      }
+    } catch (error) {
+      console.error("Error validating discount code:", error)
+      setDiscountError("Error al validar el código de descuento")
+    } finally {
+      setDiscountLoading(false)
+    }
+  }, [discountCode])
+
+  // Función para remover código de descuento
+  const removeDiscountCode = useCallback(() => {
+    setAppliedDiscount(null)
+    setDiscountCode("")
+    setDiscountError("")
+
+    // Remover de sessionStorage
+    const checkoutData = JSON.parse(sessionStorage.getItem("checkoutData") || "{}")
+    delete checkoutData.discount
+    sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData))
+  }, [])
+
   const createOrderDirectly = useCallback(async () => {
     // Evitar múltiples creaciones de pedido
     if (orderCreationRef.current || isCreatingOrder) {
@@ -115,13 +186,18 @@ export default function CheckoutSummaryPage() {
 
     const subtotal = getTotalPrice() || 0
     const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvio(subtotal)
-    const total = subtotal + shippingCost
+
+    // Calcular descuento
+    const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percentage) / 100 : 0
+    const total = subtotal + shippingCost - discountAmount
 
     try {
       console.log("=== CREATING ORDER ===")
       console.log("User ID:", user.id)
       console.log("Cart items:", cart?.length || 0)
       console.log("Shipping type:", shippingData.type)
+      console.log("Subtotal:", subtotal)
+      console.log("Discount amount:", discountAmount)
       console.log("Total amount:", total)
 
       // Crear el pedido principal
@@ -130,6 +206,9 @@ export default function CheckoutSummaryPage() {
         status: "pending",
         subtotal: subtotal,
         shipping_cost: shippingCost,
+        discount_code: appliedDiscount?.code || null,
+        discount_percentage: appliedDiscount?.percentage || 0,
+        discount_amount: discountAmount,
         total: total,
         payment_method: paymentMethod,
         created_at: new Date().toISOString(),
@@ -146,6 +225,40 @@ export default function CheckoutSummaryPage() {
       }
 
       console.log("Order created successfully:", order.id)
+
+      // Si se aplicó un descuento, actualizar el contador de usos
+      if (appliedDiscount) {
+        try {
+          // Primero obtener el valor actual
+          const { data: currentDiscount, error: fetchError } = await supabase
+            .from("discount_codes")
+            .select("current_uses")
+            .eq("id", appliedDiscount.id)
+            .single()
+
+          if (fetchError) {
+            console.warn("Warning: Could not fetch current discount usage:", fetchError.message)
+          } else {
+            // Actualizar con el nuevo valor
+            const newUsageCount = (currentDiscount.current_uses || 0) + 1
+            const { error: updateError } = await supabase
+              .from("discount_codes")
+              .update({
+                current_uses: newUsageCount,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", appliedDiscount.id)
+
+            if (updateError) {
+              console.warn("Warning: Could not update discount code usage:", updateError.message)
+            } else {
+              console.log("Discount code usage updated successfully:", newUsageCount)
+            }
+          }
+        } catch (discountError) {
+          console.warn("Warning: Error updating discount code usage:", discountError)
+        }
+      }
 
       // Crear los items del pedido
       const orderItems = (cart || []).map((item, index) => {
@@ -264,7 +377,7 @@ export default function CheckoutSummaryPage() {
       setIsCreatingOrder(false)
       orderCreationRef.current = false
     }
-  }, [user, shippingData, getTotalPrice, cart, paymentMethod])
+  }, [user, shippingData, getTotalPrice, cart, paymentMethod, appliedDiscount])
 
   const handleContinue = useCallback(async () => {
     if (!shippingData) {
@@ -279,13 +392,15 @@ export default function CheckoutSummaryPage() {
 
     const subtotal = getTotalPrice() || 0
     const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvio(subtotal)
-    const total = subtotal + shippingCost
+    const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percentage) / 100 : 0
+    const total = subtotal + shippingCost - discountAmount
 
     // Guardar datos completos para el checkout
     const checkoutData = {
       items: cart || [],
       subtotal,
       shippingCost,
+      discountAmount,
       total,
       shipping: {
         ...shippingData,
@@ -294,6 +409,7 @@ export default function CheckoutSummaryPage() {
       payment: {
         method: paymentMethod,
       },
+      discount: appliedDiscount,
     }
 
     sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData))
@@ -336,7 +452,7 @@ export default function CheckoutSummaryPage() {
       console.error("Error:", error)
       alert("Error al crear el pedido. Por favor, inténtalo de nuevo.")
     }
-  }, [shippingData, getTotalPrice, cart, paymentMethod, createOrderDirectly, isCreatingOrder])
+  }, [shippingData, getTotalPrice, cart, paymentMethod, createOrderDirectly, isCreatingOrder, appliedDiscount])
 
   const handleBack = useCallback(() => {
     router.push("/checkout/payment")
@@ -438,16 +554,19 @@ export default function CheckoutSummaryPage() {
 
   const subtotal = getTotalPrice() || 0
   const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvio(subtotal)
+  const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percentage) / 100 : 0
   const subtotalWithoutIVA = subtotal / 1.21
   const iva = subtotal - subtotalWithoutIVA
-  const total = subtotal + shippingCost
+  const total = subtotal + shippingCost - discountAmount
 
   return (
-    <main className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-white w-full overflow-x-hidden">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12">
-        <CheckoutSteps currentStep={3} />
+      <div className="w-full max-w-7xl mx-auto px-4 py-12">
+        <div className="w-full">
+          <CheckoutSteps currentStep={3} />
+        </div>
 
         <div className="mb-6">
           <Button variant="ghost" onClick={handleBack} className="text-[#2E5FEB] hover:text-[#2E5FEB]/80">
@@ -456,70 +575,76 @@ export default function CheckoutSummaryPage() {
           </Button>
         </div>
 
-        <h1 className="text-2xl font-bold text-[#2E5FEB] mb-8 text-center">Paso 3: Confirma tu pedido</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#2E5FEB] mb-8 text-center">Paso 3: Confirma tu pedido</h1>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Artículos del pedido */}
-            <Card>
-              <CardContent className="p-6">
+        <div className="w-full space-y-6 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-8">
+          {/* Artículos del pedido */}
+          <div className="w-full lg:col-span-2 space-y-6 lg:max-h-[70vh] lg:overflow-y-auto lg:pr-3 lg:scrollbar-thin lg:scrollbar-thumb-gray-400 lg:scrollbar-track-gray-100 lg:hover:scrollbar-thumb-gray-500">
+            <Card className="w-full">
+              <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Artículos en tu pedido</h3>
 
-                <div className="space-y-6">
+                <div className="space-y-6 ">
                   {(cart || []).map((item) => (
                     <div key={item.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-lg text-gray-900">{item.fileName || item.name}</h4>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-base sm:text-lg text-gray-900 break-words">
+                            {item.fileName || item.name}
+                          </h4>
                           <p className="text-sm text-gray-600 mt-1">
                             {item.pageCount || 0} páginas • {item.options?.copies || item.quantity || 1}{" "}
                             {(item.options?.copies || item.quantity || 1) === 1 ? "copia" : "copias"}
                           </p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <p className="text-lg font-bold text-[#f47d30]">{(item.price || 0).toFixed(2)}€</p>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium text-gray-700">Tamaño:</span>
-                          <p className="text-gray-600">{item.options?.paperSize?.toUpperCase() || "A4"}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div className="space-y-2">
+                          <div>
+                            <span className="font-medium text-gray-700">Tamaño: </span>
+                            <span className="text-gray-600">{item.options?.paperSize?.toUpperCase() || "A4"}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Tipo: </span>
+                            <span className="text-gray-600">
+                              {item.options?.printType === "bw" ? "Blanco y Negro" : "Color"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Papel: </span>
+                            <span className="text-gray-600">{getPaperTypeName(item.options?.paperType)}</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Tipo:</span>
-                          <p className="text-gray-600">
-                            {item.options?.printType === "bw" ? "Blanco y Negro" : "Color"}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Papel:</span>
-                          <p className="text-gray-600">{getPaperTypeName(item.options?.paperType)}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Acabado:</span>
-                          <p className="text-gray-600">{getFinishingName(item.options?.finishing)}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Forma de impresión:</span>
-                          <p className="text-gray-600">
-                            {item.options?.printForm === "oneSided" || item.options?.printForm === "single_sided"
-                              ? "Una cara"
-                              : "Doble cara"}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Orientación:</span>
-                          <p className="text-gray-600">
-                            {item.options?.orientation === "landscape" ? "Horizontal" : "Vertical"}
-                          </p>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="font-medium text-gray-700">Acabado: </span>
+                            <span className="text-gray-600">{getFinishingName(item.options?.finishing)}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Impresión: </span>
+                            <span className="text-gray-600">
+                              {item.options?.printForm === "oneSided" || item.options?.printForm === "single_sided"
+                                ? "Una cara"
+                                : "Doble cara"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Orientación: </span>
+                            <span className="text-gray-600">
+                              {item.options?.orientation === "landscape" ? "Horizontal" : "Vertical"}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
                       {item.comments && (
                         <div className="mt-4">
-                          <span className="font-medium text-gray-700">Comentarios:</span>
-                          <p className="text-gray-600 mt-1">{item.comments}</p>
+                          <span className="font-medium text-gray-700">Comentarios: </span>
+                          <p className="text-gray-600 mt-1 break-words">{item.comments}</p>
                         </div>
                       )}
                     </div>
@@ -528,40 +653,97 @@ export default function CheckoutSummaryPage() {
               </CardContent>
             </Card>
 
+            {/* Código de descuento */}
+            <Card className="w-full">
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4 flex items-center">
+                  <Tag className="mr-2 h-5 w-5" />
+                  Código de descuento
+                </h3>
+
+                {appliedDiscount ? (
+                  <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center">
+                      <Check className="mr-2 h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-800">Código aplicado: {appliedDiscount.code}</p>
+                        <p className="text-sm text-green-600">Descuento del {appliedDiscount.percentage}%</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeDiscountCode}
+                      className="text-green-600 hover:text-green-800"
+                      disabled={isCreatingOrder}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Introduce tu código de descuento"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                        className="flex-1"
+                        disabled={discountLoading || isCreatingOrder}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            validateDiscountCode()
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={validateDiscountCode}
+                        disabled={discountLoading || !discountCode.trim() || isCreatingOrder}
+                        className="bg-[#2E5FEB] hover:bg-[#2E5FEB]/80"
+                      >
+                        {discountLoading ? "Validando..." : "Aplicar"}
+                      </Button>
+                    </div>
+                    {discountError && <p className="text-sm text-red-600">{discountError}</p>}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Método de pago seleccionado */}
-            <Card>
-              <CardContent className="p-6">
+            <Card className="w-full">
+              <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4 flex items-center">
                   <CreditCard className="mr-2 h-5 w-5" />
                   Método de pago seleccionado
                 </h3>
 
-                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div className="flex flex-col space-y-4 p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center">
                     {paymentMethod === "paypal" ? (
                       <>
-                        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-3">
+                        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-3 flex-shrink-0">
                           <span className="text-white text-xs font-bold">PP</span>
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium">PayPal</p>
                           <p className="text-sm text-gray-600">Pago seguro con tu cuenta PayPal</p>
                         </div>
                       </>
                     ) : paymentMethod === "bizum" ? (
                       <>
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded flex items-center justify-center mr-3">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded flex items-center justify-center mr-3 flex-shrink-0">
                           <span className="text-white text-xs font-bold">BZ</span>
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium">Bizum</p>
                           <p className="text-sm text-gray-600">Pago instantáneo con tu móvil</p>
                         </div>
                       </>
                     ) : (
                       <>
-                        <CreditCard className="mr-3 h-6 w-6 text-gray-600" />
-                        <div>
+                        <CreditCard className="mr-3 h-6 w-6 text-gray-600 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium">Tarjeta de crédito/débito</p>
                           <p className="text-sm text-gray-600">Visa, Mastercard, American Express</p>
                         </div>
@@ -572,7 +754,7 @@ export default function CheckoutSummaryPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => router.push("/checkout/payment")}
-                    className="text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white"
+                    className="text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white w-full sm:w-auto sm:self-end"
                     disabled={isCreatingOrder}
                   >
                     Cambiar
@@ -582,8 +764,8 @@ export default function CheckoutSummaryPage() {
             </Card>
 
             {/* Información de envío */}
-            <Card>
-              <CardContent className="p-6">
+            <Card className="w-full">
+              <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4 flex items-center">
                   {shippingData.type === "pickup" ? (
                     <MapPin className="mr-2 h-5 w-5" />
@@ -593,8 +775,8 @@ export default function CheckoutSummaryPage() {
                   Envío seleccionado
                 </h3>
 
-                <div className="flex items-start justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex-1">
+                <div className="flex flex-col space-y-4 p-4 border border-gray-200 rounded-lg">
+                  <div className="min-w-0 flex-1">
                     {shippingData.type === "pickup" ? (
                       <div className="text-sm space-y-2">
                         <div className="font-medium text-gray-900">
@@ -604,7 +786,7 @@ export default function CheckoutSummaryPage() {
                         {shippingData.pickupPoint?.address && (
                           <div className="flex items-start">
                             <MapPin className="mr-2 h-4 w-4 mt-0.5 flex-shrink-0 text-gray-500" />
-                            <span className="text-gray-600">{shippingData.pickupPoint.address}</span>
+                            <span className="text-gray-600 break-words">{shippingData.pickupPoint.address}</span>
                           </div>
                         )}
                         {shippingData.pickupPoint?.phone && (
@@ -626,8 +808,8 @@ export default function CheckoutSummaryPage() {
                         </div>
                         <div className="flex items-start">
                           <Home className="mr-2 h-4 w-4 mt-0.5 flex-shrink-0 text-gray-500" />
-                          <div className="text-gray-600">
-                            <div>{shippingData.address?.address_line}</div>
+                          <div className="text-gray-600 min-w-0 flex-1">
+                            <div className="break-words">{shippingData.address?.address_line}</div>
                             <div>
                               {shippingData.address?.postal_code}{" "}
                               {shippingData.address?.municipality_name || shippingData.address?.municipality}
@@ -647,7 +829,7 @@ export default function CheckoutSummaryPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => router.push("/checkout/shipping")}
-                    className="ml-4 text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white"
+                    className="text-[#2E5FEB] border-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white w-full sm:w-auto sm:self-end"
                     disabled={isCreatingOrder}
                   >
                     Cambiar
@@ -658,9 +840,9 @@ export default function CheckoutSummaryPage() {
           </div>
 
           {/* Resumen del pedido */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-4">
-              <CardContent className="p-6">
+          <div className="w-full lg:col-span-1">
+            <Card className="w-full lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-hidden">
+              <CardContent className="p-4 sm:p-6 lg:overflow-y-auto lg:max-h-full">
                 <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Resumen del pedido</h3>
 
                 <div className="space-y-3 text-sm">
@@ -676,15 +858,24 @@ export default function CheckoutSummaryPage() {
                     <span className="text-gray-600">Gastos de envío (IVA incl.):</span>
                     <span>{shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2)}€`}</span>
                   </div>
+                  {appliedDiscount && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Descuento ({appliedDiscount.percentage}%):</span>
+                      <span>-{discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
                   <div className="border-t pt-3">
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total:</span>
                       <span className="text-[#f47d30]">{total.toFixed(2)}€</span>
                     </div>
+                    {appliedDiscount && (
+                      <p className="text-sm text-green-600 mt-1">¡Has ahorrado {discountAmount.toFixed(2)}€!</p>
+                    )}
                   </div>
                 </div>
 
-                {!showPayPal && !showRedsys && (
+                {!showPayPal && !showRedsys && !showBizum && (
                   <Button
                     className="w-full mt-6 bg-[#2E5FEB] hover:bg-[#6d1a26]"
                     onClick={handleContinue}
@@ -706,8 +897,8 @@ export default function CheckoutSummaryPage() {
 
             {/* Componente PayPal */}
             {showPayPal && paymentMethod === "paypal" && orderId && (
-              <Card key={`paypal-${paymentComponentKey.current}`}>
-                <CardContent className="p-6">
+              <Card key={`paypal-${paymentComponentKey.current}`} className="w-full mt-6">
+                <CardContent className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Procesar pago con PayPal</h3>
                   <PayPalPayment
                     orderId={orderId}
@@ -741,8 +932,8 @@ export default function CheckoutSummaryPage() {
             {showRedsys &&
               (paymentMethod === "redsys" || paymentMethod === "tarjeta" || paymentMethod === "card") &&
               orderId && (
-                <Card key={`redsys-${paymentComponentKey.current}`}>
-                  <CardContent className="p-6">
+                <Card key={`redsys-${paymentComponentKey.current}`} className="w-full mt-6">
+                  <CardContent className="p-4 sm:p-6">
                     <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Procesar pago con tarjeta</h3>
                     <RedsysPayment
                       orderId={orderId}
@@ -756,8 +947,8 @@ export default function CheckoutSummaryPage() {
 
             {/* Componente Bizum */}
             {showBizum && paymentMethod === "bizum" && orderId && (
-              <Card key={`bizum-${paymentComponentKey.current}`}>
-                <CardContent className="p-6">
+              <Card key={`bizum-${paymentComponentKey.current}`} className="w-full mt-6">
+                <CardContent className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Procesar pago con Bizum</h3>
                   <BizumPayment
                     orderId={orderId}
@@ -778,6 +969,6 @@ export default function CheckoutSummaryPage() {
       </div>
       {/* Footer */}
       <Footer />
-    </main>
+    </div>
   )
 }
