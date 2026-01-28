@@ -114,7 +114,9 @@ export default function CheckoutSummaryPage() {
     setIsCreatingOrder(true)
 
     const subtotal = getTotalPrice() || 0
-    const provinciaId = shippingData?.address?.province || ""
+    const provinciaId = shippingData?.address?.province || "41" // Default a Sevilla (41)
+    console.log("[v0] Provincia ID para calcular gastos de envío:", provinciaId)
+    console.log("[v0] Shipping data completo:", JSON.stringify(shippingData, null, 2))
     const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId)
     const total = subtotal + shippingCost
 
@@ -123,6 +125,7 @@ export default function CheckoutSummaryPage() {
       console.log("User ID:", user.id)
       console.log("Cart items:", cart?.length || 0)
       console.log("Shipping type:", shippingData.type)
+      console.log("Shipping cost calculated:", shippingCost)
       console.log("Total amount:", total)
 
       // Crear el pedido principal
@@ -279,7 +282,7 @@ export default function CheckoutSummaryPage() {
     }
 
     const subtotal = getTotalPrice() || 0
-    const provinciaId = shippingData?.address?.province || ""
+    const provinciaId = shippingData?.address?.province || "41" // Default a Sevilla (41)
     const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId)
     const total = subtotal + shippingCost
 
@@ -439,7 +442,7 @@ export default function CheckoutSummaryPage() {
   }
 
   const subtotal = getTotalPrice() || 0
-  const provinciaId = shippingData?.address?.province || ""
+  const provinciaId = shippingData?.address?.province || "41" // Default a Sevilla (41)
   const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId)
   const subtotalWithoutIVA = subtotal / 1.21
   const iva = subtotal - subtotalWithoutIVA
