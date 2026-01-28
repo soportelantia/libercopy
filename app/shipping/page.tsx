@@ -63,7 +63,34 @@ export default function ShippingPage() {
   const [selectedAddress, setSelectedAddress] = useState<string>("")
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<string>("")
 
-  const shippingCost = shippingType === "home" ? 2.99 : 0
+  // Función para calcular gastos de envío por provincia
+  const calcularGastosEnvioPorProvincia = (provinceId: string): number => {
+    // IDs de provincias de Canarias
+    const canariasIds = ["35", "38"] // Las Palmas y Santa Cruz de Tenerife
+    // IDs de Ceuta y Melilla
+    const ceutaMelillaIds = ["51", "52"]
+    
+    if (canariasIds.includes(provinceId) || ceutaMelillaIds.includes(provinceId)) {
+      return 19.99 // Canarias, Ceuta y Melilla
+    }
+    return 3.99 // Península y Baleares
+  }
+
+  // Calcular costo de envío dinámicamente basado en la dirección seleccionada
+  const getShippingCost = (): number => {
+    if (shippingType === "pickup") return 0
+    
+    if (selectedAddress) {
+      const address = addresses.find((addr) => addr.id === selectedAddress)
+      if (address) {
+        return calcularGastosEnvioPorProvincia(address.province)
+      }
+    }
+    
+    return 3.99 // Precio por defecto para península
+  }
+
+  const shippingCost = getShippingCost()
   const totalPrice = getTotalPrice() || 0
   const subtotal = totalPrice / 1.21
   const iva = totalPrice - subtotal
@@ -207,9 +234,21 @@ export default function ShippingPage() {
                     <RadioGroupItem value="home" id="home" />
                     <Label htmlFor="home" className="text-lg font-medium cursor-pointer">
                       <Home className="inline mr-2 h-5 w-5" />
-                      Envío a domicilio (+2.99€)
+                      Envío a domicilio (+{shippingCost.toFixed(2)}€)
                     </Label>
                   </div>
+                  
+                  {shippingType === "home" && (
+                    <div className="ml-9 mb-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        <strong>Tarifas de envío:</strong>
+                      </p>
+                      <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                        <li>• Península: 3.99€</li>
+                        <li>• Canarias, Ceuta y Melilla: 19.99€</li>
+                      </ul>
+                    </div>
+                  )}
 
                   {shippingType === "home" && (
                     <div className="ml-6">
