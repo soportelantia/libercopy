@@ -44,7 +44,25 @@ export async function getMunicipalitiesByProvince(provinceId: string): Promise<M
   return data || []
 }
 
-// Función para calcular los gastos de envío (mantenemos esta función del archivo original)
-export const calcularGastosEnvio = (subtotal: number): number => {
+// Provincias con tarifas de envío especiales (Canarias, Ceuta y Melilla)
+const PROVINCIAS_TARIFA_ESPECIAL = ["35", "38", "51", "52"] // Las Palmas, Santa Cruz de Tenerife, Ceuta, Melilla
+
+// Función para calcular los gastos de envío según la provincia
+export const calcularGastosEnvioPorProvincia = (provinciaId: string): number => {
+  // Si es una provincia con tarifa especial (Canarias, Ceuta, Melilla)
+  if (PROVINCIAS_TARIFA_ESPECIAL.includes(provinciaId)) {
+    return 19.99
+  }
+  // Resto de provincias
+  return 3.99
+}
+
+// Función para calcular los gastos de envío (versión antigua - mantener por compatibilidad)
+export const calcularGastosEnvio = (subtotal: number, provinciaId?: string): number => {
+  // Si se proporciona la provincia, usar el cálculo por provincia
+  if (provinciaId) {
+    return calcularGastosEnvioPorProvincia(provinciaId)
+  }
+  // Fallback: usar el cálculo antiguo
   return subtotal < 25 ? 2.99 : 0
 }
