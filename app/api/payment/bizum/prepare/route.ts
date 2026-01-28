@@ -1,8 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
-import { createClient } from "@supabase/supabase-js"
-
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+import { supabaseAdmin } from "@/lib/supabase/admin"
 
 // Configuración de Redsys
 const REDSYS_CONFIG = {
@@ -205,7 +203,7 @@ export async function POST(request: NextRequest) {
 
     // Guardar el mapeo en la base de datos
     try {
-      const { error: mappingError } = await supabase.from("redsys_order_mapping").insert({
+      const { error: mappingError } = await supabaseAdmin.from("redsys_order_mapping").insert({
         redsys_order_number: redsysOrderNumber,
         order_id: orderId,
       })
