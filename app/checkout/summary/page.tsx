@@ -89,11 +89,17 @@ export default function CheckoutSummaryPage() {
                 }
 
                 console.log("[v0] Address reloaded:", updatedAddress)
+                console.log("[v0] Province ID for shipping cost:", addressData.province)
                 
-                // Actualizar shippingData con la dirección actualizada
+                // Recalcular el costo de envío con la nueva dirección
+                const newShippingCost = calcularGastosEnvioPorProvincia(addressData.province)
+                console.log("[v0] Recalculated shipping cost:", newShippingCost)
+                
+                // Actualizar shippingData con la dirección actualizada y el nuevo costo
                 const updatedShipping = {
                   ...data.shipping,
                   address: updatedAddress,
+                  cost: newShippingCost,
                 }
                 setShippingData(updatedShipping)
                 
@@ -160,11 +166,17 @@ export default function CheckoutSummaryPage() {
                 }
 
                 console.log("[v0] Address reloaded (shippingSelection):", updatedAddress)
+                console.log("[v0] Province ID for shipping cost (shippingSelection):", addressData.province)
                 
-                // Actualizar shippingData con la dirección actualizada
+                // Recalcular el costo de envío con la nueva dirección
+                const newShippingCost = calcularGastosEnvioPorProvincia(addressData.province)
+                console.log("[v0] Recalculated shipping cost (shippingSelection):", newShippingCost)
+                
+                // Actualizar shippingData con la dirección actualizada y el nuevo costo
                 const updatedShipping = {
                   ...shipping,
                   address: updatedAddress,
+                  cost: newShippingCost,
                 }
                 setShippingData(updatedShipping)
                 
