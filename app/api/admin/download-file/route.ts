@@ -5,6 +5,21 @@ import { GoogleStorageService } from "@/lib/google-storage"
 // Configuración de Supabase
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
+function extractGCSPathFromUrl(url: string): string | null {
+  try {
+    const parsedUrl = new URL(url)
+    const parts = parsedUrl.pathname.split("/").filter(Boolean) // elimina slashes vacíos
+    // ["resources-lantia-publishing-eu", "liberCopy", ...]
+    if (parts.length < 2) return null
+
+    parts.shift() // quitar el bucket
+    return parts.join("/")
+  } catch (err) {
+    console.error("Error al parsear URL:", err)
+    return null
+  }
+}
+
 export async function POST(request: NextRequest) {
   console.log("=== ADMIN DOWNLOAD FILE ENDPOINT ===")
 
@@ -44,6 +59,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Nombre de archivo no encontrado" }, { status: 404 })
     }
 
+    const extractedPathFromFileUrl = orderItem.file_url?.startsWith("http")
+    ? extractGCSPathFromUrl(orderItem.file_url)
+    : orderItem.file_url // si ya es relativo, usarlo tal cual
+
     // Determinar la ruta del archivo en Google Storage
     const filePath = ""
 
@@ -52,16 +71,10 @@ export async function POST(request: NextRequest) {
       // Usar temp_path si está disponible
       orderItem.temp_path,
       // Usar file_url si es una ruta relativa
-      orderItem.file_url && !orderItem.file_url.startsWith("http") ? orderItem.file_url : null,
-      // Construir ruta basada en order_id y file_name
-      `orders/${orderId}/${orderItem.file_name}`,
-      // Ruta alternativa con timestamp
-      `temp/${orderId}/${orderItem.file_name}`,
-      // Ruta directa con solo el nombre del archivo
-      orderItem.file_name,
-      // Ruta en carpeta uploads
-      `uploads/${orderItem.file_name}`,
+      extractedPathFromFileUrl, // ← ahora se incluye siempre,
+      
     ].filter(Boolean)
+    .map(path => decodeURIComponent(path))
 
     console.log("Possible file paths to try:", possiblePaths)
 

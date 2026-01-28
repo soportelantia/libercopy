@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Preparar datos de actualización
     const updateData: any = {
-      status: isSuccessful ? "processing" : "payment_failed",
+      status: isSuccessful ? "completed" : "payment_failed",
       updated_at: new Date().toISOString(),
     }
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       const { error: simpleUpdateError } = await supabaseAdmin
         .from("orders")
         .update({
-          status: isSuccessful ? "processing" : "payment_failed",
+          status: isSuccessful ? "completed" : "payment_failed",
           updated_at: new Date().toISOString(),
         })
         .eq("id", orderId)
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         console.log("Recording status history...")
         const { error: historyError } = await supabaseAdmin.from("order_status_history").insert({
           order_id: orderId,
-          status: "processing",
+          status: "completed",
           comment: `Pago completado con PayPal${transactionId ? ` (ID: ${transactionId})` : ""}`,
           created_at: new Date().toISOString(),
         })
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
         // Construir el objeto del pedido con todos los datos
         const orderData = {
           ...order,
-          status: "processing",
+          status: "completed",
           order_items: orderItems,
           order_shipping_addresses: shippingAddresses,
         }
@@ -198,11 +198,11 @@ export async function POST(request: NextRequest) {
 
     const responseMessage = isSuccessful ? "Pago procesado exitosamente - Pedido en proceso" : "Pago fallido"
 
-    console.log(`Callback processing completed for order ${orderId}: ${responseMessage}`)
+    console.log(`Callback completed for order ${orderId}: ${responseMessage}`)
 
     return NextResponse.json({
       success: true,
-      status: isSuccessful ? "processing" : "payment_failed",
+      status: isSuccessful ? "completed" : "payment_failed",
       message: responseMessage,
       orderId,
       transactionId,

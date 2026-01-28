@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,8 @@ import { CheckCircle, Package, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { useCart } from "@/contexts/cart-context"
 import Footer from "@/components/footer"
-export default function PaymentSuccessPage() {
+
+function PaymentSuccessPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [orderDetails, setOrderDetails] = useState<any>(null)
@@ -84,7 +85,7 @@ export default function PaymentSuccessPage() {
                 </Link>
 
                 <Link href="/" className="block">
-                  <Button variant="outline" className="w-full" size="lg">
+                  <Button variant="outline" className="w-full bg-transparent" size="lg">
                     Volver al inicio
                   </Button>
                 </Link>
@@ -104,5 +105,13 @@ export default function PaymentSuccessPage() {
       {/* Footer */}
       <Footer />
     </main>
+  )
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <PaymentSuccessPageInner />
+    </Suspense>
   )
 }

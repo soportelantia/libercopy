@@ -2,19 +2,19 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Mail, Lock, CheckCircle, X, ArrowLeft, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useCart } from "@/hooks/use-cart"
 
-export default function AuthPage() {
+function AuthPageInner() {
   const [activeTab, setActiveTab] = useState("login")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -46,19 +46,18 @@ export default function AuthPage() {
   const { signIn, signUp, signInWithGoogle, user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get("redirect") || "/auth"
-  
-  
+  const redirectTo = searchParams.get("redirect") || "/"
+  const { items } = useCart()
+
   useEffect(() => {
     const verified = searchParams.get("verified") === "1"
-    
+
     if (user && !verified) {
       router.push(redirectTo)
     }
 
     if (verified) {
       setActiveTab("login")
-      //setSuccess("Tu cuenta ha sido verificada correctamente. Ya puedes iniciar sesión.")
       setHasVerified(true) // ← guardar en estado
     }
   }, [user, router, redirectTo, searchParams])
@@ -79,10 +78,47 @@ export default function AuthPage() {
     setError("")
 
     try {
-      await signIn(loginEmail, loginPassword)
-      router.push(redirectTo)
+      const result = await signIn(loginEmail, loginPassword)
+
+      if (result && !result.success) {
+        // 🔁 Traducción de errores conocidos
+        let errorMessage = result.error || "Credenciales incorrectas"
+
+        if (errorMessage.includes("Invalid login credentials")) {
+          errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña."
+        } else if (errorMessage.includes("Email not confirmed")) {
+          errorMessage = "Debes confirmar tu email antes de iniciar sesión."
+        } else if (errorMessage.includes("Too many requests")) {
+          errorMessage = "Demasiados intentos. Espera unos minutos antes de intentar de nuevo."
+        }
+
+        setError(errorMessage)
+        return
+      }
+
+      // Verificar si hay items en el carrito para redirigir apropiadamente
+      if (items && items.length > 0) {
+        router.push("/cart")
+      } else {
+        router.push(redirectTo)
+      }
     } catch (error: any) {
-      setError(error.message || "Error al iniciar sesión")
+      console.error("Error en login:", error)
+      let errorMessage = "Error al iniciar sesión"
+
+      if (error.message) {
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña."
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Debes confirmar tu email antes de iniciar sesión."
+        } else if (error.message.includes("Too many requests")) {
+          errorMessage = "Demasiados intentos. Espera unos minutos antes de intentar de nuevo."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -128,20 +164,38 @@ export default function AuthPage() {
       const alreadyExists = await checkIfEmailExists(registerEmail)
       if (alreadyExists) {
         setError("Ya existe una cuenta con ese email. Inicia sesión o recupera tu contraseña.")
+        setIsLoading(false)
         return
       }
+
       const result = await signUp(registerEmail, registerPassword, registerFirstName, registerLastName)
+      console.log("Resultado del registro:", result)
 
-
-      if (!result.success) {
-        setError(result.error || "Error al crear la cuenta")
+      if (!result || !result.success) {
+        setError(result?.error || "Error al crear la cuenta")
+        setIsLoading(false)
         return
       }
 
       setSuccess("Cuenta creada exitosamente. Revisa tu email para confirmar tu cuenta.")
       setActiveTab("login")
     } catch (error: any) {
-      setError(error.message || "Error inesperado al crear la cuenta")
+      console.error("Error en registro:", error)
+      let errorMessage = "Error inesperado al crear la cuenta"
+
+      if (error.message) {
+        if (error.message.includes("has already been registered")) {
+          errorMessage = "Ya existe una cuenta con ese email."
+        } else if (error.message.includes("Password should be at least")) {
+          errorMessage = "La contraseña debe tener al menos 6 caracteres."
+        } else if (error.message.includes("Invalid email")) {
+          errorMessage = "El formato del email no es válido."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -152,12 +206,34 @@ export default function AuthPage() {
     setError("")
 
     try {
-      // Guardar la intención de redirección ANTES de iniciar sesión
       sessionStorage.setItem("redirectAfterLogin", redirectTo)
-      await signInWithGoogle()
-      router.push(redirectTo)
+      const result = await signInWithGoogle()
+
+      if (result && !result.success) {
+        return
+      }
+
+      // Verificar si hay items en el carrito para redirigir apropiadamente
+      if (items && items.length > 0) {
+        router.push("/cart")
+      } else {
+        router.push(redirectTo)
+      }
     } catch (error: any) {
-      setError(error.message || "Error al iniciar sesión con Google")
+      console.error("Error en Google Sign In:", error)
+      let errorMessage = ""
+
+      if (error.message) {
+        if (error.message.includes("popup_closed_by_user")) {
+          errorMessage = "Inicio de sesión cancelado por el usuario."
+        } else if (error.message.includes("access_denied")) {
+          errorMessage = "Acceso denegado. Verifica los permisos de tu cuenta de Google."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -182,27 +258,25 @@ export default function AuthPage() {
         <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              
               <div>
                 <div className="relative flex items-center space-x-2">
-                <img
-                  src="/libercopy-favicon.svg"
-                  alt="LiberCopy Icon"
-                  className="h-20 transform group-hover:scale-110 transition-all duration-300"
-                />
-                <img
-                  src="/libercopy-logo.svg"
-                  alt="LiberCopy - grupo lantia"
-                  className="h-20 w-auto transform group-hover:scale-105 transition-all duration-300"
-                />
-              </div>
+                  <img
+                    src="/libercopy-favicon.svg"
+                    alt="LiberCopy Icon"
+                    className="h-20 transform group-hover:scale-110 transition-all duration-300"
+                  />
+                  <img
+                    src="/libercopy-logo.svg"
+                    alt="LiberCopy - grupo lantia"
+                    className="h-20 w-auto transform group-hover:scale-105 transition-all duration-300"
+                  />
+                </div>
               </div>
             </div>
-            
           </CardHeader>
 
           <CardContent className="p-6">
-            {hasVerified  && (
+            {hasVerified && (
               <Alert className="mb-4 border-green-200 bg-green-50">
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-700">
@@ -242,8 +316,6 @@ export default function AuthPage() {
 
               <TabsContent value="login" className="space-y-4">
                 <form onSubmit={handleLogin} className="space-y-4">
-                 
-
                   <div className="space-y-2">
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -337,31 +409,31 @@ export default function AuthPage() {
 
               <TabsContent value="register" className="space-y-4">
                 <form onSubmit={handleRegister} className="space-y-4">
-                   <div className="space-y-2">
+                  <div className="space-y-2">
                     <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      type="text"
-                      placeholder="Nombre"
-                      value={registerFirstName}
-                      onChange={(e) => setRegisterFirstName(e.target.value)}
-                      required
-                      className="pl-10 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        type="text"
+                        placeholder="Nombre"
+                        value={registerFirstName}
+                        onChange={(e) => setRegisterFirstName(e.target.value)}
+                        required
+                        className="pl-10 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      type="text"
-                      placeholder="Apellidos"
-                      value={registerLastName}
-                      onChange={(e) => setRegisterLastName(e.target.value)}
-                      required
-                      className="pl-10 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        type="text"
+                        placeholder="Apellidos"
+                        value={registerLastName}
+                        onChange={(e) => setRegisterLastName(e.target.value)}
+                        required
+                        className="pl-10 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -540,5 +612,13 @@ export default function AuthPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <AuthPageInner />
+    </Suspense>
   )
 }

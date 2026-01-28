@@ -1,293 +1,308 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useCart } from "@/contexts/cart-context"
 import { useRouter } from "next/navigation"
-import { PayPalPayment } from "@/components/paypal-payment"
+import { useCart } from "@/contexts/cart-context"
+import { useAuth } from "@/contexts/auth-context"
+import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, FileText, Package } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { ArrowLeft, Tag, X, Check } from "lucide-react"
+import { CheckoutSteps } from "@/components/checkout-steps"
+import Footer from "@/components/footer"
 
-// Funciones auxiliares para mostrar los detalles
-const getSizeName = (size: string) => {
-  const sizeMap: { [key: string]: string } = {
-    a4: "A4 (21x29.7 cm)",
-    a3: "A3 (29.7x42 cm)",
-    a5: "A5 (14.8x21 cm)",
-    letter: "Carta (21.6x27.9 cm)",
-    legal: "Legal (21.6x35.6 cm)",
-  }
-  return sizeMap[size] || size || "A4"
-}
-
-const getPrintTypeName = (type: string) => {
-  const typeMap: { [key: string]: string } = {
-    single: "Una cara",
-    double: "Doble cara",
-    color: "Color",
-    bw: "Blanco y negro",
-    grayscale: "Escala de grises",
-  }
-  return typeMap[type] || type || "Blanco y negro"
-}
-
-const getPaperTypeName = (paper: string) => {
-  const paperMap: { [key: string]: string } = {
-    standard: "Estándar (80g)",
-    normal: "Estándar (80g)",
-    premium: "Premium (120g)",
-    photo: "Fotográfico",
-    recycled: "Reciclado",
-  }
-  return paperMap[paper] || paper || "Estándar (80g)"
-}
-
-const getFinishingName = (finishing: string) => {
-  const finishingMap: { [key: string]: string } = {
-    none: "Sin acabado",
-    stapled: "Grapado",
-    spiral: "Espiral",
-    thermal: "Encuadernación térmica",
-    wire: "Wire-O",
-    perfect: "Encuadernación perfecta",
-  }
-  return finishingMap[finishing] || finishing || "Sin acabado"
+interface DiscountCode {
+  code: string
+  percentage: number
+  id: string
 }
 
 export default function CheckoutPage() {
-  const { cart, getTotalPrice, clearCart } = useCart()
   const router = useRouter()
-  const [isCreatingOrder, setIsCreatingOrder] = useState(false)
-  const [orderId, setOrderId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const { cart, getTotalPrice } = useCart()
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
 
-  // Calcular el total de forma segura
-  const cartTotal = getTotalPrice() || 0
-  const totalWithIVA = cartTotal * 1.21
+  // Estados para códigos de descuento
+  const [discountCode, setDiscountCode] = useState("")
+  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null)
+  const [discountLoading, setDiscountLoading] = useState(false)
+  const [discountError, setDiscountError] = useState("")
 
   useEffect(() => {
-    if (cart.length === 0) {
-      router.push("/")
+    if (!user) {
+      sessionStorage.setItem("redirectUrl", "/checkout")
+      router.push("/auth")
+      return
     }
-  }, [cart, router])
 
-  const createOrder = async () => {
-    setIsCreatingOrder(true)
-    setError(null)
+    if (!cart || cart.length === 0) {
+      router.push("/")
+      return
+    }
+
+    // Cargar código de descuento aplicado si existe
+    const checkoutData = sessionStorage.getItem("checkoutData")
+    if (checkoutData) {
+      try {
+        const data = JSON.parse(checkoutData)
+        if (data.discount) {
+          setAppliedDiscount(data.discount)
+        }
+      } catch (e) {
+        console.error("Error parsing checkoutData:", e)
+      }
+    }
+
+    setLoading(false)
+  }, [user, cart, router])
+
+  // Función para validar código de descuento
+  const validateDiscountCode = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Por favor, introduce un código de descuento")
+      return
+    }
+
+    setDiscountLoading(true)
+    setDiscountError("")
 
     try {
-      const response = await fetch("/api/orders", {
+      const response = await fetch("/api/discount-codes/validate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          items: cart,
-          total: cartTotal,
-          paymentMethod: "paypal",
-        }),
+        body: JSON.stringify({ code: discountCode.trim() }),
       })
 
-      if (!response.ok) {
-        throw new Error("Error al crear el pedido")
-      }
-
       const data = await response.json()
-      setOrderId(data.orderId)
-      return data.orderId
+
+      if (response.ok && data.success) {
+        setAppliedDiscount(data.discount)
+        setDiscountCode("")
+        setDiscountError("")
+
+        // Guardar en sessionStorage
+        const checkoutData = JSON.parse(sessionStorage.getItem("checkoutData") || "{}")
+        checkoutData.discount = data.discount
+        sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData))
+      } else {
+        setDiscountError(data.error || "Código de descuento no válido")
+      }
     } catch (error) {
-      console.error("Error creating order:", error)
-      setError("Error al crear el pedido. Por favor, inténtalo de nuevo.")
-      return null
+      console.error("Error validating discount code:", error)
+      setDiscountError("Error al validar el código de descuento")
     } finally {
-      setIsCreatingOrder(false)
+      setDiscountLoading(false)
     }
   }
 
-  const handlePaymentSuccess = () => {
-    clearCart()
-    router.push("/payment/success")
+  // Función para remover código de descuento
+  const removeDiscountCode = () => {
+    setAppliedDiscount(null)
+    setDiscountCode("")
+    setDiscountError("")
+
+    // Remover de sessionStorage
+    const checkoutData = JSON.parse(sessionStorage.getItem("checkoutData") || "{}")
+    delete checkoutData.discount
+    sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData))
   }
 
-  const handlePaymentError = (error: string) => {
-    setError(error)
+  const handleContinue = () => {
+    // Guardar datos del checkout incluyendo el descuento
+    const subtotal = getTotalPrice() || 0
+    const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percentage) / 100 : 0
+
+    const checkoutData = {
+      items: cart || [],
+      subtotal,
+      discountAmount,
+      discount: appliedDiscount,
+      timestamp: new Date().toISOString(),
+    }
+
+    sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData))
+    router.push("/checkout/shipping")
   }
 
-  const handleBackToSummary = () => {
-    router.push("/checkout/summary")
-  }
-
-  if (cart.length === 0) {
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Tu carrito está vacío</h1>
-          <Button onClick={() => router.push("/")} className="bg-[#8B4513] hover:bg-[#A0522D] text-white">
-            Volver al inicio
-          </Button>
+      <main className="flex min-h-screen flex-col bg-white">
+        <Navbar />
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center">Cargando...</div>
         </div>
-      </div>
+      </main>
     )
   }
 
+  if (!cart || cart.length === 0) {
+    return (
+      <main className="flex min-h-screen flex-col bg-white">
+        <Navbar />
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center">
+            <p>Tu carrito está vacío. Redirigiendo...</p>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  const subtotal = getTotalPrice() || 0
+  const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percentage) / 100 : 0
+  const finalSubtotal = subtotal - discountAmount
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" onClick={handleBackToSummary} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Volver al resumen
+    <div className="flex min-h-screen flex-col bg-white">
+      <Navbar />
+
+      <div className="container mx-auto px-4 py-12">
+        <CheckoutSteps currentStep={1} />
+
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/cart")}
+            className="text-[#2E5FEB] hover:text-[#2E5FEB]/80"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver al carrito
           </Button>
-          <h1 className="text-2xl font-bold">Finalizar compra con PayPal</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Detalles del pedido */}
-          <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-[#2E5FEB] mb-8 text-center">Paso 1: Revisa tu pedido</h1>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Artículos del pedido */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Detalles del pedido
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {cart.map((item, index) => {
-                  const itemPrice = item.price || 0
-                  const itemQuantity = item.quantity || 1
-                  const itemSubtotal = itemPrice * itemQuantity
-
-                  return (
-                    <div key={item.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-gray-500" />
-                          <span className="font-medium">{item.fileName || `Documento ${index + 1}`}</span>
-                        </div>
-                        <span className="text-sm text-gray-500">Cantidad: {itemQuantity}</span>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Artículos en tu pedido</h3>
+                <div className="space-y-4">
+                  {cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-start border-b border-gray-200 pb-4 last:border-b-0"
+                    >
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">{item.fileName || item.name}</h4>
+                        <p className="text-sm text-gray-600">
+                          {item.pageCount || 0} páginas • {item.options?.copies || item.quantity || 1} copias
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {item.options?.printType === "bw" ? "Blanco y Negro" : "Color"} •{" "}
+                          {item.options?.paperSize?.toUpperCase() || "A4"}
+                        </p>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Tamaño:</span>
-                          <span className="ml-2 font-medium">{getSizeName(item.options?.paperSize)}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Tipo:</span>
-                          <span className="ml-2 font-medium">{getPrintTypeName(item.options?.printType)}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Papel:</span>
-                          <span className="ml-2 font-medium">{getPaperTypeName(item.options?.paperType)}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Acabado:</span>
-                          <span className="ml-2 font-medium">{getFinishingName(item.options?.finishing)}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center mt-3 pt-3 border-t">
-                        <span className="text-sm text-gray-600">Precio unitario:</span>
-                        <span className="font-medium">{itemPrice.toFixed(2)}€</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Subtotal:</span>
-                        <span className="font-medium">{itemSubtotal.toFixed(2)}€</span>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-[#f47d30]">{(item.price || 0).toFixed(2)}€</p>
                       </div>
                     </div>
-                  )
-                })}
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
-            {/* Resumen de precios */}
+            {/* Código de descuento */}
             <Card>
-              <CardHeader>
-                <CardTitle>Resumen del pedido</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">{cartTotal.toFixed(2)}€</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Envío:</span>
-                  <span className="font-medium text-green-600">Gratis</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">IVA (21%):</span>
-                  <span className="font-medium">{(cartTotal * 0.21).toFixed(2)}€</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total:</span>
-                  <span>{totalWithIVA.toFixed(2)}€</span>
-                </div>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4 flex items-center">
+                  <Tag className="mr-2 h-5 w-5" />
+                  Código de descuento
+                </h3>
+
+                {appliedDiscount ? (
+                  <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center">
+                      <Check className="mr-2 h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-800">Código aplicado: {appliedDiscount.code}</p>
+                        <p className="text-sm text-green-600">Descuento del {appliedDiscount.percentage}%</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeDiscountCode}
+                      className="text-green-600 hover:text-green-800"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Introduce tu código de descuento"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                        className="flex-1"
+                        disabled={discountLoading}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            validateDiscountCode()
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={validateDiscountCode}
+                        disabled={discountLoading || !discountCode.trim()}
+                        className="bg-[#2E5FEB] hover:bg-[#2E5FEB]/80"
+                      >
+                        {discountLoading ? "Validando..." : "Aplicar"}
+                      </Button>
+                    </div>
+                    {discountError && <p className="text-sm text-red-600">{discountError}</p>}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Formulario de pago PayPal */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pago con PayPal</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <p className="text-red-600 text-sm">{error}</p>
-                  </div>
-                )}
+          {/* Resumen del pedido */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-4">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-[#2E5FEB] mb-4">Resumen del pedido</h3>
 
-                {!orderId ? (
-                  <div className="text-center py-8">
-                    <Button
-                      onClick={createOrder}
-                      disabled={isCreatingOrder}
-                      className="bg-[#8B4513] hover:bg-[#A0522D] text-white"
-                    >
-                      {isCreatingOrder ? "Creando pedido..." : "Crear pedido y continuar"}
-                    </Button>
-                    <p className="text-sm text-gray-500 mt-2">Se creará tu pedido antes de proceder al pago</p>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Subtotal:</span>
+                    <span>{subtotal.toFixed(2)}€</span>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-blue-800 text-sm">
-                        <strong>Pedido creado:</strong> #{orderId.substring(0, 8)}
-                      </p>
-                      <p className="text-blue-600 text-sm mt-1">Procede con el pago usando PayPal</p>
+                  {appliedDiscount && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Descuento ({appliedDiscount.percentage}%):</span>
+                      <span>-{discountAmount.toFixed(2)}€</span>
                     </div>
-
-                    <PayPalPayment
-                      orderId={orderId}
-                      amount={totalWithIVA}
-                      onSuccess={handlePaymentSuccess}
-                      onError={handlePaymentError}
-                    />
+                  )}
+                  <div className="border-t pt-3">
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Subtotal con descuento:</span>
+                      <span className="text-[#f47d30]">{finalSubtotal.toFixed(2)}€</span>
+                    </div>
+                    {appliedDiscount && (
+                      <p className="text-sm text-green-600 mt-1">¡Has ahorrado {discountAmount.toFixed(2)}€!</p>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <p className="text-xs text-gray-500 mt-2">Los gastos de envío se calcularán en el siguiente paso</p>
+                </div>
 
-            {/* Información adicional */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Información del pago</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-gray-600 space-y-2">
-                <p>• Pago seguro procesado por PayPal</p>
-                <p>• Recibirás un email de confirmación</p>
-                <p>• El pedido se procesará una vez confirmado el pago</p>
-                <p>• Tiempo estimado de entrega: 2-3 días laborables</p>
+                <Button className="w-full mt-6 bg-[#2E5FEB] hover:bg-[#2E5FEB]/80" onClick={handleContinue}>
+                  Continuar al envío
+                </Button>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

@@ -2,11 +2,14 @@ import type { Metadata } from "next"
 import Navbar from "@/components/navbar"
 import { Badge } from "@/components/ui/badge"
 import Footer from "@/components/footer"
-import { Building2  } from "lucide-react"
+import { Building2 } from "lucide-react"
+import { generateCanonicalMetadata } from "@/lib/canonical-url"
+
 export const metadata: Metadata = {
   title: "Sobre Nosotros - LiberCopy",
   description:
     "Conoce la historia y valores de LiberCopy, tu servicio de impresión y distribución editorial de confianza.",
+  ...generateCanonicalMetadata("/sobre-nosotros"),
 }
 
 export default function SobreNosotros() {
@@ -15,7 +18,7 @@ export default function SobreNosotros() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden" style={{paddingBottom: "4rem"}}>
+      <section className="relative py-20 md:py-32 overflow-hidden" style={{ paddingBottom: "4rem" }}>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
         <div className="container mx-auto px-4 relative">
           <div className="text-center max-w-4xl mx-auto">
@@ -23,24 +26,27 @@ export default function SobreNosotros() {
               <Building2 className="w-4 h-4 mr-2" />
               Grupo Lantia
             </Badge>
-            
+
             <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Sobre Nosotros</h1>
-            
           </div>
         </div>
       </section>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-4xl mx-auto">
-            
-
             <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">Nuestra Historia</h2>
               <p className="text-gray-700 mb-6 leading-relaxed">
-                LiberCopy forma parte del Grupo Lantia y nace con la misión de hacer accesibles los servicios de impresión de alta calidad a cualquier persona. Ya seas estudiante, profesional, emprendedor o particular, ponemos a tu alcance soluciones personalizadas y eficientes para tus necesidades de impresión.
+                LiberCopy forma parte del Grupo Lantia y nace con la misión de hacer accesibles los servicios de
+                impresión de alta calidad a cualquier persona. Ya seas estudiante, profesional, emprendedor o
+                particular, ponemos a tu alcance soluciones personalizadas y eficientes para tus necesidades de
+                impresión.
               </p>
               <p className="text-gray-700 leading-relaxed">
-                Con una sólida trayectoria en el sector de la impresión y la tecnología, hemos creado una plataforma que une la tradición del buen hacer con la innovación digital. Ofrecemos un servicio integral que abarca desde la impresión bajo demanda hasta opciones de entrega flexibles, con la calidad y rapidez que buscas.
+                Con una sólida trayectoria en el sector de la impresión y la tecnología, hemos creado una plataforma que
+                une la tradición del buen hacer con la innovación digital. Ofrecemos un servicio integral que abarca
+                desde la impresión bajo demanda hasta opciones de entrega flexibles, con la calidad y rapidez que
+                buscas.
               </p>
             </div>
 
@@ -48,9 +54,9 @@ export default function SobreNosotros() {
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">Nuestra Misión</h2>
               <p className="text-gray-700 leading-relaxed">
                 Facilitar el acceso a servicios de impresión y encuadernación profesionales, ofreciendo calidad
-                excepcional, precios competitivos y un servicio personalizado que se adapte a las necesidades específicas
-                de cada cliente. Creemos en el poder de las ideas impresas y trabajamos para que cada proyecto editorial
-                tenga la mejor presentación posible.
+                excepcional, precios competitivos y un servicio personalizado que se adapte a las necesidades
+                específicas de cada cliente. Creemos en el poder de las ideas impresas y trabajamos para que cada
+                proyecto editorial tenga la mejor presentación posible.
               </p>
             </div>
 
@@ -81,7 +87,8 @@ export default function SobreNosotros() {
                 <div className="border-l-4 border-orange-600 pl-4">
                   <h3 className="font-semibold text-gray-900 mb-2">Sostenibilidad</h3>
                   <p className="text-gray-700">
-                    Trabajamos con proveedores responsables y utilizamos procesos que minimizan nuestro impacto ambiental.
+                    Trabajamos con proveedores responsables y utilizamos procesos que minimizan nuestro impacto
+                    ambiental.
                   </p>
                 </div>
               </div>
@@ -119,7 +126,7 @@ export default function SobreNosotros() {
           </div>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </main>
   )
 }

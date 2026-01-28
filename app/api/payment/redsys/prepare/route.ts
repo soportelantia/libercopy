@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
 import { createClient } from "@supabase/supabase-js"
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 // Configuración de Redsys
 const REDSYS_CONFIG = {
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
     // URLs de callback
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://v0-libery-copy.vercel.app"
     const merchantURL = `${baseUrl}/api/payment/redsys/callback`
-    const urlOK = `${baseUrl}/payment/success`
+    const urlOK = `${baseUrl}/payment/success?orderId=${orderId}`
     const urlKO = `${baseUrl}/payment/error`
 
     console.log("=== CALLBACK URLS ===")

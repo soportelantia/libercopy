@@ -16,7 +16,7 @@ import Link from "next/link"
 import { v4 as uuidv4 } from "uuid"
 import { pricingService } from "@/lib/pricing-service"
 import Footer from "@/components/footer"
-import ShippingBanner from '@/components/shipping-banner'
+import ShippingBanner from "@/components/shipping-banner"
 export type PrintOptions = {
   paperSize: "a4"
   paperType: "normal"
@@ -364,7 +364,7 @@ export default function ImprimirPage() {
       )}
 
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden" style={{paddingBottom: "4rem"}}>
+      <section className="relative py-20 md:py-32 overflow-hidden" style={{ paddingBottom: "4rem" }}>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
         <div className="container mx-auto px-4 relative">
           <div className="text-center max-w-4xl mx-auto">
@@ -415,7 +415,7 @@ export default function ImprimirPage() {
       </section>
 
       {/* Shipping Banner */}
-      <ShippingBanner/>
+      <ShippingBanner />
 
       {/* Main Content */}
       <section className="py-8 md:py-12">
@@ -637,7 +637,7 @@ export default function ImprimirPage() {
             {/* Desktop Layout - Side by side */}
             <div className="hidden xl:grid xl:grid-cols-3 gap-8">
               {/* Left Column - Forms */}
-              <div className="xl:col-span-2 space-y-8">
+              <div className="xl:col-span-2 space-y-8 max-h-screen overflow-y-auto pr-4">
                 {/* File Upload */}
                 <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
                   <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-xl">
@@ -678,7 +678,7 @@ export default function ImprimirPage() {
               </div>
 
               {/* Right Column - Summary */}
-              <div className="space-y-6">
+              <div className="space-y-6 sticky top-4 self-start">
                 <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
                   <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-xl">
                     <CardTitle className="flex items-center space-x-2">

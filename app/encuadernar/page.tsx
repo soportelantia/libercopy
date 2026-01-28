@@ -20,31 +20,20 @@ export default function EncuadernarPage() {
       rating: 5,
     },
     {
-      name: "Carlos Rodríguez",
-      role: "Arquitecto",
-      text: "Utilizo sus servicios para imprimir presentaciones con grapado. La calidad es excelente y siempre cumplen con los plazos. Mis clientes quedan impresionados con el resultado.",
+      name: "Miguel Blanco",
+      role: "Asesor jurídico",
+      text: "Utilizo sus servicios para imprimir presentaciones con grapado. La calidad es excelente y siempre cumplen con los plazos.",
+      rating: 5,
+    },
+    
+    {
+      name: "Carmen Fernández",
+      role: "Maestra infantil",
+      text: "Libercopy siempre cumple con mis expectativas y los plazos de entrega son inmejorables.",
       rating: 5,
     },
     {
-      name: "Elena Gómez",
-      role: "Profesora universitaria",
-      text: "Recomiendo Liberiscopy a todos mis alumnos para sus trabajos. El servicio online es muy intuitivo y los resultados son siempre profesionales.",
-      rating: 5,
-    },
-    {
-      name: "Miguel Sánchez",
-      role: "Estudiante de Ingeniería",
-      text: "La encuadernación en espiral es perfecta para mis apuntes. Puedo abrir completamente el documento y es muy resistente. Además, el precio es muy competitivo.",
-      rating: 5,
-    },
-    {
-      name: "Ana Fernández",
-      role: "Diseñadora gráfica",
-      text: "Como profesional del diseño, valoro mucho la calidad de impresión y acabado. Liberiscopy siempre cumple con mis expectativas y los plazos de entrega son inmejorables.",
-      rating: 5,
-    },
-    {
-      name: "Javier López",
+      name: "Carlos García",
       role: "Abogado",
       text: "Para documentos legales, la presentación es fundamental. El servicio de encuadernación profesional me ha ayudado a dar una imagen seria y de calidad a mis clientes.",
       rating: 5,

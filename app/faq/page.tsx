@@ -20,6 +20,7 @@ import {
   AlertCircle,
   Info,
   Zap,
+  Clock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -135,7 +136,7 @@ const faqData: FAQItem[] = [
         </div>
         <div className="p-3 bg-green-50 rounded-lg">
           <p className="text-sm text-green-700">
-            <strong>Horarios:</strong> Lunes a Viernes 9:00-18:00, Sábados 10:00-14:00
+            <strong>Horarios:</strong> Lunes a Viernes 9:00-18:00
           </p>
         </div>
       </div>
@@ -424,7 +425,7 @@ const faqData: FAQItem[] = [
           <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200">
             <div className="flex items-center space-x-2 mb-2">
               <Truck className="h-5 w-5 text-blue-500" />
-              <Badge variant="secondary">2.99</Badge>
+              <Badge variant="secondary">3.99</Badge>
             </div>
             <h4 className="font-semibold text-blue-800">Pedidos &lt; 25€</h4>
             <p className="text-sm text-blue-700">Tarifa fija de envío</p>
@@ -456,7 +457,7 @@ const faqData: FAQItem[] = [
             <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               24-48h
             </div>
-            <p className="text-sm text-gray-600">días laborables</p>
+            <p className="text-sm text-gray-600">Recibe tu pedido en 24 o 48 horas a partir de la confirmación de pago, siempre y cuando se realice antes de las 14:00h de Lunes a Jueves, no computándose como días hábiles los Sábados, Domingos, festivos locales, autonómicos y nacionales</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -806,8 +807,8 @@ export default function FAQPage() {
                 <p className="text-sm text-white/80">info@libercopy.es</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
-                <Phone className="h-8 w-8 mx-auto mb-3" />
-                <h3 className="font-semibold mb-2">Teléfono</h3>
+                <Clock className="h-8 w-8 mx-auto mb-3" />
+                <h3 className="font-semibold mb-2">Horario</h3>
                 <p className="text-sm text-white/80">Lun-Vie 9:00-18:00</p>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ interface BlogSearchProps {
   categories: BlogCategory[]
 }
 
-export function BlogSearch({ categories }: BlogSearchProps) {
+function BlogSearchInner({ categories }: BlogSearchProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [search, setSearch] = useState(searchParams.get("search") || "")
@@ -100,5 +100,13 @@ export function BlogSearch({ categories }: BlogSearchProps) {
         </div>
       )}
     </div>
+  )
+}
+
+export function BlogSearch({ categories }: BlogSearchProps) {
+  return (
+    <Suspense fallback={<div>Cargando búsqueda...</div>}>
+      <BlogSearchInner categories={categories} />
+    </Suspense>
   )
 }
