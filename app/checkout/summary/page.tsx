@@ -43,46 +43,152 @@ export default function CheckoutSummaryPage() {
       return
     }
 
-    // Cargar método de pago seleccionado - priorizar sessionStorage
-    const savedPayment = sessionStorage.getItem("selectedPaymentMethod")
-    if (savedPayment) {
-      setPaymentMethod(savedPayment)
-      console.log("Payment method from sessionStorage:", savedPayment)
-    }
-
-    // Verificar que tenemos datos de envío
-    const checkoutData = sessionStorage.getItem("checkoutData")
-    if (checkoutData) {
-      try {
-        const data = JSON.parse(checkoutData)
-        if (data.shipping) {
-          setShippingData(data.shipping)
-          console.log("Shipping data from checkoutData:", data.shipping.type)
-        }
-        if (data.payment?.method && !savedPayment) {
-          setPaymentMethod(data.payment.method)
-          console.log("Payment method from checkoutData:", data.payment.method)
-        }
-      } catch (e) {
-        console.error("Error parsing checkoutData:", e)
+    const loadShippingData = async () => {
+      // Cargar método de pago seleccionado - priorizar sessionStorage
+      const savedPayment = sessionStorage.getItem("selectedPaymentMethod")
+      if (savedPayment) {
+        setPaymentMethod(savedPayment)
+        console.log("Payment method from sessionStorage:", savedPayment)
       }
-    }
 
-    // Si no hay datos en checkoutData, intentar con shippingSelection
-    if (!shippingData) {
-      const savedShipping = sessionStorage.getItem("shippingSelection")
-      if (savedShipping) {
+      // Verificar que tenemos datos de envío
+      const checkoutData = sessionStorage.getItem("checkoutData")
+      if (checkoutData) {
         try {
-          const shipping = JSON.parse(savedShipping)
-          setShippingData(shipping)
-          console.log("Shipping data from shippingSelection:", shipping.type)
+          const data = JSON.parse(checkoutData)
+          if (data.shipping) {
+            // Si es envío a domicilio, recargar la dirección desde la base de datos
+            if (data.shipping.type === "home" && data.shipping.address?.id) {
+              console.log("[v0] Reloading address from database, ID:", data.shipping.address.id)
+              
+              const { data: addressData, error } = await supabase
+                .from("user_addresses")
+                .select("*")
+                .eq("id", data.shipping.address.id)
+                .single()
+
+              if (!error && addressData) {
+                // Obtener nombre de la provincia
+                const { data: provinceData } = await supabase
+                  .from("provinces")
+                  .select("name")
+                  .eq("id", addressData.province)
+                  .single()
+
+                // Obtener nombre del municipio
+                const { data: municipalityData } = await supabase
+                  .from("municipalities")
+                  .select("name")
+                  .eq("id", addressData.municipality)
+                  .single()
+
+                const updatedAddress = {
+                  ...addressData,
+                  province_name: provinceData?.name || addressData.province,
+                  municipality_name: municipalityData?.name || addressData.municipality,
+                }
+
+                console.log("[v0] Address reloaded:", updatedAddress)
+                
+                // Actualizar shippingData con la dirección actualizada
+                const updatedShipping = {
+                  ...data.shipping,
+                  address: updatedAddress,
+                }
+                setShippingData(updatedShipping)
+                
+                // Actualizar sessionStorage con los datos actualizados
+                sessionStorage.setItem(
+                  "checkoutData",
+                  JSON.stringify({ ...data, shipping: updatedShipping })
+                )
+              } else {
+                console.error("[v0] Error loading address:", error)
+                setShippingData(data.shipping)
+              }
+            } else {
+              setShippingData(data.shipping)
+            }
+            
+            console.log("Shipping data from checkoutData:", data.shipping.type)
+          }
+          if (data.payment?.method && !savedPayment) {
+            setPaymentMethod(data.payment.method)
+            console.log("Payment method from checkoutData:", data.payment.method)
+          }
         } catch (e) {
-          console.error("Error parsing shippingSelection:", e)
+          console.error("Error parsing checkoutData:", e)
         }
       }
+
+      // Si no hay datos en checkoutData, intentar con shippingSelection
+      if (!shippingData) {
+        const savedShipping = sessionStorage.getItem("shippingSelection")
+        if (savedShipping) {
+          try {
+            const shipping = JSON.parse(savedShipping)
+            
+            // Si es envío a domicilio, recargar la dirección desde la base de datos
+            if (shipping.type === "home" && shipping.address?.id) {
+              console.log("[v0] Reloading address from database (shippingSelection), ID:", shipping.address.id)
+              
+              const { data: addressData, error } = await supabase
+                .from("user_addresses")
+                .select("*")
+                .eq("id", shipping.address.id)
+                .single()
+
+              if (!error && addressData) {
+                // Obtener nombre de la provincia
+                const { data: provinceData } = await supabase
+                  .from("provinces")
+                  .select("name")
+                  .eq("id", addressData.province)
+                  .single()
+
+                // Obtener nombre del municipio
+                const { data: municipalityData } = await supabase
+                  .from("municipalities")
+                  .select("name")
+                  .eq("id", addressData.municipality)
+                  .single()
+
+                const updatedAddress = {
+                  ...addressData,
+                  province_name: provinceData?.name || addressData.province,
+                  municipality_name: municipalityData?.name || addressData.municipality,
+                }
+
+                console.log("[v0] Address reloaded (shippingSelection):", updatedAddress)
+                
+                // Actualizar shippingData con la dirección actualizada
+                const updatedShipping = {
+                  ...shipping,
+                  address: updatedAddress,
+                }
+                setShippingData(updatedShipping)
+                
+                // Actualizar sessionStorage con los datos actualizados
+                sessionStorage.setItem("shippingSelection", JSON.stringify(updatedShipping))
+              } else {
+                console.error("[v0] Error loading address (shippingSelection):", error)
+                setShippingData(shipping)
+              }
+            } else {
+              setShippingData(shipping)
+            }
+            
+            console.log("Shipping data from shippingSelection:", shipping.type)
+          } catch (e) {
+            console.error("Error parsing shippingSelection:", e)
+          }
+        }
+      }
+
+      setLoading(false)
     }
 
-    setLoading(false)
+    loadShippingData()
   }, [user, session, router])
 
   // Solo redirigir si no hay datos de envío después de cargar Y hay items en el carrito
