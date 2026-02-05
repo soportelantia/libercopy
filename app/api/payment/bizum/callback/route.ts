@@ -33,7 +33,13 @@ function addLog(level: "info" | "error" | "warning", message: string, data?: any
 
 // Configuración de Redsys (misma que en prepare)
 const REDSYS_CONFIG = {
+  MERCHANT_CODE: process.env.NEXT_PUBLIC_REDSYS_MERCHANT_CODE || "",
+  TERMINAL: "001",
   SHA256_KEY: process.env.REDSYS_SHA256_KEY!,
+  CURRENCY: "978", // EUR
+  TRANSACTION_TYPE: "0", // Autorización
+  SIGNATURE_VERSION: "HMAC_SHA256_V1",
+  TEST_MODE: process.env.NEXT_PUBLIC_REDSYS_TEST_MODE === "true",
 }
 
 // Funciones de utilidad (mismas que en prepare)
