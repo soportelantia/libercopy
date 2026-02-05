@@ -101,6 +101,7 @@ function createMerchantSignature(merchantParameters: string, orderNumber: string
 }
 
 export async function POST(request: NextRequest) {
+  console.log("[v0] === REDSYS BIZUM CALLBACK RECEIVED ===")
   addLog("info", "=== REDSYS CALLBACK RECEIVED ===")
 
   try {
@@ -110,6 +111,12 @@ export async function POST(request: NextRequest) {
     const merchantParameters = formData.get("Ds_MerchantParameters") as string
     const signature = formData.get("Ds_Signature") as string
 
+    console.log("[v0] Form data received:", {
+      signatureVersion,
+      merchantParameters: merchantParameters?.substring(0, 50) + "...",
+      signature: signature?.substring(0, 20) + "...",
+    })
+
     addLog("info", "Form data received", {
       signatureVersion,
       merchantParametersLength: merchantParameters?.length,
@@ -117,6 +124,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!merchantParameters || !signature) {
+      console.error("[v0] ERROR: Missing required parameters")
       addLog("error", "Missing required parameters")
       return new Response("OK", { status: 200 })
     }
@@ -126,8 +134,10 @@ export async function POST(request: NextRequest) {
     try {
       const decodedJson = Buffer.from(merchantParameters, "base64").toString("utf8")
       decodedParameters = JSON.parse(decodedJson)
+      console.log("[v0] Parameters decoded successfully:", decodedParameters)
       addLog("info", "Parameters decoded successfully", decodedParameters)
     } catch (error) {
+      console.error("[v0] ERROR: Error decoding parameters:", error)
       addLog("error", "Error decoding parameters", { error: error instanceof Error ? error.message : String(error) })
       return new Response("OK", { status: 200 })
     }
@@ -176,6 +186,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar el pedido real usando el mapeo
+    console.log("[v0] Looking up order mapping for Redsys order:", redsysOrderNumber)
     addLog("info", "Looking up order mapping", { redsysOrderNumber })
 
     const { data: mappingData, error: mappingError } = await supabase
@@ -184,7 +195,14 @@ export async function POST(request: NextRequest) {
       .eq("redsys_order_number", redsysOrderNumber)
       .single()
 
+    console.log("[v0] Mapping query result:", { mappingData, mappingError: mappingError?.message })
+
     if (mappingError || !mappingData) {
+      console.error("[v0] ERROR: Order mapping not found!", {
+        redsysOrderNumber,
+        error: mappingError?.message,
+        errorDetails: mappingError,
+      })
       addLog("error", "Order mapping not found", {
         redsysOrderNumber,
         error: mappingError?.message,
@@ -193,6 +211,10 @@ export async function POST(request: NextRequest) {
     }
 
     const realOrderId = mappingData.order_id
+    console.log("[v0] Order mapping found successfully:", {
+      redsysOrderNumber,
+      realOrderId,
+    })
     addLog("info", "Order mapping found", {
       redsysOrderNumber,
       realOrderId,
@@ -239,6 +261,12 @@ export async function POST(request: NextRequest) {
     const isSuccessful = responseCode && Number.parseInt(responseCode) >= 0 && Number.parseInt(responseCode) <= 99
     const newStatus = isSuccessful ? "completed" : "payment_failed"
 
+    console.log("[v0] Payment status determined:", {
+      responseCode,
+      isSuccessful,
+      newStatus,
+    })
+
     addLog("info", "Payment status determined", {
       responseCode,
       isSuccessful,
@@ -247,6 +275,12 @@ export async function POST(request: NextRequest) {
 
     // Actualizar el pedido
     try {
+      console.log("[v0] Updating order in database:", {
+        orderId: realOrderId,
+        newStatus,
+        paymentReference: authCode || redsysOrderNumber,
+      })
+
       const { error: updateError } = await supabase
         .from("orders")
         .update({
@@ -257,11 +291,13 @@ export async function POST(request: NextRequest) {
         .eq("id", realOrderId)
 
       if (updateError) {
+        console.error("[v0] ERROR: Error updating order:", updateError)
         addLog("error", "Error updating order", {
           orderId: realOrderId,
           error: updateError.message,
         })
       } else {
+        console.log("[v0] SUCCESS: Order updated successfully!")
         addLog("info", "Order updated successfully", {
           orderId: realOrderId,
           newStatus,
@@ -269,6 +305,7 @@ export async function POST(request: NextRequest) {
         })
       }
     } catch (dbError) {
+      console.error("[v0] ERROR: Database error updating order:", dbError)
       addLog("error", "Database error updating order", {
         orderId: realOrderId,
         error: dbError instanceof Error ? dbError.message : String(dbError),
