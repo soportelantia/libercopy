@@ -162,7 +162,13 @@ export async function POST(request: NextRequest) {
 
     // Verificar firma
     try {
+      console.log("[v0] Starting signature verification...")
+      console.log("[v0] Redsys Order Number for signature:", redsysOrderNumber)
+      
       const expectedSignature = createMerchantSignature(merchantParameters, redsysOrderNumber, REDSYS_CONFIG.SHA256_KEY)
+
+      console.log("[v0] Signature received:", signature)
+      console.log("[v0] Expected signature:", expectedSignature)
 
       // Normalizar firma recibida: Base64 URL-safe → Base64 estándar
         let normalizedSignature = signature.replace(/-/g, "+").replace(/_/g, "/").replace(/\s/g, "")
@@ -170,8 +176,13 @@ export async function POST(request: NextRequest) {
         normalizedSignature += "="
         }
 
+        console.log("[v0] Normalized signature:", normalizedSignature)
+
         // Comparar firma esperada con firma normalizada
         if (expectedSignature !== normalizedSignature) {
+        console.error("[v0] ERROR: Signature verification FAILED!")
+        console.error("[v0] Received:", normalizedSignature)
+        console.error("[v0] Expected:", expectedSignature)
         addLog("error", "Signature verification failed", {
             received: normalizedSignature,
             expected: expectedSignature,
@@ -179,8 +190,10 @@ export async function POST(request: NextRequest) {
         return new Response("OK", { status: 200 })
         }
 
+      console.log("[v0] SUCCESS: Signature verified successfully!")
       addLog("info", "Signature verified successfully")
     } catch (error) {
+      console.error("[v0] ERROR: Exception during signature verification:", error)
       addLog("error", "Error verifying signature", { error: error instanceof Error ? error.message : String(error) })
       return new Response("OK", { status: 200 })
     }
