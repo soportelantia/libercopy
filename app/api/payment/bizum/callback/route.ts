@@ -3,23 +3,7 @@ import crypto from "crypto"
 import { createClient } from "@supabase/supabase-js"
 import { sendEmail, getOrderConfirmationEmail } from "@/lib/mail-service"
 
-// Configuración de Supabase con fallback a variables con prefijo NEXT_PUBLIC_
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error("[v0] CRITICAL ERROR: Supabase credentials not found!")
-  console.error("[v0] SUPABASE_URL:", !!process.env.SUPABASE_URL, !!process.env.NEXT_PUBLIC_SUPABASE_URL)
-  console.error("[v0] SUPABASE_SERVICE_ROLE_KEY:", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
-  console.error("[v0] SUPABASE_ANON_KEY:", !!process.env.SUPABASE_ANON_KEY)
-}
-
-const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_KEY!, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-})
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 // Sistema de logging en memoria
 let callbackLogs: Array<{
@@ -198,52 +182,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar el pedido real usando el mapeo
-    console.log("[v0] === SUPABASE CONNECTION DEBUG ===")
-    console.log("[v0] SUPABASE_URL (direct):", !!process.env.SUPABASE_URL)
-    console.log("[v0] NEXT_PUBLIC_SUPABASE_URL:", !!process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log("[v0] Using URL:", SUPABASE_URL?.substring(0, 40) + "...")
-    console.log("[v0] SUPABASE_SERVICE_ROLE_KEY:", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
-    console.log("[v0] SUPABASE_ANON_KEY:", !!process.env.SUPABASE_ANON_KEY)
-    console.log("[v0] Using KEY length:", SUPABASE_SERVICE_KEY?.length)
-    console.log("[v0] Supabase client created:", !!supabase)
-    
     addLog("info", "Looking up order mapping", { redsysOrderNumber })
 
-    let mappingData, mappingError
-    try {
-      console.log("[v0] Executing Supabase query...")
-      const result = await supabase
-        .from("redsys_order_mapping")
-        .select("order_id")
-        .eq("redsys_order_number", redsysOrderNumber)
-        .single()
-      
-      mappingData = result.data
-      mappingError = result.error
-      console.log("[v0] Query executed, has data:", !!mappingData, "has error:", !!mappingError)
-    } catch (queryError) {
-      console.error("[v0] EXCEPTION during Supabase query:", queryError)
-      console.error("[v0] Exception type:", queryError instanceof Error ? queryError.constructor.name : typeof queryError)
-      console.error("[v0] Exception message:", queryError instanceof Error ? queryError.message : String(queryError))
-      mappingError = queryError
-    }
-
-    console.log("[v0] Query result:", { 
-      mappingData, 
-      hasError: !!mappingError,
-      errorMessage: mappingError?.message,
-      errorCode: mappingError?.code,
-      errorDetails: mappingError
-    })
+    const { data: mappingData, error: mappingError } = await supabase
+      .from("redsys_order_mapping")
+      .select("order_id")
+      .eq("redsys_order_number", redsysOrderNumber)
+      .single()
 
     if (mappingError || !mappingData) {
-      console.error("[v0] ERROR: Order mapping not found!")
-      console.error("[v0] Error details:", mappingError)
       addLog("error", "Order mapping not found", {
         redsysOrderNumber,
         error: mappingError?.message,
-        errorType: mappingError?.constructor?.name,
-        errorDetails: JSON.stringify(mappingError),
       })
       return new Response("OK", { status: 200 })
     }
