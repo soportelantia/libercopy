@@ -182,6 +182,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar el pedido real usando el mapeo
+    console.log("[v0] === SUPABASE CONNECTION DEBUG ===")
+    console.log("[v0] SUPABASE_URL configured:", !!process.env.SUPABASE_URL)
+    console.log("[v0] SUPABASE_URL value:", process.env.SUPABASE_URL?.substring(0, 30) + "...")
+    console.log("[v0] SUPABASE_SERVICE_ROLE_KEY configured:", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+    console.log("[v0] SUPABASE_SERVICE_ROLE_KEY length:", process.env.SUPABASE_SERVICE_ROLE_KEY?.length)
+    
     addLog("info", "Looking up order mapping", { redsysOrderNumber })
 
     const { data: mappingData, error: mappingError } = await supabase
@@ -190,10 +196,22 @@ export async function POST(request: NextRequest) {
       .eq("redsys_order_number", redsysOrderNumber)
       .single()
 
+    console.log("[v0] Query result:", { 
+      mappingData, 
+      hasError: !!mappingError,
+      errorMessage: mappingError?.message,
+      errorCode: mappingError?.code,
+      errorDetails: mappingError
+    })
+
     if (mappingError || !mappingData) {
+      console.error("[v0] ERROR: Order mapping not found!")
+      console.error("[v0] Error details:", mappingError)
       addLog("error", "Order mapping not found", {
         redsysOrderNumber,
         error: mappingError?.message,
+        errorType: mappingError?.constructor?.name,
+        errorDetails: JSON.stringify(mappingError),
       })
       return new Response("OK", { status: 200 })
     }
