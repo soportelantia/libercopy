@@ -182,18 +182,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar el pedido real usando el mapeo
+    console.log("[v0] BIZUM CALLBACK VERSION: 2.0 - Simplified Supabase client")
+    console.log("[v0] About to query redsys_order_mapping for:", redsysOrderNumber)
     addLog("info", "Looking up order mapping", { redsysOrderNumber })
 
-    const { data: mappingData, error: mappingError } = await supabase
-      .from("redsys_order_mapping")
-      .select("order_id")
-      .eq("redsys_order_number", redsysOrderNumber)
-      .single()
+    let mappingData, mappingError
+    try {
+      const result = await supabase
+        .from("redsys_order_mapping")
+        .select("order_id")
+        .eq("redsys_order_number", redsysOrderNumber)
+        .single()
+      
+      mappingData = result.data
+      mappingError = result.error
+      console.log("[v0] Query completed - data:", !!mappingData, "error:", !!mappingError)
+    } catch (error) {
+      console.error("[v0] EXCEPTION during query:", error)
+      mappingError = error
+    }
 
     if (mappingError || !mappingData) {
       addLog("error", "Order mapping not found", {
         redsysOrderNumber,
-        error: mappingError?.message,
+        error: mappingError?.message || String(mappingError),
       })
       return new Response("OK", { status: 200 })
     }
