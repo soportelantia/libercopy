@@ -7,6 +7,11 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const redsysOrderNumber = searchParams.get("redsysOrderNumber")
 
+  console.log("[v0] Check Redsys Mapping - Start")
+  console.log("[v0] Redsys Order Number:", redsysOrderNumber)
+  console.log("[v0] Supabase URL configured:", !!process.env.SUPABASE_URL)
+  console.log("[v0] Service Role Key configured:", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+
   if (!redsysOrderNumber) {
     return NextResponse.json(
       {
@@ -19,12 +24,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log("[v0] Querying redsys_order_mapping table...")
+    
     // Buscar el mapeo
     const { data: mappingData, error: mappingError } = await supabase
       .from("redsys_order_mapping")
       .select("*")
       .eq("redsys_order_number", redsysOrderNumber)
       .single()
+
+    console.log("[v0] Query result:", { mappingData, mappingError: mappingError?.message })
 
     if (mappingError) {
       return NextResponse.json({
@@ -33,6 +42,7 @@ export async function GET(request: NextRequest) {
         found: false,
         error: mappingError.message,
         errorCode: mappingError.code,
+        errorDetails: mappingError,
       })
     }
 
@@ -52,10 +62,14 @@ export async function GET(request: NextRequest) {
       orderError: orderError?.message || null,
     })
   } catch (error) {
+    console.error("[v0] Unexpected error:", error)
     return NextResponse.json(
       {
         success: false,
+        redsysOrderNumber,
         error: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorStack: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }
     )
