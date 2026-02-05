@@ -33,13 +33,7 @@ function addLog(level: "info" | "error" | "warning", message: string, data?: any
 
 // Configuración de Redsys (misma que en prepare)
 const REDSYS_CONFIG = {
-  MERCHANT_CODE: process.env.NEXT_PUBLIC_REDSYS_MERCHANT_CODE || "",
-  TERMINAL: "001",
   SHA256_KEY: process.env.REDSYS_SHA256_KEY!,
-  CURRENCY: "978", // EUR
-  TRANSACTION_TYPE: "0", // Autorización
-  SIGNATURE_VERSION: "HMAC_SHA256_V1",
-  TEST_MODE: process.env.NEXT_PUBLIC_REDSYS_TEST_MODE === "true",
 }
 
 // Funciones de utilidad (mismas que en prepare)
@@ -182,30 +176,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar el pedido real usando el mapeo
-    console.log("[v0] BIZUM CALLBACK VERSION: 2.0 - Simplified Supabase client")
-    console.log("[v0] About to query redsys_order_mapping for:", redsysOrderNumber)
     addLog("info", "Looking up order mapping", { redsysOrderNumber })
 
-    let mappingData, mappingError
-    try {
-      const result = await supabase
-        .from("redsys_order_mapping")
-        .select("order_id")
-        .eq("redsys_order_number", redsysOrderNumber)
-        .single()
-      
-      mappingData = result.data
-      mappingError = result.error
-      console.log("[v0] Query completed - data:", !!mappingData, "error:", !!mappingError)
-    } catch (error) {
-      console.error("[v0] EXCEPTION during query:", error)
-      mappingError = error
-    }
+    const { data: mappingData, error: mappingError } = await supabase
+      .from("redsys_order_mapping")
+      .select("order_id")
+      .eq("redsys_order_number", redsysOrderNumber)
+      .single()
 
     if (mappingError || !mappingData) {
       addLog("error", "Order mapping not found", {
         redsysOrderNumber,
-        error: mappingError?.message || String(mappingError),
+        error: mappingError?.message,
       })
       return new Response("OK", { status: 200 })
     }
