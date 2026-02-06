@@ -47,7 +47,7 @@ function encodeBase64(data: Buffer): string {
   return data.toString("base64")
 }
 
-function encrypt3DES(key: Buffer, message: string): Buffer {
+function encrypt3DES(message: string, key: Buffer): Buffer {
   addLog("info", "Encrypting with 3DES", { messageLength: message.length, keyLength: key.length })
 
   const blockSize = 8
@@ -90,7 +90,7 @@ function createMerchantSignature(merchantParameters: string, orderNumber: string
 
   try {
     const decodedKey = decodeBase64(key)
-    const diversifiedKey = encrypt3DES(decodedKey, orderNumber)
+    const diversifiedKey = encrypt3DES(orderNumber, decodedKey)
     const macResult = mac256(merchantParameters, diversifiedKey)
     const signature = encodeBase64(macResult)
 
