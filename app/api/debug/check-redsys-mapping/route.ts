@@ -4,61 +4,72 @@ import { createClient } from "@supabase/supabase-js"
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams
+  const redsysOrderNumber = searchParams.get("redsysOrderNumber")
+
+  console.log("[v0] Check Redsys Mapping - Start")
+  console.log("[v0] Redsys Order Number:", redsysOrderNumber)
+  console.log("[v0] Supabase URL configured:", !!process.env.SUPABASE_URL)
+  console.log("[v0] Service Role Key configured:", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+
+  if (!redsysOrderNumber) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Missing redsysOrderNumber parameter",
+        usage: "?redsysOrderNumber=364131370956",
+      },
+      { status: 400 }
+    )
+  }
+
   try {
-    const searchParams = request.nextUrl.searchParams
-    const redsysOrderNumber = searchParams.get("redsysOrderNumber")
-
-    if (!redsysOrderNumber) {
-      return NextResponse.json(
-        {
-          error: "Missing redsysOrderNumber parameter",
-          usage: "/api/debug/check-redsys-mapping?redsysOrderNumber=364131370956",
-        },
-        { status: 400 }
-      )
-    }
-
+    console.log("[v0] Querying redsys_order_mapping table...")
+    
     // Buscar el mapeo
-    const { data: mapping, error: mappingError } = await supabase
+    const { data: mappingData, error: mappingError } = await supabase
       .from("redsys_order_mapping")
       .select("*")
       .eq("redsys_order_number", redsysOrderNumber)
       .single()
 
-    // Buscar todos los mapeos similares (por si hay un problema de formato)
-    const { data: allMappings, error: allMappingsError } = await supabase
-      .from("redsys_order_mapping")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(10)
+    console.log("[v0] Query result:", { mappingData, mappingError: mappingError?.message })
 
-    // Si encontramos el mapeo, buscar el pedido asociado
-    let orderData = null
-    if (mapping?.order_id) {
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .select("id, status, payment_reference, total, created_at")
-        .eq("id", mapping.order_id)
-        .single()
-
-      orderData = order || { error: orderError?.message }
+    if (mappingError) {
+      return NextResponse.json({
+        success: false,
+        redsysOrderNumber,
+        found: false,
+        error: mappingError.message,
+        errorCode: mappingError.code,
+        errorDetails: mappingError,
+      })
     }
 
+    // Si encontró el mapeo, también buscar el pedido
+    const { data: orderData, error: orderError } = await supabase
+      .from("orders")
+      .select("id, status, total_amount, payment_method, payment_reference, created_at, updated_at")
+      .eq("id", mappingData.order_id)
+      .single()
+
     return NextResponse.json({
-      searchedRedsysOrderNumber: redsysOrderNumber,
-      mappingFound: !!mapping,
-      mapping: mapping || null,
-      mappingError: mappingError?.message || null,
-      associatedOrder: orderData,
-      recentMappings: allMappings || [],
-      allMappingsError: allMappingsError?.message || null,
+      success: true,
+      redsysOrderNumber,
+      found: true,
+      mapping: mappingData,
+      order: orderData || null,
+      orderError: orderError?.message || null,
     })
   } catch (error) {
-    console.error("[v0] Error in check-redsys-mapping:", error)
+    console.error("[v0] Unexpected error:", error)
     return NextResponse.json(
       {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
+        success: false,
+        redsysOrderNumber,
+        error: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorStack: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }
     )
