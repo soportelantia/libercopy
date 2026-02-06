@@ -4,8 +4,8 @@ import { createClient } from "@supabase/supabase-js"
 import { sendEmail, getOrderConfirmationEmail } from "@/lib/mail-service"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 // Sistema de logging en memoria
 let callbackLogs: Array<{
@@ -205,36 +205,36 @@ export async function POST(request: NextRequest) {
 
     // Obtener información completa del pedido y el usuario
     try {
-    const { data: orderDetails, error: orderError } = await supabase
+      const { data: orderDetails, error: orderError } = await supabase
         .from("orders")
         .select("*, order_items (*), order_shipping_addresses (*)")
         .eq("id", realOrderId)
-        .single()
+        .maybeSingle()
 
-    if (orderError || !orderDetails) {
+      if (orderError || !orderDetails) {
         addLog("error", "Failed to fetch order details for email", {
-        error: orderError?.message,
-        orderId: realOrderId,
+          error: orderError?.message,
+          orderId: realOrderId,
         })
-    } else {
+      } else {
         orderData = orderDetails
 
         // Buscar email del usuario
         const { data: userData, error: userError } = await supabase.auth.admin.getUserById(orderDetails.user_id)
         if (userError || !userData?.user?.email) {
-        addLog("warning", "User email not found", {
+          addLog("warning", "User email not found", {
             userId: orderDetails.user_id,
             error: userError?.message,
-        })
+          })
         } else {
-        userEmail = userData.user.email
-        addLog("info", "User email retrieved", { userEmail })
+          userEmail = userData.user.email
+          addLog("info", "User email retrieved", { userEmail })
         }
-    }
+      }
     } catch (fetchError) {
-    addLog("error", "Error retrieving order and user", {
+      addLog("error", "Error retrieving order and user", {
         error: fetchError instanceof Error ? fetchError.message : String(fetchError),
-    })
+      })
     }
 
     // Determinar el estado del pago
