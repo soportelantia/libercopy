@@ -53,7 +53,9 @@ function calculateOrderTotal(orderData: any): number {
   // Si no, calcular desde los items + gastos de envío
   const itemsTotal =
     orderData.order_items?.reduce((sum: number, item: any) => {
-      return sum + (item.price || 0)
+      const itemPrice = item.price || 0
+      const itemCopies = item.copies || 1
+      return sum + (itemPrice * itemCopies)
     }, 0) || 0
 
   const shippingCost = orderData.shipping_cost || 0
