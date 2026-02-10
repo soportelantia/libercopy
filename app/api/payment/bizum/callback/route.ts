@@ -3,7 +3,9 @@ import crypto from "crypto"
 import { createClient } from "@supabase/supabase-js"
 import { sendEmail, getOrderConfirmationEmail } from "@/lib/mail-service"
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 // Sistema de logging en memoria
 let callbackLogs: Array<{
@@ -45,7 +47,7 @@ function encodeBase64(data: Buffer): string {
   return data.toString("base64")
 }
 
-function encrypt3DES(key: Buffer, message: string): Buffer {
+function encrypt3DES(message: string, key: Buffer): Buffer {
   addLog("info", "Encrypting with 3DES", { messageLength: message.length, keyLength: key.length })
 
   const blockSize = 8
@@ -88,7 +90,7 @@ function createMerchantSignature(merchantParameters: string, orderNumber: string
 
   try {
     const decodedKey = decodeBase64(key)
-    const diversifiedKey = encrypt3DES(decodedKey, orderNumber)
+    const diversifiedKey = encrypt3DES(orderNumber, decodedKey)
     const macResult = mac256(merchantParameters, diversifiedKey)
     const signature = encodeBase64(macResult)
 
@@ -238,18 +240,18 @@ export async function POST(request: NextRequest) {
 
     // Obtener información completa del pedido y el usuario
     try {
-    const { data: orderDetails, error: orderError } = await supabase
+      const { data: orderDetails, error: orderError } = await supabase
         .from("orders")
         .select("*, order_items (*), order_shipping_addresses (*)")
         .eq("id", realOrderId)
-        .single()
+        .maybeSingle()
 
-    if (orderError || !orderDetails) {
+      if (orderError || !orderDetails) {
         addLog("error", "Failed to fetch order details for email", {
-        error: orderError?.message,
-        orderId: realOrderId,
+          error: orderError?.message,
+          orderId: realOrderId,
         })
-    } else {
+      } else {
         orderData = orderDetails
 
         // Buscar email del usuario
