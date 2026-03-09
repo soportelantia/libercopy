@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
+import Script from "next/script"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { AppProviders } from "./providers"
@@ -35,6 +36,25 @@ export default function RootLayout({
         <link rel="icon" href="/libercopy-favicon.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/libercopy-favicon.svg" />
         <link rel="apple-touch-icon" href="/libercopy-favicon.svg" />
+        
+        {/* Google Analytics */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-3MM7JTV9PB"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-3MM7JTV9PB');
+            `,
+          }}
+        />
       </head>
       <body className={inter.className}>
         <AppProviders>
