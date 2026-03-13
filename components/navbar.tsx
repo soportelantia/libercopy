@@ -80,10 +80,17 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center group">
+            {/* Favicon: solo en móvil */}
+            <img
+              src="/libercopy-favicon.png"
+              alt="LiberCopy"
+              className="md:hidden h-10 w-10 object-contain transform group-hover:scale-105 transition-all duration-300"
+            />
+            {/* Logo completo: desktop */}
             <img
               src="/libercopy-logo.png"
               alt="LiberCopy - grupo lantia"
-              className="h-10 w-auto transform group-hover:scale-105 transition-all duration-300"
+              className="hidden md:block h-10 w-auto transform group-hover:scale-105 transition-all duration-300"
             />
           </Link>
 
