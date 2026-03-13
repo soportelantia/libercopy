@@ -65,18 +65,19 @@ export default function ShippingPage() {
   const [selectedAddress, setSelectedAddress] = useState<string>("")
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<string>("")
 
-  // Calcular el costo de envío según la dirección seleccionada
+  const totalPrice = getTotalPrice() || 0
+
+  // Calcular el costo de envío según la dirección seleccionada y el total del pedido
   const getShippingCost = () => {
     if (shippingType === "pickup") return 0
-    
+
     const address = addresses.find((addr) => addr.id === selectedAddress)
     if (!address?.province) return 3.99 // Precio por defecto si no hay provincia
-    
-    return calcularGastosEnvioPorProvincia(address.province)
+
+    return calcularGastosEnvioPorProvincia(address.province, totalPrice)
   }
 
   const shippingCost = getShippingCost()
-  const totalPrice = getTotalPrice() || 0
   const subtotal = totalPrice / 1.21
   const iva = totalPrice - subtotal
   const total = totalPrice + shippingCost
@@ -233,7 +234,7 @@ export default function ShippingPage() {
                     <div className="text-sm text-gray-600 ml-6 mb-3 p-3 bg-blue-50 rounded-md border border-blue-100">
                       <p className="font-medium text-gray-700 mb-1">Tarifas de envío:</p>
                       <ul className="list-disc list-inside space-y-1">
-                        <li>Península: 3.99€</li>
+                        <li>Península y Baleares: 3.99€ (gratis en pedidos superiores a 25€)</li>
                         <li>Canarias, Ceuta y Melilla: 19.99€</li>
                       </ul>
                     </div>
