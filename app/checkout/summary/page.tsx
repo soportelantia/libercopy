@@ -563,7 +563,7 @@ export default function CheckoutSummaryPage() {
 
   const subtotal = getTotalPrice() || 0
   const provinciaId = shippingData?.address?.province || "41" // Default a Sevilla (41)
-  const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId)
+  const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId, subtotal)
   const subtotalWithoutIVA = subtotal / 1.21
   const iva = subtotal - subtotalWithoutIVA
   const total = subtotal + shippingCost
