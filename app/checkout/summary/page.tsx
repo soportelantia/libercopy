@@ -129,7 +129,8 @@ export default function CheckoutSummaryPage() {
       }
 
       // Si no hay datos en checkoutData, intentar con shippingSelection
-      if (!shippingData) {
+      const alreadyLoaded = !!sessionStorage.getItem("checkoutData") && !!JSON.parse(sessionStorage.getItem("checkoutData") || "{}").shipping
+      if (!alreadyLoaded) {
         const savedShipping = sessionStorage.getItem("shippingSelection")
         if (savedShipping) {
           try {

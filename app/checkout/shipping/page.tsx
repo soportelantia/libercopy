@@ -171,9 +171,11 @@ export default function ShippingPage() {
     }
 
     console.log("[v0] Complete shipping data being saved:", JSON.stringify(shippingData, null, 2))
-    
-    // Guardar selección en sessionStorage
-    sessionStorage.setItem("checkoutData", JSON.stringify({ shipping: shippingData }))
+
+    // Guardar selección en sessionStorage preservando datos previos (pago, etc.)
+    const existingData = sessionStorage.getItem("checkoutData")
+    const parsed = existingData ? JSON.parse(existingData) : {}
+    sessionStorage.setItem("checkoutData", JSON.stringify({ ...parsed, shipping: shippingData }))
     router.push("/checkout/payment")
   }
 
