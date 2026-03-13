@@ -181,22 +181,12 @@ export default function AuthPage() {
 
         <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              
-              <div>
-                <div className="relative flex items-center space-x-2">
-                <img
-                  src="/libercopy-favicon.svg"
-                  alt="LiberCopy Icon"
-                  className="h-20 transform group-hover:scale-110 transition-all duration-300"
-                />
-                <img
-                  src="/libercopy-logo.svg"
-                  alt="LiberCopy - grupo lantia"
-                  className="h-20 w-auto transform group-hover:scale-105 transition-all duration-300"
-                />
-              </div>
-              </div>
+            <div className="flex items-center justify-center mb-4">
+              <img
+                src="/libercopy-logo.png"
+                alt="LiberCopy - grupo lantia"
+                className="h-16 w-auto"
+              />
             </div>
             
           </CardHeader>
