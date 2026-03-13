@@ -424,7 +424,7 @@ const faqData: FAQItem[] = [
           <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200">
             <div className="flex items-center space-x-2 mb-2">
               <Truck className="h-5 w-5 text-blue-500" />
-              <Badge variant="secondary">3.99</Badge>
+              <Badge variant="secondary">3.99€</Badge>
             </div>
             <h4 className="font-semibold text-blue-800">Pedidos &lt; 25€</h4>
             <p className="text-sm text-blue-700">Tarifa fija de envío</p>
@@ -670,8 +670,8 @@ export default function FAQPage() {
                       key={category.id}
                       value={category.id}
                       className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${activeCategory === category.id
-                          ? `bg-gradient-to-r ${category.color} text-white shadow-lg transform scale-105`
-                          : "text-gray-600 hover:text-gray-800 hover:bg-white/80"
+                        ? `bg-gradient-to-r ${category.color} text-white shadow-lg transform scale-105`
+                        : "text-gray-600 hover:text-gray-800 hover:bg-white/80"
                         }`}
                     >
                       <Icon className="h-4 w-4" />
