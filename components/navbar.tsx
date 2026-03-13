@@ -79,19 +79,19 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3 group">
-            <div className="relative flex items-center space-x-2">
-              <img
-                src="/libercopy-favicon.svg"
-                alt="LiberCopy Icon"
-                className="h-10 w-10 transform group-hover:scale-110 transition-all duration-300"
-              />
-              <img
-                src="/libercopy-logo.svg"
-                alt="LiberCopy - grupo lantia"
-                className="h-10 w-auto transform group-hover:scale-105 transition-all duration-300"
-              />
-            </div>
+          <Link href="/" className="flex items-center gap-2 group">
+            {/* Isotipo: siempre visible */}
+            <img
+              src="/libercopy-favicon.svg"
+              alt="LiberCopy isotipo"
+              className="h-9 w-9 object-contain transform group-hover:scale-105 transition-all duration-300"
+            />
+            {/* Logo completo: solo en desktop */}
+            <img
+              src="/libercopy-logo.png"
+              alt="LiberCopy - grupo lantia"
+              className="hidden md:block h-8 w-auto transform group-hover:scale-105 transition-all duration-300"
+            />
           </Link>
 
           {/* Desktop Navigation */}

@@ -60,7 +60,7 @@ const faqData: FAQItem[] = [
             <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
             <span className="text-sm">Recibir tus pedidos en casa</span>
           </div>
-          
+
         </div>
       </div>
     ),
@@ -424,7 +424,7 @@ const faqData: FAQItem[] = [
           <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200">
             <div className="flex items-center space-x-2 mb-2">
               <Truck className="h-5 w-5 text-blue-500" />
-              <Badge variant="secondary">2.99</Badge>
+              <Badge variant="secondary">3.99€</Badge>
             </div>
             <h4 className="font-semibold text-blue-800">Pedidos &lt; 25€</h4>
             <p className="text-sm text-blue-700">Tarifa fija de envío</p>
@@ -598,7 +598,7 @@ export default function FAQPage() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden" style={{paddingBottom: "4rem"}}>
+      <section className="relative py-20 md:py-32 overflow-hidden" style={{ paddingBottom: "4rem" }}>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10"></div>
         <div className="absolute inset-0 backdrop-blur-3xl"></div>
         <div className="container mx-auto px-4 relative">
@@ -608,10 +608,10 @@ export default function FAQPage() {
               Centro de ayuda
             </Badge>
             <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent" style={{marginRight: '20px'}}>
-                Preguntas 
+              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent" style={{ marginRight: '20px' }}>
+                Preguntas
               </span>
-              
+
               <span className="text-gray-800">Frecuentes</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
@@ -669,11 +669,10 @@ export default function FAQPage() {
                     <TabsTrigger
                       key={category.id}
                       value={category.id}
-                      className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
-                        activeCategory === category.id
-                          ? `bg-gradient-to-r ${category.color} text-white shadow-lg transform scale-105`
-                          : "text-gray-600 hover:text-gray-800 hover:bg-white/80"
-                      }`}
+                      className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${activeCategory === category.id
+                        ? `bg-gradient-to-r ${category.color} text-white shadow-lg transform scale-105`
+                        : "text-gray-600 hover:text-gray-800 hover:bg-white/80"
+                        }`}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="hidden sm:inline">{category.name}</span>

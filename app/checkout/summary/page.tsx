@@ -92,7 +92,8 @@ export default function CheckoutSummaryPage() {
                 console.log("[v0] Province ID for shipping cost:", addressData.province)
                 
                 // Recalcular el costo de envío con la nueva dirección
-                const newShippingCost = calcularGastosEnvioPorProvincia(addressData.province)
+                const cartTotal = getTotalPrice() || 0
+                const newShippingCost = calcularGastosEnvioPorProvincia(addressData.province, cartTotal)
                 console.log("[v0] Recalculated shipping cost:", newShippingCost)
                 
                 // Actualizar shippingData con la dirección actualizada y el nuevo costo
@@ -169,7 +170,8 @@ export default function CheckoutSummaryPage() {
                 console.log("[v0] Province ID for shipping cost (shippingSelection):", addressData.province)
                 
                 // Recalcular el costo de envío con la nueva dirección
-                const newShippingCost = calcularGastosEnvioPorProvincia(addressData.province)
+                const cartTotal = getTotalPrice() || 0
+                const newShippingCost = calcularGastosEnvioPorProvincia(addressData.province, cartTotal)
                 console.log("[v0] Recalculated shipping cost (shippingSelection):", newShippingCost)
                 
                 // Actualizar shippingData con la dirección actualizada y el nuevo costo
@@ -235,7 +237,7 @@ export default function CheckoutSummaryPage() {
     const provinciaId = shippingData?.address?.province || "41" // Default a Sevilla (41)
     console.log("[v0] Provincia ID para calcular gastos de envío:", provinciaId)
     console.log("[v0] Shipping data completo:", JSON.stringify(shippingData, null, 2))
-    const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId)
+    const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId, subtotal)
     const total = subtotal + shippingCost
 
     try {
@@ -401,7 +403,7 @@ export default function CheckoutSummaryPage() {
 
     const subtotal = getTotalPrice() || 0
     const provinciaId = shippingData?.address?.province || "41" // Default a Sevilla (41)
-    const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId)
+    const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId, subtotal)
     const total = subtotal + shippingCost
 
     // Guardar datos completos para el checkout

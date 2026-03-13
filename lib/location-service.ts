@@ -47,22 +47,24 @@ export async function getMunicipalitiesByProvince(provinceId: string): Promise<M
 // Provincias con tarifas de envío especiales (Canarias, Ceuta y Melilla)
 const PROVINCIAS_TARIFA_ESPECIAL = ["35", "38", "51", "52"] // Las Palmas, Santa Cruz de Tenerife, Ceuta, Melilla
 
-// Función para calcular los gastos de envío según la provincia
-export const calcularGastosEnvioPorProvincia = (provinciaId: string): number => {
-  // Si es una provincia con tarifa especial (Canarias, Ceuta, Melilla)
+export const SHIPPING_FREE_THRESHOLD = 25 // €
+export const SHIPPING_PENINSULA_COST = 3.99 // €
+export const SHIPPING_ESPECIAL_COST = 19.99 // €
+
+// Función para calcular los gastos de envío según la provincia y el subtotal del pedido (IVA incluido)
+export const calcularGastosEnvioPorProvincia = (provinciaId: string, subtotal: number = 0): number => {
+  // Canarias, Ceuta y Melilla: tarifa fija sin envío gratis
   if (PROVINCIAS_TARIFA_ESPECIAL.includes(provinciaId)) {
-    return 19.99
+    return SHIPPING_ESPECIAL_COST
   }
-  // Resto de provincias
-  return 3.99
+  // Península y Baleares: gratis a partir de 25 €
+  return subtotal >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_PENINSULA_COST
 }
 
 // Función para calcular los gastos de envío (versión antigua - mantener por compatibilidad)
 export const calcularGastosEnvio = (subtotal: number, provinciaId?: string): number => {
-  // Si se proporciona la provincia, usar el cálculo por provincia
   if (provinciaId) {
-    return calcularGastosEnvioPorProvincia(provinciaId)
+    return calcularGastosEnvioPorProvincia(provinciaId, subtotal)
   }
-  // Fallback: usar el cálculo antiguo
-  return subtotal < 25 ? 2.99 : 0
+  return subtotal < SHIPPING_FREE_THRESHOLD ? SHIPPING_PENINSULA_COST : 0
 }
