@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client"
+import { supabaseAdmin as supabase } from "@/lib/supabase/admin"
 import type { BlogCategory, BlogTag, BlogSearchParams, BlogSearchResult, BlogPostWithRelations } from "@/types/blog"
 
 export class BlogService {
