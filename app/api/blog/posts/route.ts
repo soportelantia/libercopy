@@ -32,7 +32,15 @@ export async function GET(request: NextRequest) {
       if (cat) query = query.eq("category_id", cat.id)
     }
 
-    const { data: allPosts } = await query
+    const { data: allPosts, error: postsError } = await query
+
+    console.log("[v0] blog posts query result - count:", allPosts?.length, "error:", postsError)
+    console.log("[v0] supabase url defined:", !!process.env.NEXT_PUBLIC_SUPABASE_URL, "key defined:", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+
+    if (postsError) {
+      console.error("[v0] blog posts error detail:", postsError)
+      return NextResponse.json({ error: postsError.message, detail: postsError }, { status: 500 })
+    }
 
     let posts = (allPosts || []).map((post) => ({
       ...post,
