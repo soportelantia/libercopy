@@ -11,16 +11,14 @@ export async function GET(request: NextRequest) {
     const tag = searchParams.get("tag") || undefined
     const offset = (page - 1) * limit
 
-    let query = supabaseAdmin
+    let postsQuery = supabaseAdmin
       .from("blog_posts")
-      .select(`
-        *,
-        category:blog_categories(*)
-      `)
+      .select("*")
+      .eq("status", "published")
       .order("published_at", { ascending: false })
 
     if (search) {
-      query = query.or(`title.ilike.%${search}%,excerpt.ilike.%${search}%,content.ilike.%${search}%`)
+      postsQuery = postsQuery.or(`title.ilike.%${search}%,excerpt.ilike.%${search}%,content.ilike.%${search}%`)
     }
 
     if (category) {
@@ -29,27 +27,24 @@ export async function GET(request: NextRequest) {
         .select("id")
         .eq("slug", category)
         .single()
-      if (cat) query = query.eq("category_id", cat.id)
+      if (cat) postsQuery = postsQuery.eq("category_id", cat.id)
     }
 
-    const { data: allPosts, error: postsError } = await query
-
-    console.log("[v0] blog posts query result - count:", allPosts?.length, "error:", postsError)
-    console.log("[v0] supabase url defined:", !!process.env.NEXT_PUBLIC_SUPABASE_URL, "key defined:", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+    const { data: allPosts, error: postsError } = await postsQuery
 
     if (postsError) {
-      console.error("[v0] blog posts error detail:", postsError)
       return NextResponse.json({ error: postsError.message, detail: postsError }, { status: 500 })
     }
 
-    let posts = (allPosts || []).map((post) => ({
+    // Obtener categorías por separado y mapearlas
+    const { data: allCategories } = await supabaseAdmin.from("blog_categories").select("*")
+    const categoriesMap = Object.fromEntries((allCategories || []).map((c) => [c.id, c]))
+
+    const posts = (allPosts || []).map((post) => ({
       ...post,
+      category: categoriesMap[post.category_id] || null,
       tags: [],
     }))
-
-    if (tag) {
-      posts = posts.filter((post) => post.tags.some((t: any) => t.slug === tag))
-    }
 
     const total = posts.length
     const paginated = posts.slice(offset, offset + limit)
