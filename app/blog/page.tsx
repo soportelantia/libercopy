@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { BlogPostCard } from "@/components/blog/blog-post-card"
@@ -42,7 +42,7 @@ function BlogPostsSkeleton() {
   )
 }
 
-export default function BlogPage() {
+function BlogContent() {
   const searchParams = useSearchParams()
   const page = parseInt(searchParams.get("page") || "1")
   const search = searchParams.get("search") || undefined
@@ -87,10 +87,62 @@ export default function BlogPage() {
   }, [page, search, category, tag])
 
   return (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="lg:col-span-1">
+        <div className="sticky top-8">
+          <BlogSearch categories={categories} />
+        </div>
+      </div>
+      <div className="lg:col-span-3">
+        {error ? (
+          <div className="text-center py-12">
+            <h3 className="text-xl font-semibold mb-2 text-red-600">Error al cargar el blog</h3>
+            <p className="text-gray-600">Por favor, intenta de nuevo más tarde</p>
+          </div>
+        ) : loading ? (
+          <BlogPostsSkeleton />
+        ) : postsData && postsData.posts.length > 0 ? (
+          <>
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold mb-2">
+                {search || category ? "Resultados de búsqueda" : "Últimos posts"}
+              </h2>
+              <p className="text-gray-600">
+                {postsData.total} post{postsData.total !== 1 ? "s" : ""} encontrado
+                {postsData.total !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {postsData.posts.map((post) => (
+                <BlogPostCard key={post.id} post={post} />
+              ))}
+            </div>
+            <BlogPagination
+              currentPage={postsData.page}
+              totalPages={postsData.totalPages}
+              total={postsData.total}
+              limit={postsData.limit}
+            />
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <h3 className="text-xl font-semibold mb-2">No se encontraron posts</h3>
+            <p className="text-gray-600 mb-4">
+              {search || category ? "Intenta con otros términos de búsqueda" : "Aún no hay posts publicados"}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function BlogPage() {
+  return (
     <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navbar />
       <section className="relative py-20 md:py-32 overflow-hidden" style={{ paddingBottom: "4rem" }}>
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10" />
         <div className="container mx-auto px-4 relative">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2">
@@ -106,58 +158,10 @@ export default function BlogPage() {
           </div>
         </div>
       </section>
-
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8">
-              <BlogSearch categories={categories} />
-            </div>
-          </div>
-
-          {/* Contenido principal */}
-          <div className="lg:col-span-3">
-            {error ? (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-semibold mb-2 text-red-600">Error al cargar el blog</h3>
-                <p className="text-gray-600">Por favor, intenta de nuevo más tarde</p>
-              </div>
-            ) : loading ? (
-              <BlogPostsSkeleton />
-            ) : postsData && postsData.posts.length > 0 ? (
-              <>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-semibold mb-2">
-                    {search || category ? "Resultados de búsqueda" : "Últimos posts"}
-                  </h2>
-                  <p className="text-gray-600">
-                    {postsData.total} post{postsData.total !== 1 ? "s" : ""} encontrado
-                    {postsData.total !== 1 ? "s" : ""}
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {postsData.posts.map((post) => (
-                    <BlogPostCard key={post.id} post={post} />
-                  ))}
-                </div>
-                <BlogPagination
-                  currentPage={postsData.page}
-                  totalPages={postsData.totalPages}
-                  total={postsData.total}
-                  limit={postsData.limit}
-                />
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-semibold mb-2">No se encontraron posts</h3>
-                <p className="text-gray-600 mb-4">
-                  {search || category ? "Intenta con otros términos de búsqueda" : "Aún no hay posts publicados"}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        <Suspense fallback={<BlogPostsSkeleton />}>
+          <BlogContent />
+        </Suspense>
       </div>
     </main>
   )
