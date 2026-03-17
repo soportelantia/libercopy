@@ -10,11 +10,7 @@ export async function GET(
 
     const { data: post, error } = await supabaseAdmin
       .from("blog_posts")
-      .select(`
-        *,
-        category:blog_categories(*),
-        tags:blog_post_tags(tag:blog_tags(*))
-      `)
+      .select(`*, category:blog_categories(*)`)
       .eq("slug", slug)
       .single()
 
@@ -28,19 +24,12 @@ export async function GET(
       .update({ views_count: (post.views_count || 0) + 1 })
       .eq("id", post.id)
 
-    const transformed = {
-      ...post,
-      tags: post.tags?.map((pt: any) => pt.tag).filter(Boolean) || [],
-    }
+    const transformed = { ...post, tags: [] }
 
     // Posts relacionados
     let relatedQuery = supabaseAdmin
       .from("blog_posts")
-      .select(`
-        *,
-        category:blog_categories(*),
-        tags:blog_post_tags(tag:blog_tags(*))
-      `)
+      .select(`*, category:blog_categories(*)`)
       .neq("id", post.id)
       .order("published_at", { ascending: false })
       .limit(3)
@@ -50,11 +39,7 @@ export async function GET(
     }
 
     const { data: related } = await relatedQuery
-
-    const relatedPosts = (related || []).map((p) => ({
-      ...p,
-      tags: p.tags?.map((pt: any) => pt.tag).filter(Boolean) || [],
-    }))
+    const relatedPosts = (related || []).map((p) => ({ ...p, tags: [] }))
 
     return NextResponse.json({ post: transformed, relatedPosts })
   } catch (error: any) {

@@ -15,8 +15,7 @@ export async function GET(request: NextRequest) {
       .from("blog_posts")
       .select(`
         *,
-        category:blog_categories(*),
-        tags:blog_post_tags(tag:blog_tags(*))
+        category:blog_categories(*)
       `)
       .order("published_at", { ascending: false })
 
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     let posts = (allPosts || []).map((post) => ({
       ...post,
-      tags: post.tags?.map((pt: any) => pt.tag).filter(Boolean) || [],
+      tags: [],
     }))
 
     if (tag) {
