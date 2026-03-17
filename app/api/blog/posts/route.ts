@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     let postsQuery = supabaseAdmin
       .from("blog_posts")
       .select("*")
+      .eq("status", "published")
       .order("published_at", { ascending: false })
 
     if (search) {

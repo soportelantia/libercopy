@@ -12,6 +12,7 @@ export async function GET(
       .from("blog_posts")
       .select("*")
       .eq("slug", slug)
+      .eq("status", "published")
       .single()
 
     if (error || !post) {
@@ -38,6 +39,7 @@ export async function GET(
     let relatedQuery = supabaseAdmin
       .from("blog_posts")
       .select("*")
+      .eq("status", "published")
       .neq("id", post.id)
       .order("published_at", { ascending: false })
       .limit(3)
