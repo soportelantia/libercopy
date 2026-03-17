@@ -10,7 +10,7 @@ export async function GET(
 
     const { data: post, error } = await supabaseAdmin
       .from("blog_posts")
-      .select(`*, category:blog_categories(*)`)
+      .select("*")
       .eq("slug", slug)
       .single()
 
@@ -24,12 +24,20 @@ export async function GET(
       .update({ views_count: (post.views_count || 0) + 1 })
       .eq("id", post.id)
 
-    const transformed = { ...post, tags: [] }
+    // Obtener categoría por separado
+    const { data: allCategories } = await supabaseAdmin.from("blog_categories").select("*")
+    const categoriesMap = Object.fromEntries((allCategories || []).map((c) => [c.id, c]))
+
+    const transformed = {
+      ...post,
+      category: categoriesMap[post.category_id] || null,
+      tags: [],
+    }
 
     // Posts relacionados
     let relatedQuery = supabaseAdmin
       .from("blog_posts")
-      .select(`*, category:blog_categories(*)`)
+      .select("*")
       .neq("id", post.id)
       .order("published_at", { ascending: false })
       .limit(3)
@@ -39,7 +47,11 @@ export async function GET(
     }
 
     const { data: related } = await relatedQuery
-    const relatedPosts = (related || []).map((p) => ({ ...p, tags: [] }))
+    const relatedPosts = (related || []).map((p) => ({
+      ...p,
+      category: categoriesMap[p.category_id] || null,
+      tags: [],
+    }))
 
     return NextResponse.json({ post: transformed, relatedPosts })
   } catch (error: any) {
