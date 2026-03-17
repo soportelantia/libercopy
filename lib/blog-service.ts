@@ -1,25 +1,9 @@
-import { createClient } from "@supabase/supabase-js"
+import { supabaseAdmin as supabase } from "@/lib/supabase/admin"
 import type { BlogCategory, BlogTag, BlogSearchParams, BlogSearchResult, BlogPostWithRelations } from "@/types/blog"
-
-// Cliente universal compatible con Server Components y Client Components
-// Usa SUPABASE_URL y SUPABASE_ANON_KEY (disponibles en servidor) con fallback a NEXT_PUBLIC_
-function getClient() {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  console.log("[v0] Supabase client init - URL defined:", !!url, "KEY defined:", !!key, "URL value:", url?.substring(0, 30))
-
-  if (!url || !key) {
-    throw new Error(`Supabase env vars missing. URL: ${!!url}, KEY: ${!!key}`)
-  }
-
-  return createClient(url, key, { auth: { persistSession: false } })
-}
 
 export class BlogService {
   // Obtener posts con filtros y paginación
   static async getPosts(params: BlogSearchParams = {}): Promise<BlogSearchResult> {
-    const supabase = getClient()
     const { search, category, tag, page = 1, limit = 6 } = params
     const offset = (page - 1) * limit
 
@@ -91,7 +75,6 @@ export class BlogService {
 
   // Obtener un post por slug
   static async getPostBySlug(slug: string): Promise<BlogPostWithRelations | null> {
-    const supabase = getClient()
     const { data: post, error } = await supabase
       .from("blog_posts")
       .select(`
@@ -127,7 +110,6 @@ export class BlogService {
 
   // Obtener posts relacionados
   static async getRelatedPosts(postId: string, categoryId?: string, limit = 3): Promise<BlogPostWithRelations[]> {
-    const supabase = getClient()
     let query = supabase
       .from("blog_posts")
       .select(`
@@ -161,7 +143,6 @@ export class BlogService {
 
   // Obtener categorías
   static async getCategories(): Promise<BlogCategory[]> {
-    const supabase = getClient()
     const { data, error } = await supabase.from("blog_categories").select("*").order("name")
 
     if (error) {
@@ -174,7 +155,6 @@ export class BlogService {
 
   // Obtener tags
   static async getTags(): Promise<BlogTag[]> {
-    const supabase = getClient()
     const { data, error } = await supabase.from("blog_tags").select("*").order("name")
 
     if (error) {
