@@ -2,12 +2,18 @@ import { createClient } from "@supabase/supabase-js"
 import type { BlogCategory, BlogTag, BlogSearchParams, BlogSearchResult, BlogPostWithRelations } from "@/types/blog"
 
 // Cliente universal compatible con Server Components y Client Components
+// Usa SUPABASE_URL y SUPABASE_ANON_KEY (disponibles en servidor) con fallback a NEXT_PUBLIC_
 function getClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } }
-  )
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  console.log("[v0] Supabase client init - URL defined:", !!url, "KEY defined:", !!key, "URL value:", url?.substring(0, 30))
+
+  if (!url || !key) {
+    throw new Error(`Supabase env vars missing. URL: ${!!url}, KEY: ${!!key}`)
+  }
+
+  return createClient(url, key, { auth: { persistSession: false } })
 }
 
 export class BlogService {
