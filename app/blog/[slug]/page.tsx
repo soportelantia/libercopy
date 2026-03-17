@@ -1,5 +1,6 @@
 import { BlogService } from "@/lib/blog-service"
 import BlogPostClientPage from "./BlogPostClientPage"
+import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 
 interface BlogPostPageProps {
@@ -28,6 +29,14 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   }
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
-  return <BlogPostClientPage params={params} />
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const post = await BlogService.getPostBySlug(params.slug)
+
+  if (!post) {
+    notFound()
+  }
+
+  const relatedPosts = await BlogService.getRelatedPosts(post.id, post.category_id)
+
+  return <BlogPostClientPage post={post} relatedPosts={relatedPosts} />
 }
