@@ -1,9 +1,19 @@
-import { supabase } from "@/lib/supabase/client"
+import { createClient } from "@supabase/supabase-js"
 import type { BlogCategory, BlogTag, BlogSearchParams, BlogSearchResult, BlogPostWithRelations } from "@/types/blog"
+
+// Cliente universal compatible con Server Components y Client Components
+function getClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } }
+  )
+}
 
 export class BlogService {
   // Obtener posts con filtros y paginación
   static async getPosts(params: BlogSearchParams = {}): Promise<BlogSearchResult> {
+    const supabase = getClient()
     const { search, category, tag, page = 1, limit = 6 } = params
     const offset = (page - 1) * limit
 
@@ -75,6 +85,7 @@ export class BlogService {
 
   // Obtener un post por slug
   static async getPostBySlug(slug: string): Promise<BlogPostWithRelations | null> {
+    const supabase = getClient()
     const { data: post, error } = await supabase
       .from("blog_posts")
       .select(`
@@ -110,6 +121,7 @@ export class BlogService {
 
   // Obtener posts relacionados
   static async getRelatedPosts(postId: string, categoryId?: string, limit = 3): Promise<BlogPostWithRelations[]> {
+    const supabase = getClient()
     let query = supabase
       .from("blog_posts")
       .select(`
@@ -143,6 +155,7 @@ export class BlogService {
 
   // Obtener categorías
   static async getCategories(): Promise<BlogCategory[]> {
+    const supabase = getClient()
     const { data, error } = await supabase.from("blog_categories").select("*").order("name")
 
     if (error) {
@@ -155,6 +168,7 @@ export class BlogService {
 
   // Obtener tags
   static async getTags(): Promise<BlogTag[]> {
+    const supabase = getClient()
     const { data, error } = await supabase.from("blog_tags").select("*").order("name")
 
     if (error) {
