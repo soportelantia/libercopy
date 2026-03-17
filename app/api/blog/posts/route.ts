@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
         category:blog_categories(*),
         tags:blog_post_tags(tag:blog_tags(*))
       `)
-      .eq("status", "published")
       .order("published_at", { ascending: false })
 
     if (search) {

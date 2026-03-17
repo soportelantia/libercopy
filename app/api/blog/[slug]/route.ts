@@ -16,7 +16,6 @@ export async function GET(
         tags:blog_post_tags(tag:blog_tags(*))
       `)
       .eq("slug", slug)
-      .eq("status", "published")
       .single()
 
     if (error || !post) {
@@ -42,7 +41,6 @@ export async function GET(
         category:blog_categories(*),
         tags:blog_post_tags(tag:blog_tags(*))
       `)
-      .eq("status", "published")
       .neq("id", post.id)
       .order("published_at", { ascending: false })
       .limit(3)

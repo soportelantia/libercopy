@@ -16,7 +16,6 @@ export class BlogService {
           tag:blog_tags(*)
         )
       `)
-      .eq("status", "published")
       .order("published_at", { ascending: false })
 
     // Aplicar filtros
@@ -85,7 +84,6 @@ export class BlogService {
         )
       `)
       .eq("slug", slug)
-      .eq("status", "published")
       .single()
 
     if (error) {
@@ -119,7 +117,6 @@ export class BlogService {
           tag:blog_tags(*)
         )
       `)
-      .eq("status", "published")
       .neq("id", postId)
       .order("published_at", { ascending: false })
       .limit(limit)
