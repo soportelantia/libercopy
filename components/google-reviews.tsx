@@ -4,7 +4,8 @@ import { Star, ExternalLink } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-const GOOGLE_MAPS_URL = "https://share.google/hEO0ANx1idQylYW0W"
+const PLACE_ID = "ChIJQeMQUQBtEg0R3qHruQZ13Wo"
+const GOOGLE_MAPS_URL = `https://search.google.com/local/reviews?placeid=${PLACE_ID}`
 const WRITE_REVIEW_URL = "https://g.page/r/Cd6h67kGdd1qEAE/review"
 
 const reviews = [
