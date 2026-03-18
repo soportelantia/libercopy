@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Mail, Clock, Send, MessageSquare, HelpCircle, Printer, BookOpen, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import Footer from "@/components/footer"
+import GoogleReviews from "@/components/google-reviews"
 
 export default function ContactPageClient() {
   const [formData, setFormData] = useState({
@@ -343,6 +344,9 @@ export default function ContactPageClient() {
         </div>
         </section>
    
+      {/* Google Reviews Section */}
+      <GoogleReviews />
+
     {/* Footer */}
       <Footer />
     </main>
