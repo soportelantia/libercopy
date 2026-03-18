@@ -80,23 +80,37 @@ const staticRoutes: MetadataRoute.Sitemap = [
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Obtener todos los posts publicados del blog
-  const { data: posts, error } = await supabaseAdmin
-    .from("blog_posts")
-    .select("slug, updated_at, published_at")
-    .eq("status", "published")
-    .order("published_at", { ascending: false })
+  // Si las variables de entorno no están disponibles, devolver solo rutas estáticas
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (error) {
-    console.error("[sitemap] Error fetching blog posts:", error)
+  if (!supabaseUrl || !supabaseKey) {
+    return staticRoutes
   }
 
-  const blogRoutes: MetadataRoute.Sitemap = (posts || []).map((post) => ({
-    url: `${BASE_URL}/blog/${post.slug}`,
-    lastModified: new Date(post.updated_at || post.published_at),
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  }))
+  try {
+    // Obtener todos los posts publicados del blog
+    const { data: posts, error } = await supabaseAdmin
+      .from("blog_posts")
+      .select("slug, updated_at, published_at")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
 
-  return [...staticRoutes, ...blogRoutes]
+    if (error) {
+      console.error("[sitemap] Error fetching blog posts:", error)
+      return staticRoutes
+    }
+
+    const blogRoutes: MetadataRoute.Sitemap = (posts || []).map((post) => ({
+      url: `${BASE_URL}/blog/${post.slug}`,
+      lastModified: new Date(post.updated_at || post.published_at),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }))
+
+    return [...staticRoutes, ...blogRoutes]
+  } catch (err) {
+    console.error("[sitemap] Unexpected error:", err)
+    return staticRoutes
+  }
 }
