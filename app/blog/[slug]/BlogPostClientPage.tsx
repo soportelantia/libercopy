@@ -111,14 +111,10 @@ export default function BlogPostClientPage({ post, relatedPosts }: BlogPostClien
           )}
 
           {/* Contenido */}
-          <div className="prose prose-lg max-w-none mb-12">
-            <div
-              dangerouslySetInnerHTML={{
-                __html: post.content.replace(/\n/g, "<br />"),
-              }}
-              className="whitespace-pre-wrap"
-            />
-          </div>
+          <div
+            className="blog-content max-w-none mb-12"
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
 
           {/* Botón de compartir al final */}
           <div className="text-center py-6 border-t">
