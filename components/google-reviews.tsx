@@ -1,57 +1,32 @@
 "use client"
 
-import { Star, ExternalLink } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Star, ExternalLink, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-const PLACE_ID = "ChIJQeMQUQBtEg0R3qHruQZ13Wo"
-const GOOGLE_MAPS_URL = `https://search.google.com/local/reviews?placeid=${PLACE_ID}`
+const GOOGLE_MAPS_URL = `https://search.google.com/local/reviews?placeid=ChIJQeMQUQBtEg0R3qHruQZ13Wo`
 const WRITE_REVIEW_URL = "https://g.page/r/Cd6h67kGdd1qEAE/review"
 
-const reviews = [
-  {
-    author: "María García",
-    rating: 5,
-    date: "Hace 2 semanas",
-    text: "Excelente servicio. Pedí la impresión de mis apuntes y llegaron perfectos y a tiempo. El precio es muy competitivo. Totalmente recomendado.",
-    avatar: "MG",
-  },
-  {
-    author: "Carlos López",
-    rating: 5,
-    date: "Hace 1 mes",
-    text: "La calidad de impresión es muy buena y el proceso de pedido es muy sencillo. Repetiré sin duda.",
-    avatar: "CL",
-  },
-  {
-    author: "Ana Martínez",
-    rating: 5,
-    date: "Hace 1 mes",
-    text: "Muy contentos con el resultado. Entrega rápida y el material llegó en perfectas condiciones. El servicio al cliente es muy amable.",
-    avatar: "AM",
-  },
-  {
-    author: "David Sánchez",
-    rating: 5,
-    date: "Hace 2 meses",
-    text: "Usé LiberCopy para imprimir mi TFG y quedé encantado. La calidad de impresión y la encuadernación son de primera. Muy recomendable.",
-    avatar: "DS",
-  },
-  {
-    author: "Laura Fernández",
-    rating: 5,
-    date: "Hace 2 meses",
-    text: "Precio imbatible y calidad excelente. El envío llegó antes de lo esperado. Sin duda el mejor servicio de impresión online.",
-    avatar: "LF",
-  },
-  {
-    author: "Javier Romero",
-    rating: 5,
-    date: "Hace 3 meses",
-    text: "Llevaba tiempo buscando una imprenta online de confianza y LiberCopy ha superado mis expectativas. Rápido, económico y de calidad.",
-    avatar: "JR",
-  },
-]
+interface Review {
+  authorAttribution: {
+    displayName: string
+    photoUri?: string
+    uri?: string
+  }
+  rating: number
+  relativePublishTimeDescription: string
+  text?: {
+    text: string
+    languageCode: string
+  }
+}
+
+interface ReviewsData {
+  rating: number
+  userRatingCount: number
+  reviews: Review[]
+}
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -77,7 +52,56 @@ function GoogleLogo() {
   )
 }
 
+function Avatar({ name, photoUri }: { name: string; photoUri?: string }) {
+  const initials = name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+
+  if (photoUri) {
+    return (
+      <img
+        src={photoUri}
+        alt={name}
+        crossOrigin="anonymous"
+        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+      />
+    )
+  }
+
+  return (
+    <div
+      className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
+      aria-hidden="true"
+    >
+      {initials}
+    </div>
+  )
+}
+
 export default function GoogleReviews() {
+  const [data, setData] = useState<ReviewsData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    fetch("/api/google-reviews")
+      .then((res) => {
+        if (!res.ok) throw new Error("Error fetching reviews")
+        return res.json()
+      })
+      .then((json) => {
+        setData(json)
+        setLoading(false)
+      })
+      .catch(() => {
+        setError(true)
+        setLoading(false)
+      })
+  }, [])
+
   return (
     <section className="py-20 bg-white/60">
       <div className="container mx-auto px-4">
@@ -95,55 +119,83 @@ export default function GoogleReviews() {
           </h2>
 
           {/* Puntuación global */}
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <div className="flex items-center gap-1" aria-label="Valoración media: 5 de 5 estrellas">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} className="w-7 h-7 fill-yellow-400 text-yellow-400" />
-              ))}
+          {data && (
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <div className="flex items-center gap-1" aria-label={`Valoración media: ${data.rating} de 5 estrellas`}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-7 h-7 ${star <= Math.round(data.rating) ? "fill-yellow-400 text-yellow-400" : "fill-gray-200 text-gray-200"}`}
+                  />
+                ))}
+              </div>
+              <span className="text-5xl font-bold text-gray-900">{data.rating.toFixed(1).replace(".", ",")}</span>
+              <div className="text-left">
+                <p className="text-sm text-gray-500">{data.userRatingCount} reseñas en</p>
+                <a
+                  href={GOOGLE_MAPS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1.5"
+                >
+                  <GoogleLogo />
+                  <span>Google</span>
+                </a>
+              </div>
             </div>
-            <span className="text-5xl font-bold text-gray-900">5,0</span>
-            <div className="text-left">
-              <p className="text-sm text-gray-500">Basado en reseñas de</p>
-              <a
-                href={GOOGLE_MAPS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1.5"
-              >
-                <GoogleLogo />
-                <span>Google</span>
-              </a>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Grid de reseñas */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-          {reviews.map((review, index) => (
-            <Card
-              key={index}
-              className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start gap-3 mb-3">
-                  <div
-                    className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
-                    aria-hidden="true"
-                  >
-                    {review.avatar}
+        {/* Estados: cargando / error / reseñas */}
+        {loading && (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          </div>
+        )}
+
+        {error && (
+          <p className="text-center text-gray-500 py-10">
+            No se pudieron cargar las reseñas en este momento.
+          </p>
+        )}
+
+        {!loading && !error && data && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {data.reviews.map((review, index) => (
+              <Card
+                key={index}
+                className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Avatar
+                      name={review.authorAttribution.displayName}
+                      photoUri={review.authorAttribution.photoUri}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <a
+                        href={review.authorAttribution.uri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-gray-900 text-sm truncate block hover:text-blue-600 transition-colors"
+                      >
+                        {review.authorAttribution.displayName}
+                      </a>
+                      <p className="text-xs text-gray-400">{review.relativePublishTimeDescription}</p>
+                    </div>
+                    <GoogleLogo />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm truncate">{review.author}</p>
-                    <p className="text-xs text-gray-400">{review.date}</p>
-                  </div>
-                  <GoogleLogo />
-                </div>
-                <StarRating rating={review.rating} />
-                <p className="mt-3 text-gray-600 text-sm leading-relaxed line-clamp-4">{review.text}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <StarRating rating={review.rating} />
+                  {review.text?.text && (
+                    <p className="mt-3 text-gray-600 text-sm leading-relaxed line-clamp-4">
+                      {review.text.text}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
