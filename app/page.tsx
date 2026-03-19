@@ -25,6 +25,7 @@ import {
   Calculator,
   ArrowRight,
 } from "lucide-react"
+// FileText and ArrowRight kept for use in features/how-it-works sections
 import PriceCalculator from "@/components/price-calculator"
 
 export default function HomePage() {
@@ -90,26 +91,15 @@ export default function HomePage() {
                   Empezar a imprimir
                 </Button>
               </Link>
-              <Link href="/encuadernar">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-2 border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg rounded-xl bg-white/80 backdrop-blur-sm"
-                >
-                  <FileText className="mr-2 h-5 w-5" />
-                  Encuadernacion
-                </Button>
-              </Link>
-              <Link href="/calcular-precio">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-2 border-blue-300 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg rounded-xl bg-white/80 backdrop-blur-sm"
-                >
-                  <Calculator className="mr-2 h-5 w-5" />
-                  Calcular precio
-                </Button>
-              </Link>
+              <button
+                onClick={() => {
+                  document.getElementById("calculadora")?.scrollIntoView({ behavior: "smooth" })
+                }}
+                className="inline-flex items-center justify-center border-2 border-blue-300 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg rounded-xl bg-white/80 backdrop-blur-sm font-medium transition-all duration-200"
+              >
+                <Calculator className="mr-2 h-5 w-5" />
+                Calcula tu pedido
+              </button>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
               <div className="flex items-center space-x-2">
@@ -248,7 +238,7 @@ export default function HomePage() {
       </section>
 
       {/* Price Calculator Section */}
-      <section className="py-20 bg-white/50">
+      <section id="calculadora" className="py-20 bg-white/50">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
             {/* Left: text */}

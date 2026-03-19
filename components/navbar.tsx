@@ -27,7 +27,8 @@ import {
   Printer,
   MapPin,
   Phone,
-  Rss
+  Rss,
+  Calculator
 } from "lucide-react"
 
 export default function Navbar() {
@@ -63,6 +64,7 @@ export default function Navbar() {
   const navLinks = [
     { href: "/imprimir", label: "Imprimir", icon: Printer },
     { href: "/encuadernar", label: "Encuadernar", icon: BookOpen },
+    { href: "/calcular-precio", label: "Calcular Precio", icon: Calculator },
     { href: "/faq", label: "FAQ", icon: HelpCircle },
     { href: "/blog", label: "Blog", icon: Rss },
     { href: "/contacto", label: "Contacto", icon: Phone },
