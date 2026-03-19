@@ -22,7 +22,10 @@ import {
   Award,
   Users,
   Zap,
+  Calculator,
+  ArrowRight,
 } from "lucide-react"
+import PriceCalculator from "@/components/price-calculator"
 
 export default function HomePage() {
   const [stats, setStats] = useState({
@@ -94,7 +97,17 @@ export default function HomePage() {
                   className="border-2 border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg rounded-xl bg-white/80 backdrop-blur-sm"
                 >
                   <FileText className="mr-2 h-5 w-5" />
-                  Encuadernación
+                  Encuadernacion
+                </Button>
+              </Link>
+              <Link href="/calcular-precio">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-2 border-blue-300 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg rounded-xl bg-white/80 backdrop-blur-sm"
+                >
+                  <Calculator className="mr-2 h-5 w-5" />
+                  Calcular precio
                 </Button>
               </Link>
             </div>
@@ -229,6 +242,54 @@ export default function HomePage() {
                 <h3 className="text-xl font-semibold mb-4">3. Realiza el pedido</h3>
                 <p className="text-gray-600">Añade al carrito, paga de forma segura y recibe en tu domicilio</p>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Price Calculator Section */}
+      <section className="py-20 bg-white/50">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+            {/* Left: text */}
+            <div>
+              <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2">
+                <Calculator className="w-4 h-4 mr-2" />
+                Calcula tu precio al instante
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Sabe exactamente{" "}
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  cuanto te va a costar
+                </span>{" "}
+                antes de subir tu archivo
+              </h2>
+              <p className="text-lg text-gray-600 mb-6">
+                Introduce el numero de paginas, elige si quieres color o blanco y negro, las caras y el acabado. Obtendras el precio total en segundos, sin sorpresas.
+              </p>
+              <div className="space-y-3 text-gray-600">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+                  <span>Precios actualizados desde nuestra base de datos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-blue-500 shrink-0" />
+                  <span>Sin necesidad de crear cuenta ni subir ningun fichero</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-purple-500 shrink-0" />
+                  <span>IVA incluido en el precio mostrado</span>
+                </div>
+              </div>
+              <Link href="/calcular-precio" className="mt-8 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium">
+                Abrir calculadora completa
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            {/* Right: calculator */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+              <PriceCalculator />
             </div>
           </div>
         </div>
