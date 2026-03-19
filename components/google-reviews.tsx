@@ -162,16 +162,32 @@ export default function GoogleReviews() {
                 className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
               >
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <StarRating rating={review.rating} />
+                  <div className="flex items-start gap-3 mb-3">
+                    <div
+                      className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
+                      aria-hidden="true"
+                    >
+                      {review.author_name.trim().charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">
+                        {(() => {
+                          const parts = review.author_name.trim().split(" ")
+                          const first = parts[0]
+                          const lastInitial = parts.length > 1 ? ` ${parts[parts.length - 1].charAt(0).toUpperCase()}.` : ""
+                          return `${first}${lastInitial}`
+                        })()}
+                      </p>
+                      <p className="text-xs text-gray-400">{review.relative_time_description}</p>
+                    </div>
                     <GoogleLogo />
                   </div>
+                  <StarRating rating={review.rating} />
                   {review.text && (
-                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-4">
+                    <p className="mt-3 text-gray-600 text-sm leading-relaxed line-clamp-4">
                       {review.text}
                     </p>
                   )}
-                  <p className="mt-3 text-xs text-gray-400">{review.relative_time_description}</p>
                 </CardContent>
               </Card>
             ))}
