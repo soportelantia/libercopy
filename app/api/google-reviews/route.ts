@@ -11,13 +11,9 @@ export async function GET() {
   }
 
   try {
-    const url = `https://places.googleapis.com/v1/places/${PLACE_ID}?fields=displayName,rating,userRatingCount,reviews&languageCode=es`
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=name,rating,user_ratings_total,reviews&language=es&reviews_sort=newest&key=${apiKey}`
 
     const response = await fetch(url, {
-      headers: {
-        "X-Goog-Api-Key": apiKey,
-        "Content-Type": "application/json",
-      },
       next: { revalidate: 3600 }, // Cache 1 hora
     })
 
@@ -29,7 +25,12 @@ export async function GET() {
 
     const data = await response.json()
 
-    const allReviews = data.reviews ?? []
+    if (data.status !== "OK") {
+      console.error("[v0] Google Places API status:", data.status, data.error_message)
+      return NextResponse.json({ error: data.error_message ?? data.status }, { status: 500 })
+    }
+
+    const allReviews = data.result.reviews ?? []
 
     // Filtrar solo reseñas con puntuación >= MIN_RATING y ordenar de mayor a menor
     const filtered = allReviews
@@ -37,8 +38,8 @@ export async function GET() {
       .sort((a: { rating: number }, b: { rating: number }) => b.rating - a.rating)
 
     return NextResponse.json({
-      rating: data.rating ?? null,
-      userRatingCount: data.userRatingCount ?? 0,
+      rating: data.result.rating ?? null,
+      userRatingCount: data.result.user_ratings_total ?? 0,
       reviews: filtered,
     })
   } catch (error) {

@@ -9,17 +9,12 @@ const GOOGLE_MAPS_URL = `https://search.google.com/local/reviews?placeid=ChIJQeM
 const WRITE_REVIEW_URL = "https://g.page/r/Cd6h67kGdd1qEAE/review"
 
 interface Review {
-  authorAttribution: {
-    displayName: string
-    photoUri?: string
-    uri?: string
-  }
+  author_name: string
+  author_url?: string
+  profile_photo_url?: string
   rating: number
-  relativePublishTimeDescription: string
-  text?: {
-    text: string
-    languageCode: string
-  }
+  relative_time_description: string
+  text?: string
 }
 
 interface ReviewsData {
@@ -169,26 +164,26 @@ export default function GoogleReviews() {
                 <CardContent className="p-6">
                   <div className="flex items-start gap-3 mb-3">
                     <Avatar
-                      name={review.authorAttribution.displayName}
-                      photoUri={review.authorAttribution.photoUri}
+                      name={review.author_name}
+                      photoUri={review.profile_photo_url}
                     />
                     <div className="flex-1 min-w-0">
                       <a
-                        href={review.authorAttribution.uri}
+                        href={review.author_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-semibold text-gray-900 text-sm truncate block hover:text-blue-600 transition-colors"
                       >
-                        {review.authorAttribution.displayName}
+                        {review.author_name}
                       </a>
-                      <p className="text-xs text-gray-400">{review.relativePublishTimeDescription}</p>
+                      <p className="text-xs text-gray-400">{review.relative_time_description}</p>
                     </div>
                     <GoogleLogo />
                   </div>
                   <StarRating rating={review.rating} />
-                  {review.text?.text && (
+                  {review.text && (
                     <p className="mt-3 text-gray-600 text-sm leading-relaxed line-clamp-4">
-                      {review.text.text}
+                      {review.text}
                     </p>
                   )}
                 </CardContent>
