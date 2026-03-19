@@ -162,30 +162,16 @@ export default function GoogleReviews() {
                 className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
               >
                 <CardContent className="p-6">
-                  <div className="flex items-start gap-3 mb-3">
-                    <Avatar
-                      name={review.author_name}
-                      photoUri={review.profile_photo_url}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <a
-                        href={review.author_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-gray-900 text-sm truncate block hover:text-blue-600 transition-colors"
-                      >
-                        {review.author_name}
-                      </a>
-                      <p className="text-xs text-gray-400">{review.relative_time_description}</p>
-                    </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <StarRating rating={review.rating} />
                     <GoogleLogo />
                   </div>
-                  <StarRating rating={review.rating} />
                   {review.text && (
-                    <p className="mt-3 text-gray-600 text-sm leading-relaxed line-clamp-4">
+                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-4">
                       {review.text}
                     </p>
                   )}
+                  <p className="mt-3 text-xs text-gray-400">{review.relative_time_description}</p>
                 </CardContent>
               </Card>
             ))}
