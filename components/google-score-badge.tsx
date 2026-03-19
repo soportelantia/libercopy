@@ -38,12 +38,18 @@ export default function GoogleScoreBadge() {
   return (
     <Card className="border-2 border-yellow-100 bg-gradient-to-br from-yellow-50 to-orange-50">
       <CardContent className="p-5">
-        <div className="flex items-center gap-3">
+        <a
+          href="https://share.google/hEO0ANx1idQylYW0W"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 group"
+          aria-label={`Ver perfil de LiberCopy en Google — ${data.rating.toFixed(1)} estrellas`}
+        >
           <GoogleLogo />
-          <div>
+          <div className="flex-1">
             <p className="text-xs font-medium text-gray-500 leading-none mb-1">Valoración en Google</p>
             <div className="flex items-center gap-1.5">
-              <span className="text-2xl font-bold text-gray-900 leading-none">{data.rating.toFixed(1)}</span>
+              <span className="text-2xl font-bold text-gray-900 leading-none group-hover:text-yellow-600 transition-colors">{data.rating.toFixed(1)}</span>
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
@@ -59,11 +65,14 @@ export default function GoogleScoreBadge() {
                 ))}
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5 group-hover:text-gray-700 transition-colors">
               {data.userRatingCount} reseñas verificadas
             </p>
           </div>
-        </div>
+          <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
       </CardContent>
     </Card>
   )
