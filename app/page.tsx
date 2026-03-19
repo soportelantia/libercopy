@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Footer from "@/components/footer"
 import ShippingBanner from '@/components/shipping-banner'
+import GoogleReviews from "@/components/google-reviews"
 import {
   FileText,
   Printer,
@@ -279,6 +280,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Google Reviews Section */}
+      <GoogleReviews />
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">

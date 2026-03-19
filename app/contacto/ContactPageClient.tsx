@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Mail, Clock, Send, MessageSquare, HelpCircle, Printer, BookOpen, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import Footer from "@/components/footer"
+import GoogleReviews from "@/components/google-reviews"
+import GoogleScoreBadge from "@/components/google-score-badge"
 
 export default function ContactPageClient() {
   const [formData, setFormData] = useState({
@@ -195,6 +197,9 @@ export default function ContactPageClient() {
                 </Card>
               )
             })}
+
+            {/* Google Score Badge */}
+            <GoogleScoreBadge />
 
             {/* Why Contact Us */}
             <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-100">
