@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Calculator, Minus, Plus, Printer, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { pricingService } from "@/lib/pricing-service"
@@ -14,7 +15,7 @@ type PrintForm = "oneSided" | "doubleSided"
 type Finishing = "none" | "stapled" | "bound"
 
 export default function PriceCalculator() {
-  const [pages, setPages] = useState(10)
+  const [pages, setPages] = useState<number | "">(10)
   const [copies, setCopies] = useState(1)
   const [printType, setPrintType] = useState<PrintType>("bw")
   const [printForm, setPrintForm] = useState<PrintForm>("oneSided")
@@ -23,7 +24,7 @@ export default function PriceCalculator() {
   const [isCalculating, setIsCalculating] = useState(false)
 
   const calculatePrice = useCallback(async () => {
-    if (pages <= 0) {
+    if (!pages || pages <= 0) {
       setPrice(null)
       return
     }
@@ -51,7 +52,21 @@ export default function PriceCalculator() {
   }, [calculatePrice])
 
   const handlePagesChange = (increment: boolean) => {
-    setPages((prev) => Math.max(1, increment ? prev + 1 : prev - 1))
+    setPages((prev) => Math.max(1, (Number(prev) || 0) + (increment ? 1 : -1)))
+  }
+
+  const handlePagesInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    if (val === "") {
+      setPages("")
+    } else {
+      const num = parseInt(val, 10)
+      if (!isNaN(num) && num >= 0) setPages(num)
+    }
+  }
+
+  const handlePagesBlur = () => {
+    if (!pages || Number(pages) < 1) setPages(1)
   }
 
   const handleCopiesChange = (increment: boolean) => {
@@ -59,26 +74,33 @@ export default function PriceCalculator() {
   }
 
   const setPagesPreset = (value: number) => setPages(value)
+  const pagesNum = Number(pages) || 0
 
   return (
     <div className="space-y-6">
       {/* Pages */}
       <div className="space-y-3">
-        <Label className="text-sm font-semibold text-gray-700">Numero de paginas</Label>
+        <Label htmlFor="calc-pages" className="text-sm font-semibold text-gray-700">Numero de paginas</Label>
         <div className="flex items-center gap-3">
           <Button
             type="button"
             variant="outline"
             size="icon"
             onClick={() => handlePagesChange(false)}
-            disabled={pages <= 1}
+            disabled={pagesNum <= 1}
             className="h-9 w-9 rounded-full shrink-0"
           >
             <Minus className="h-3 w-3" />
           </Button>
-          <div className="flex items-center justify-center w-16 h-9 border rounded-lg bg-gray-50 font-semibold text-base">
-            {pages}
-          </div>
+          <Input
+            id="calc-pages"
+            type="number"
+            min={1}
+            value={pages}
+            onChange={handlePagesInput}
+            onBlur={handlePagesBlur}
+            className="w-20 h-9 text-center font-semibold text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
           <Button
             type="button"
             variant="outline"
@@ -94,7 +116,7 @@ export default function PriceCalculator() {
                 key={preset}
                 onClick={() => setPagesPreset(preset)}
                 className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                  pages === preset
+                  pagesNum === preset
                     ? "bg-blue-600 text-white border-blue-600"
                     : "border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600"
                 }`}
@@ -247,6 +269,10 @@ export default function PriceCalculator() {
         </div>
       </div>
 
+      <p className="text-xs text-gray-400 text-center">
+        El precio final puede variar segun el numero exacto de paginas de tu PDF
+      </p>
+
       {/* CTA */}
       <Link href="/imprimir">
         <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl h-11 text-sm font-semibold">
@@ -255,10 +281,6 @@ export default function PriceCalculator() {
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </Link>
-
-      <p className="text-xs text-gray-400 text-center">
-        El precio final puede variar segun el numero exacto de paginas de tu PDF
-      </p>
     </div>
   )
 }
