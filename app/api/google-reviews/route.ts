@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic"
+
 const PLACE_ID = "ChIJQeMQUQBtEg0R3qHruQZ13Wo"
 const MIN_RATING = 4
 
@@ -10,29 +12,29 @@ export async function GET() {
     return NextResponse.json({ error: "API key not configured" }, { status: 500 })
   }
 
+  const url = new URL("https://maps.googleapis.com/maps/api/place/details/json")
+  url.searchParams.set("place_id", PLACE_ID)
+  url.searchParams.set("fields", "name,rating,user_ratings_total,reviews")
+  url.searchParams.set("language", "es")
+  url.searchParams.set("reviews_sort", "newest")
+  url.searchParams.set("key", apiKey)
+
+  console.log("[v0] Fetching from:", url.toString().replace(apiKey, "REDACTED"))
+
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=name,rating,user_ratings_total,reviews&language=es&reviews_sort=newest&key=${apiKey}`
-
-    const response = await fetch(url, {
-      next: { revalidate: 3600 }, // Cache 1 hora
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error("[v0] Google Places API error:", errorText)
-      return NextResponse.json({ error: "Error fetching reviews" }, { status: response.status })
-    }
+    const response = await fetch(url.toString(), { cache: "no-store" })
 
     const data = await response.json()
 
+    console.log("[v0] Google API status:", data.status)
+
     if (data.status !== "OK") {
-      console.error("[v0] Google Places API status:", data.status, data.error_message)
+      console.error("[v0] Google Places API error:", JSON.stringify(data))
       return NextResponse.json({ error: data.error_message ?? data.status }, { status: 500 })
     }
 
     const allReviews = data.result.reviews ?? []
 
-    // Filtrar solo reseñas con puntuación >= MIN_RATING y ordenar de mayor a menor
     const filtered = allReviews
       .filter((r: { rating: number }) => r.rating >= MIN_RATING)
       .sort((a: { rating: number }, b: { rating: number }) => b.rating - a.rating)
@@ -43,7 +45,7 @@ export async function GET() {
       reviews: filtered,
     })
   } catch (error) {
-    console.error("[v0] Unexpected error fetching reviews:", error)
+    console.error("[v0] Unexpected error:", error)
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 })
   }
 }
