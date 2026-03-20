@@ -61,7 +61,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden" style={{paddingBottom: "4rem"}}>
+      <section className="relative py-20 md:py-32 overflow-hidden" style={{ paddingBottom: "4rem" }}>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
         <div className="container mx-auto px-4 relative">
           <div className="text-center max-w-4xl mx-auto">
@@ -69,17 +69,17 @@ export default function HomePage() {
               <Star className="w-4 h-4 mr-2" />
               Servicio de impresión profesional
             </Badge>
-            
+
             <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold mb-6">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Imprime tus Apuntes y Documentos
+                Imprime tus apuntes baratos y recíbelos en 48h
               </span>
               <br />
               con LiberCopy
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              De forma rápida y económica desde 0,02€
-            </p>
+            <h2 className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Sube tu PDF, calcula el precio al instante y olvídate del resto
+            </h2>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link href="/imprimir">
@@ -87,7 +87,7 @@ export default function HomePage() {
                   className="h-14 px-8 text-base font-semibold rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transform hover:scale-105 transition-all duration-200 shadow-lg shadow-blue-200"
                 >
                   <Printer className="mr-2 h-5 w-5" />
-                  Empezar a imprimir
+                  Sube tu PDF ahora
                 </Button>
               </Link>
               <Button
@@ -98,25 +98,25 @@ export default function HomePage() {
                 className="h-14 px-8 text-base font-semibold rounded-xl border-2 border-blue-300 text-blue-600 hover:bg-blue-50 bg-white/80 backdrop-blur-sm transition-all duration-200"
               >
                 <Calculator className="mr-2 h-5 w-5" />
-                Calcula tu pedido
+                Calcula tu precio en 10 segundos
               </Button>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Calidad garantizada</span>
+                <span>Entrega en 24-48h</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-blue-500" />
-                <span>Entrega rápida</span>
+                <span>Desde 0,02€/página</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-purple-500" />
-                <span>Precios competitivos</span>
+                <span>Envío gratis desde 25€</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-orange-500" />
-                <span>Pago seguro</span>
+                <span>Pago 100% seguro</span>
               </div>
             </div>
           </div>
@@ -124,7 +124,7 @@ export default function HomePage() {
       </section>
 
       {/* Shipping Banner */}
-      <ShippingBanner/>
+      <ShippingBanner />
 
       {/* Features Section */}
       <section className="py-20 bg-white/50">
@@ -343,9 +343,9 @@ export default function HomePage() {
             Únete a miles de clientes que confían en nosotros para sus necesidades de impresión
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          
+
             <Link href="/imprimir">
-            
+
               <Button
                 size="lg"
                 className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg rounded-xl transform hover:scale-105 transition-all duration-200"
