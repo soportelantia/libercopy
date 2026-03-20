@@ -84,22 +84,22 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link href="/imprimir">
                 <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg rounded-xl transform hover:scale-105 transition-all duration-200"
+                  className="h-14 px-8 text-base font-semibold rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transform hover:scale-105 transition-all duration-200 shadow-lg shadow-blue-200"
                 >
                   <Printer className="mr-2 h-5 w-5" />
                   Empezar a imprimir
                 </Button>
               </Link>
-              <button
+              <Button
+                variant="outline"
                 onClick={() => {
                   document.getElementById("calculadora")?.scrollIntoView({ behavior: "smooth" })
                 }}
-                className="inline-flex items-center justify-center border-2 border-blue-300 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg rounded-xl bg-white/80 backdrop-blur-sm font-medium transition-all duration-200"
+                className="h-14 px-8 text-base font-semibold rounded-xl border-2 border-blue-300 text-blue-600 hover:bg-blue-50 bg-white/80 backdrop-blur-sm transition-all duration-200"
               >
                 <Calculator className="mr-2 h-5 w-5" />
                 Calcula tu pedido
-              </button>
+              </Button>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
               <div className="flex items-center space-x-2">
