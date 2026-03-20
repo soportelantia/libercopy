@@ -94,11 +94,16 @@ export default function HomePage() {
                 onClick={() => {
                   document.getElementById("calculadora")?.scrollIntoView({ behavior: "smooth" })
                 }}
-                className="h-14 px-6 text-base font-medium rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent transition-all duration-200"
+                className="h-14 px-6 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent transition-all duration-200 flex items-center justify-center"
               >
-
-                Calcula tu precio en 10 segundos
-                (sin subir archivo)
+                <div className="flex flex-col leading-tight text-center">
+                  <span className="text-base font-medium">
+                    Calcula tu precio en 10 segundos
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    (sin subir archivo)
+                  </span>
+                </div>
               </Button>
             </div>
             <h3 className="text-md text-gray-600 mb-8 max-w-3xl mx-auto">
