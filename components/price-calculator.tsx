@@ -164,7 +164,7 @@ export default function PriceCalculator() {
 
       {/* Print Form */}
       <div className="space-y-3">
-        <Label className="text-sm font-semibold text-gray-700">Caras de impresion</Label>
+        <Label className="text-sm font-semibold text-gray-700">Caras de impresión</Label>
         <RadioGroup
           value={printForm}
           onValueChange={(v) => setPrintForm(v as PrintForm)}
