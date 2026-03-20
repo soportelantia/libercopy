@@ -74,8 +74,7 @@ export default function HomePage() {
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Imprime tus apuntes baratos y recíbelos en 48h
               </span>
-              <br />
-              con LiberCopy
+
             </h1>
             <h2 className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Sube tu PDF, calcula el precio al instante y olvídate del resto
