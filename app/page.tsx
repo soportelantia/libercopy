@@ -101,6 +101,9 @@ export default function HomePage() {
                 Calcula tu precio en 10 segundos
               </Button>
             </div>
+            <h3 className="text-md text-gray-600 mb-8 max-w-3xl mx-auto">
+              Sube tu PDF → Calculamos el precio → Lo recibes en casa
+            </h3>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
