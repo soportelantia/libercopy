@@ -258,12 +258,12 @@ export default function HomePage() {
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Sabe exactamente{" "}
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  cuanto te va a costar
+                  cuánto te va a costar
                 </span>{" "}
                 antes de subir tu archivo
               </h2>
               <p className="text-lg text-gray-600 mb-6">
-                Introduce el numero de paginas, elige si quieres color o blanco y negro, las caras y el acabado. Obtendras el precio total en segundos, sin sorpresas.
+                Introduce el número de paginas, elige si quieres color o blanco y negro, las caras y el acabado. Obtendrás el precio total en segundos, sin sorpresas.
               </p>
               <div className="space-y-3 text-gray-600">
                 <div className="flex items-center gap-2">

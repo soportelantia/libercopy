@@ -80,7 +80,7 @@ export default function PriceCalculator() {
     <div className="space-y-6">
       {/* Pages */}
       <div className="space-y-3">
-        <Label htmlFor="calc-pages" className="text-sm font-semibold text-gray-700">Numero de paginas</Label>
+        <Label htmlFor="calc-pages" className="text-sm font-semibold text-gray-700">Número de paginas</Label>
         <div className="flex items-center gap-3">
           <Button
             type="button"
@@ -115,11 +115,10 @@ export default function PriceCalculator() {
               <button
                 key={preset}
                 onClick={() => setPagesPreset(preset)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                  pagesNum === preset
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600"
-                }`}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${pagesNum === preset
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                  }`}
               >
                 {preset}
               </button>
@@ -130,16 +129,15 @@ export default function PriceCalculator() {
 
       {/* Print Type */}
       <div className="space-y-3">
-        <Label className="text-sm font-semibold text-gray-700">Tipo de impresion</Label>
+        <Label className="text-sm font-semibold text-gray-700">Tipo de impresión</Label>
         <RadioGroup
           value={printType}
           onValueChange={(v) => setPrintType(v as PrintType)}
           className="grid grid-cols-2 gap-3"
         >
           <div
-            className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${
-              printType === "bw" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
-            }`}
+            className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${printType === "bw" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
+              }`}
           >
             <RadioGroupItem value="bw" id="calc-bw" />
             <Label htmlFor="calc-bw" className="cursor-pointer flex items-center gap-2">
@@ -150,9 +148,8 @@ export default function PriceCalculator() {
             </Label>
           </div>
           <div
-            className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${
-              printType === "color" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
-            }`}
+            className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${printType === "color" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
+              }`}
           >
             <RadioGroupItem value="color" id="calc-color" />
             <Label htmlFor="calc-color" className="cursor-pointer flex items-center gap-2">
@@ -174,9 +171,8 @@ export default function PriceCalculator() {
           className="grid grid-cols-2 gap-3"
         >
           <div
-            className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${
-              printForm === "oneSided" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
-            }`}
+            className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${printForm === "oneSided" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
+              }`}
           >
             <RadioGroupItem value="oneSided" id="calc-one" />
             <Label htmlFor="calc-one" className="cursor-pointer">
@@ -184,9 +180,8 @@ export default function PriceCalculator() {
             </Label>
           </div>
           <div
-            className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${
-              printForm === "doubleSided" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
-            }`}
+            className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${printForm === "doubleSided" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
+              }`}
           >
             <RadioGroupItem value="doubleSided" id="calc-double" />
             <Label htmlFor="calc-double" className="cursor-pointer">
@@ -208,11 +203,10 @@ export default function PriceCalculator() {
             <button
               key={opt.value}
               onClick={() => setFinishing(opt.value as Finishing)}
-              className={`p-2.5 border rounded-lg text-xs font-medium transition-all text-center ${
-                finishing === opt.value
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
-              }`}
+              className={`p-2.5 border rounded-lg text-xs font-medium transition-all text-center ${finishing === opt.value
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                }`}
             >
               {opt.label}
             </button>
@@ -270,7 +264,7 @@ export default function PriceCalculator() {
       </div>
 
       <p className="text-xs text-gray-400 text-center">
-        El precio final puede variar segun el numero exacto de paginas de tu PDF
+        El precio final puede variar segun el número exacto de paginas de tu PDF
       </p>
 
       {/* CTA */}
