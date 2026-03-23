@@ -50,13 +50,16 @@ export async function POST(request: NextRequest) {
     const adminSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
     // Crear el pedido principal
+    const accessToken = crypto.randomUUID()
     const orderData = {
       user_id: user.id,
+      customer_email: user.email ?? null,
       status: "pending",
       subtotal: subtotal || 0,
       shipping_cost: shippingCost || 0,
       total: total,
       payment_method: payment?.method || "paypal",
+      access_token: accessToken,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
@@ -186,6 +189,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId: order.id,
+      accessToken: accessToken,
       order: order,
     })
   } catch (error) {

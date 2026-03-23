@@ -1,20 +1,17 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import FileUploader from "@/components/file-uploader"
 import PrintForm from "@/components/print-form"
 import { useCart } from "@/contexts/cart-context"
-import { useAuth } from "@/contexts/auth-context"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { FileText, ShoppingCart, Printer, CheckCircle, Star, ArrowLeft, Calculator, Mail } from "lucide-react"
+import { FileText, ShoppingCart, Printer, CheckCircle, Star, ArrowLeft, Calculator } from "lucide-react"
 import Link from "next/link"
 import { v4 as uuidv4 } from "uuid"
 import { pricingService } from "@/lib/pricing-service"
@@ -50,7 +47,6 @@ export default function ImprimirPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { addToCart, cart, removeFromCart } = useCart()
-  const { user, loading: authLoading } = useAuth()
 
   // Check if editing existing item
   const editId = searchParams.get("edit")
@@ -65,15 +61,8 @@ export default function ImprimirPage() {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // Abandoned cart recovery state
-  const [guestEmail, setGuestEmail] = useState("")
-  const [guestEmailInput, setGuestEmailInput] = useState("")
-  const [emailSubmitted, setEmailSubmitted] = useState(false)
-  const [isSubmittingEmail, setIsSubmittingEmail] = useState(false)
-  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null)
-  const [currentOrderToken, setCurrentOrderToken] = useState<string | null>(null)
+  // Abandoned cart recovery state (read-only — order created at checkout time)
   const [recoveredOrder, setRecoveredOrder] = useState(false)
-  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Initialize editing data
   useEffect(() => {
@@ -146,20 +135,14 @@ export default function ImprimirPage() {
 
         const order = data.order
 
-        // Restore order ID and token in state + localStorage
-        setCurrentOrderId(order.id)
-        setCurrentOrderToken(urlToken)
-        localStorage.setItem("current_order_id", order.id)
-        localStorage.setItem("current_order_token", urlToken)
+        // Persist IDs for reference after checkout
+        if (order.id) {
+          localStorage.setItem("current_order_id", order.id)
+          localStorage.setItem("current_order_token", urlToken)
+        }
 
         // Restore price info
         if (order.subtotal) setPrice(order.subtotal)
-
-        // Mark email as already captured if present
-        if (order.customer_email) {
-          setGuestEmail(order.customer_email)
-          setEmailSubmitted(true)
-        }
 
         setRecoveredOrder(true)
 
@@ -224,85 +207,6 @@ export default function ImprimirPage() {
       calculatePrice()
     }
   }, [calculatePrice, isInitialized])
-
-  // Create a pending order in Supabase for abandoned cart recovery
-  const createAbandonedOrder = useCallback(async (email: string, uid: string | null, subtotal: number, total: number) => {
-    try {
-      const res = await fetch("/api/orders/abandoned", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerEmail: email,
-          userId: uid,
-          subtotal,
-          total,
-        }),
-      })
-      const data = await res.json()
-      if (data.orderId && data.accessToken) {
-        setCurrentOrderId(data.orderId)
-        setCurrentOrderToken(data.accessToken)
-        localStorage.setItem("current_order_id", data.orderId)
-        localStorage.setItem("current_order_token", data.accessToken)
-      }
-    } catch (err) {
-      console.error("Error creating abandoned order:", err)
-    }
-  }, [])
-
-  // Debounced update of subtotal/total on an existing pending order
-  const scheduleOrderUpdate = useCallback((orderId: string, accessToken: string, subtotal: number, total: number) => {
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current)
-    }
-    updateTimeoutRef.current = setTimeout(async () => {
-      try {
-        await fetch("/api/orders/abandoned", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, accessToken, subtotal, total }),
-        })
-      } catch (err) {
-        console.error("Error updating abandoned order:", err)
-      }
-    }, 1000)
-  }, [])
-
-  // When price changes and an order exists, auto-update it
-  useEffect(() => {
-    if (currentOrderId && currentOrderToken && price > 0 && !isCalculating) {
-      scheduleOrderUpdate(currentOrderId, currentOrderToken, price, price)
-    }
-  }, [price, currentOrderId, currentOrderToken, isCalculating, scheduleOrderUpdate])
-
-  // When auth resolves and user is logged in, create an order automatically (if no order yet)
-  useEffect(() => {
-    if (!authLoading && user && price > 0 && !currentOrderId && !isEditing) {
-      createAbandonedOrder(user.email ?? "", user.id, price, price)
-    }
-  }, [authLoading, user, price, currentOrderId, isEditing, createAbandonedOrder])
-
-  // Handle guest email submission
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const trimmed = guestEmailInput.trim()
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      toast({
-        title: "Email no válido",
-        description: "Por favor, introduce una dirección de correo válida.",
-        variant: "destructive",
-      })
-      return
-    }
-    setIsSubmittingEmail(true)
-    try {
-      await createAbandonedOrder(trimmed, null, price, price)
-      setGuestEmail(trimmed)
-      setEmailSubmitted(true)
-    } finally {
-      setIsSubmittingEmail(false)
-    }
-  }
 
   const handleUpdateOptions = (options: Partial<PrintOptions>) => {
     setPrintOptions((prev) => ({ ...prev, ...options }))
@@ -625,41 +529,6 @@ export default function ImprimirPage() {
                 </Card>
               )}
 
-              {/* Email Capture Step - Mobile (guest, file uploaded, email not yet submitted) */}
-              {!isEditing && uploadedFiles.length > 0 && !authLoading && !user && !emailSubmitted && (
-                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-xl">
-                    <CardTitle className="flex items-center space-x-2">
-                      <Mail className="h-6 w-6 text-blue-600" />
-                      <span>¿Dónde te enviamos tu pedido y el resumen?</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 md:p-6">
-                    <form onSubmit={handleEmailSubmit} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="guest-email-mobile">Tu correo electrónico</Label>
-                        <Input
-                          id="guest-email-mobile"
-                          type="email"
-                          placeholder="ejemplo@correo.com"
-                          value={guestEmailInput}
-                          onChange={(e) => setGuestEmailInput(e.target.value)}
-                          required
-                          className="rounded-xl"
-                        />
-                      </div>
-                      <Button
-                        type="submit"
-                        disabled={isSubmittingEmail}
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl"
-                      >
-                        {isSubmittingEmail ? "Guardando..." : "Continuar"}
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Summary - Mobile */}
               <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
                 <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-xl">
@@ -877,41 +746,6 @@ export default function ImprimirPage() {
 
               {/* Right Column - Summary */}
               <div className="space-y-6">
-                {/* Email Capture Step - Desktop */}
-                {!isEditing && uploadedFiles.length > 0 && !authLoading && !user && !emailSubmitted && (
-                  <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                    <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-xl">
-                      <CardTitle className="flex items-center space-x-2">
-                        <Mail className="h-6 w-6 text-blue-600" />
-                        <span>¿Dónde te enviamos tu pedido y el resumen?</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                      <form onSubmit={handleEmailSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="guest-email-desktop">Tu correo electrónico</Label>
-                          <Input
-                            id="guest-email-desktop"
-                            type="email"
-                            placeholder="ejemplo@correo.com"
-                            value={guestEmailInput}
-                            onChange={(e) => setGuestEmailInput(e.target.value)}
-                            required
-                            className="rounded-xl"
-                          />
-                        </div>
-                        <Button
-                          type="submit"
-                          disabled={isSubmittingEmail}
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl"
-                        >
-                          {isSubmittingEmail ? "Guardando..." : "Continuar"}
-                        </Button>
-                      </form>
-                    </CardContent>
-                  </Card>
-                )}
-
                 <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
                   <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-xl">
                     <CardTitle className="flex items-center space-x-2">
