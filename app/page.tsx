@@ -22,7 +22,11 @@ import {
   Award,
   Users,
   Zap,
+  Calculator,
+  ArrowRight,
 } from "lucide-react"
+// FileText and ArrowRight kept for use in features/how-it-works sections
+import PriceCalculator from "@/components/price-calculator"
 
 export default function HomePage() {
   const [stats, setStats] = useState({
@@ -57,7 +61,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden" style={{paddingBottom: "4rem"}}>
+      <section className="relative py-20 md:py-32 overflow-hidden" style={{ paddingBottom: "4rem" }}>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
         <div className="container mx-auto px-4 relative">
           <div className="text-center max-w-4xl mx-auto">
@@ -65,55 +69,62 @@ export default function HomePage() {
               <Star className="w-4 h-4 mr-2" />
               Servicio de impresión profesional
             </Badge>
-            
+
             <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold mb-6">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Imprime tus Apuntes y Documentos
+                Imprime tus apuntes baratos y recíbelos en 48h
               </span>
-              <br />
-              con LiberCopy
+
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              De forma rápida y económica desde 0,02€
-            </p>
+            <h2 className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Sube tu PDF, calcula el precio al instante y olvídate del resto
+            </h2>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link href="/imprimir">
                 <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg rounded-xl transform hover:scale-105 transition-all duration-200"
+                  className="h-14 px-8 text-base font-semibold rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transform hover:scale-105 transition-all duration-200 shadow-lg shadow-blue-200"
                 >
                   <Printer className="mr-2 h-5 w-5" />
-                  Empezar a imprimir
+                  Sube tu PDF ahora
                 </Button>
               </Link>
-              <Link href="/encuadernar">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-2 border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg rounded-xl bg-white/80 backdrop-blur-sm"
-                >
-                  <FileText className="mr-2 h-5 w-5" />
-                  Encuadernación
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  document.getElementById("calculadora")?.scrollIntoView({ behavior: "smooth" })
+                }}
+                className="h-14 px-6 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 bg-transparent transition-all duration-200 flex items-center justify-center"
+              >
+                <div className="flex flex-col leading-tight text-center">
+                  <span className="text-base font-medium">
+                    Calcula tu precio en 10 segundos
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    (sin subir archivo)
+                  </span>
+                </div>
+              </Button>
             </div>
+            <h3 className="text-md text-gray-600 mb-8 max-w-3xl mx-auto">
+              Sube tu PDF → Calculamos el precio → Lo recibes en casa
+            </h3>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Calidad garantizada</span>
+                <span>Entrega en 24-48h</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-blue-500" />
-                <span>Entrega rápida</span>
+                <span>Desde 0,02€/página</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-purple-500" />
-                <span>Precios competitivos</span>
+                <span>Envío gratis desde 25€</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-orange-500" />
-                <span>Pago seguro</span>
+                <span>Pago 100% seguro</span>
               </div>
             </div>
           </div>
@@ -121,7 +132,7 @@ export default function HomePage() {
       </section>
 
       {/* Shipping Banner */}
-      <ShippingBanner/>
+      <ShippingBanner />
 
       {/* Features Section */}
       <section className="py-20 bg-white/50">
@@ -234,6 +245,54 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Price Calculator Section */}
+      <section id="calculadora" className="py-20 bg-white/50">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+            {/* Left: text */}
+            <div>
+              <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2">
+                <Calculator className="w-4 h-4 mr-2" />
+                Calcula tu precio al instante
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Sabe exactamente{" "}
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  cuánto te va a costar
+                </span>{" "}
+                antes de subir tu archivo
+              </h2>
+              <p className="text-lg text-gray-600 mb-6">
+                Introduce el número de paginas, elige si quieres color o blanco y negro, las caras y el acabado. Obtendrás el precio total en segundos, sin sorpresas.
+              </p>
+              <div className="space-y-3 text-gray-600">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+                  <span>Precios actualizados desde nuestra base de datos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-blue-500 shrink-0" />
+                  <span>Sin necesidad de crear cuenta ni subir ningun fichero</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-purple-500 shrink-0" />
+                  <span>IVA incluido en el precio mostrado</span>
+                </div>
+              </div>
+              <Link href="/calcular-precio" className="mt-8 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium">
+                Abrir calculadora completa
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            {/* Right: calculator */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+              <PriceCalculator />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Stats Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -292,9 +351,9 @@ export default function HomePage() {
             Únete a miles de clientes que confían en nosotros para sus necesidades de impresión
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          
+
             <Link href="/imprimir">
-            
+
               <Button
                 size="lg"
                 className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg rounded-xl transform hover:scale-105 transition-all duration-200"
