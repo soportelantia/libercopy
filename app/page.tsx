@@ -24,6 +24,9 @@ import {
   Zap,
   Calculator,
   ArrowRight,
+  BookOpen,
+  FolderOpen,
+  GraduationCap,
 } from "lucide-react"
 // FileText and ArrowRight kept for use in features/how-it-works sections
 import PriceCalculator from "@/components/price-calculator"
@@ -72,9 +75,11 @@ export default function HomePage() {
 
             <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold mb-6">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Imprime tus apuntes baratos y recíbelos en 48h
+                Imprime tus apuntes baratos{" "}
+                <span className="whitespace-nowrap">
+                  sin salir de casa
+                </span>
               </span>
-
             </h1>
             <h2 className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Sube tu PDF, calcula el precio al instante y olvídate del resto
@@ -133,6 +138,86 @@ export default function HomePage() {
 
       {/* Shipping Banner */}
       <ShippingBanner />
+
+      {/* Audience Selector Section */}
+      <section className="py-16 bg-white/70">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">
+              ¿Qué quieres{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                imprimir?
+              </span>
+            </h2>
+            <p className="text-lg text-gray-600 max-w-xl mx-auto">
+              Elige tu caso y te llevamos directamente a la mejor opción
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {/* Card 1: Estudiantes */}
+            <Link
+              href="/imprimir-apuntes"
+              className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 hover:border-blue-200 p-8 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1"
+            >
+              <Badge className="absolute top-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs px-2 py-0.5">
+                Más popular
+              </Badge>
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-5 shadow-md group-hover:shadow-blue-200 transition-shadow duration-300">
+                <BookOpen className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Apuntes</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Imprime tus apuntes baratos y recíbelos en 48h
+              </p>
+            </Link>
+
+            {/* Card 2: Opositores */}
+            <Link
+              href="/copisteria-oposiciones"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 hover:border-purple-200 p-8 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1"
+            >
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-5 shadow-md group-hover:shadow-purple-200 transition-shadow duration-300">
+                <FolderOpen className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Oposiciones</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Imprime tu temario completo con precios por volumen
+              </p>
+            </Link>
+
+            {/* Card 3: Profesores */}
+            <Link
+              href="/impresion-material-docente"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 hover:border-green-200 p-8 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1"
+            >
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-5 shadow-md group-hover:shadow-green-200 transition-shadow duration-300">
+                <GraduationCap className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Material docente</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Dossiers, exámenes y material listo para clase
+              </p>
+            </Link>
+          </div>
+
+          {/* Secondary CTA */}
+          <div className="text-center mt-10">
+            <p className="text-gray-500 text-sm mb-3">
+              También puedes subir tu PDF directamente y calcular el precio en segundos
+            </p>
+            <Link href="/imprimir">
+              <Button
+                variant="outline"
+                className="rounded-xl border border-blue-300 text-blue-600 hover:bg-blue-50 bg-transparent transition-all duration-200"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Sube tu PDF ahora
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Features Section */}
       <section className="py-20 bg-white/50">
