@@ -236,6 +236,7 @@ export default function CopisteriaOposicionesPage() {
                   <div>
                     <p className="text-xs font-semibold text-blue-500 uppercase tracking-wider">Pack</p>
                     <h3 className="text-2xl font-bold text-gray-800">500 páginas</h3>
+                    <p className="text-lg font-semibold text-blue-600">9,15 €</p>
                   </div>
                 </div>
                 <ul className="space-y-3 mb-8 text-gray-600">
@@ -246,10 +247,6 @@ export default function CopisteriaOposicionesPage() {
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
                     <span>Encuadernado en espiral incluido</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
-                    <span>Entrega en 24-48h</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
@@ -279,6 +276,7 @@ export default function CopisteriaOposicionesPage() {
                   <div>
                     <p className="text-xs font-semibold text-purple-500 uppercase tracking-wider">Pack</p>
                     <h3 className="text-2xl font-bold text-gray-800">1000 páginas</h3>
+                    <p className="text-lg font-semibold text-purple-600">16,65 €</p>
                   </div>
                 </div>
                 <ul className="space-y-3 mb-8 text-gray-600">
@@ -289,10 +287,6 @@ export default function CopisteriaOposicionesPage() {
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
                     <span>Encuadernado en espiral incluido</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
-                    <span>Entrega prioritaria en 24h</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
