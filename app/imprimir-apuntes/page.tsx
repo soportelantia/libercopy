@@ -44,7 +44,7 @@ export default function ImprimirApuntesPage() {
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Imprime tus apuntes baratos
                 </span>{" "}
-                y recíbelos en 48h
+                sin salir de casa
               </h1>
 
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
