@@ -71,6 +71,8 @@ export default function ImprimirPage() {
   const [emailSubmitted, setEmailSubmitted] = useState(false)
   const [isSubmittingEmail, setIsSubmittingEmail] = useState(false)
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null)
+  const [currentOrderToken, setCurrentOrderToken] = useState<string | null>(null)
+  const [recoveredOrder, setRecoveredOrder] = useState(false)
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Initialize editing data
@@ -125,6 +127,55 @@ export default function ImprimirPage() {
       setIsInitialized(true)
     }
   }, [editingItem, isInitialized, searchParams])
+
+  // Recover order from URL params (?order_id=XXX&token=YYY)
+  useEffect(() => {
+    const urlOrderId = searchParams.get("order_id")
+    const urlToken = searchParams.get("token")
+
+    if (!urlOrderId || !urlToken || isEditing) return
+
+    const recover = async () => {
+      try {
+        const res = await fetch(
+          `/api/orders/abandoned?order_id=${encodeURIComponent(urlOrderId)}&token=${encodeURIComponent(urlToken)}`
+        )
+        if (!res.ok) return
+        const data = await res.json()
+        if (!data.order) return
+
+        const order = data.order
+
+        // Restore order ID and token in state + localStorage
+        setCurrentOrderId(order.id)
+        setCurrentOrderToken(urlToken)
+        localStorage.setItem("current_order_id", order.id)
+        localStorage.setItem("current_order_token", urlToken)
+
+        // Restore price info
+        if (order.subtotal) setPrice(order.subtotal)
+
+        // Mark email as already captured if present
+        if (order.customer_email) {
+          setGuestEmail(order.customer_email)
+          setEmailSubmitted(true)
+        }
+
+        setRecoveredOrder(true)
+
+        toast({
+          title: "Pedido recuperado",
+          description: "Has recuperado tu pedido anterior. Puedes continuar desde donde lo dejaste.",
+        })
+      } catch (err) {
+        // Silently ignore — do not disrupt normal flow
+      }
+    }
+
+    recover()
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Calculate price when options or pages change
   const calculatePrice = useCallback(async () => {
@@ -188,9 +239,11 @@ export default function ImprimirPage() {
         }),
       })
       const data = await res.json()
-      if (data.orderId) {
+      if (data.orderId && data.accessToken) {
         setCurrentOrderId(data.orderId)
+        setCurrentOrderToken(data.accessToken)
         localStorage.setItem("current_order_id", data.orderId)
+        localStorage.setItem("current_order_token", data.accessToken)
       }
     } catch (err) {
       console.error("Error creating abandoned order:", err)
@@ -198,7 +251,7 @@ export default function ImprimirPage() {
   }, [])
 
   // Debounced update of subtotal/total on an existing pending order
-  const scheduleOrderUpdate = useCallback((orderId: string, subtotal: number, total: number) => {
+  const scheduleOrderUpdate = useCallback((orderId: string, accessToken: string, subtotal: number, total: number) => {
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current)
     }
@@ -207,7 +260,7 @@ export default function ImprimirPage() {
         await fetch("/api/orders/abandoned", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, subtotal, total }),
+          body: JSON.stringify({ orderId, accessToken, subtotal, total }),
         })
       } catch (err) {
         console.error("Error updating abandoned order:", err)
@@ -217,10 +270,10 @@ export default function ImprimirPage() {
 
   // When price changes and an order exists, auto-update it
   useEffect(() => {
-    if (currentOrderId && price > 0 && !isCalculating) {
-      scheduleOrderUpdate(currentOrderId, price, price)
+    if (currentOrderId && currentOrderToken && price > 0 && !isCalculating) {
+      scheduleOrderUpdate(currentOrderId, currentOrderToken, price, price)
     }
-  }, [price, currentOrderId, isCalculating, scheduleOrderUpdate])
+  }, [price, currentOrderId, currentOrderToken, isCalculating, scheduleOrderUpdate])
 
   // When auth resolves and user is logged in, create an order automatically (if no order yet)
   useEffect(() => {
@@ -446,6 +499,27 @@ export default function ImprimirPage() {
               </div>
               <button onClick={handleCancelEdit} className="text-white hover:text-gray-200 underline">
                 Cancelar edición
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recovered Order Banner */}
+      {recoveredOrder && (
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 py-3">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                <span className="font-medium text-sm">Has recuperado tu pedido anterior. Puedes continuar desde donde lo dejaste.</span>
+              </div>
+              <button
+                onClick={() => setRecoveredOrder(false)}
+                className="text-white/80 hover:text-white text-sm ml-4 flex-shrink-0"
+                aria-label="Cerrar"
+              >
+                ✕
               </button>
             </div>
           </div>
