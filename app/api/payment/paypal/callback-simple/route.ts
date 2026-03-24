@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendEmail, getOrderConfirmationEmail } from "@/lib/mail-service"
+import crypto from "crypto"
 
 // Usar el cliente de Supabase con service role para acceso completo
 const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -88,6 +89,19 @@ export async function POST(request: NextRequest) {
         }
       } catch (error) {
         console.error("Error fetching user:", error)
+      }
+    }
+
+    // Si el pedido no tiene customer_email o access_token, rellenarlos ahora
+    if (!order.customer_email || !order.access_token) {
+      const missingFields: Record<string, string> = {}
+      if (!order.customer_email && userEmail) missingFields.customer_email = userEmail
+      if (!order.access_token) missingFields.access_token = crypto.randomUUID()
+      if (Object.keys(missingFields).length > 0) {
+        await supabaseAdmin.from("orders").update(missingFields).eq("id", orderId)
+        console.log("[callback-simple] Filled missing order fields:", Object.keys(missingFields))
+        // Sync local order object for email step below
+        Object.assign(order, missingFields)
       }
     }
 

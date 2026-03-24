@@ -71,11 +71,24 @@ export async function POST(request: NextRequest) {
     // Usar el service role key para operaciones de base de datos
     const adminSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
+    // Garantizar que tenemos el email del usuario — user.email puede ser undefined
+    // si la sesión viene de un Bearer token sin los metadatos completos
+    let customerEmail: string | null = (user as any).email ?? null
+    if (!customerEmail) {
+      try {
+        const { data: adminUserData } = await adminSupabase.auth.admin.getUserById(user.id)
+        customerEmail = adminUserData?.user?.email ?? null
+        console.log("[orders POST] Resolved customer_email via admin client:", customerEmail)
+      } catch (e) {
+        console.warn("[orders POST] Could not resolve customer_email via admin client:", e)
+      }
+    }
+
     // Crear el pedido principal
     const accessToken = crypto.randomUUID()
     const orderData = {
       user_id: user.id,
-      customer_email: user.email ?? null,
+      customer_email: customerEmail,
       status: "pending",
       subtotal: subtotal || 0,
       shipping_cost: shippingCost || 0,
