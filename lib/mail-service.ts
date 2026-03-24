@@ -491,3 +491,46 @@ export function getOrderConfirmationEmail(orderData: any) {
     html: getEmailTemplate("Confirmación de pedido", content),
   }
 }
+
+// Plantilla de recuperación de carrito abandonado
+export function getAbandonedCartEmail(orderData: {
+  id: string
+  customer_email: string
+  subtotal?: number
+  total?: number
+  access_token: string
+}) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://libercopy.es"
+  const recoveryUrl = `${siteUrl}/imprimir?order_id=${orderData.id}&token=${orderData.access_token}`
+  const amount = (orderData.total ?? orderData.subtotal ?? 0).toFixed(2)
+  const orderRef = orderData.id.substring(0, 8).toUpperCase()
+
+  const content = `
+    <p>Hola,</p>
+
+    <p>Vimos que dejaste un pedido de impresión pendiente en LiberCopy y no llegaste a completar el pago.</p>
+
+    <div style="background-color: #f0f7ff; border: 1px solid #bfdbfe; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 0 0 8px 0;"><strong>Referencia:</strong> <span style="font-family: monospace; background-color: #e9ecef; padding: 2px 6px; border-radius: 4px;">#${orderRef}</span></p>
+      <p style="margin: 0;"><strong>Importe:</strong> <span style="font-size: 20px; font-weight: bold; color: #2563eb;">${amount}€</span></p>
+    </div>
+
+    <p>Tu pedido sigue guardado. Puedes retomarlo exactamente donde lo dejaste haciendo clic en el botón de abajo:</p>
+
+    <div style="text-align: center; margin: 35px 0;">
+      <a href="${recoveryUrl}"
+         style="background-color: #2563eb; color: white; padding: 16px 36px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;">
+        Retomar mi pedido
+      </a>
+    </div>
+
+    <p style="color: #666; font-size: 13px;">Si ya completaste tu pedido o no reconoces este mensaje, puedes ignorarlo.</p>
+
+    <p>Saludos,<br>El equipo de LiberCopy</p>
+  `
+
+  return {
+    subject: "¿Olvidaste algo? Tu pedido de impresión te espera",
+    html: getEmailTemplate("Tu pedido sigue guardado", content),
+  }
+}
