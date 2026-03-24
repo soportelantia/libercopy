@@ -201,6 +201,35 @@ export async function POST(request: NextRequest) {
     console.log("Amount in euros:", amount)
     console.log("Amount in cents:", amountInCents)
 
+    // Rellenar customer_email y access_token si están vacíos (por si /api/orders no los guardó)
+    const accessToken = crypto.randomUUID()
+    const { data: existingOrder } = await supabaseAdmin
+      .from("orders")
+      .select("customer_email, access_token")
+      .eq("id", orderId)
+      .single()
+
+    if (existingOrder && (!existingOrder.customer_email || !existingOrder.access_token)) {
+      // Obtener el email del usuario autenticado desde Supabase Auth
+      const authHeader = request.headers.get("authorization")
+      let userEmail: string | null = null
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.replace("Bearer ", "")
+        const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+        userEmail = user?.email ?? null
+      }
+
+      await supabaseAdmin
+        .from("orders")
+        .update({
+          ...((!existingOrder.customer_email && userEmail) ? { customer_email: userEmail } : {}),
+          ...(!existingOrder.access_token ? { access_token: accessToken } : {}),
+        })
+        .eq("id", orderId)
+
+      console.log("[v0] Updated order with customer_email and access_token:", orderId)
+    }
+
     // Guardar el mapeo en la base de datos
     try {
       const { error: mappingError } = await supabaseAdmin.from("redsys_order_mapping").insert({

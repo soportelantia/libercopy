@@ -1,33 +1,55 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { cookies } from "next/headers"
 
 export async function POST(request: NextRequest) {
   try {
-    // Obtener el token de autorización del header
+    // Intentar autenticar: primero por header Bearer, luego por cookies de sesión
+    let user: { id: string; email?: string } | null = null
+
     const authHeader = request.headers.get("authorization")
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Token de autorización requerido" }, { status: 401 })
+
+    if (authHeader?.startsWith("Bearer ")) {
+      // Autenticación por header (checkout con token explícito)
+      const token = authHeader.replace("Bearer ", "")
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { global: { headers: { Authorization: `Bearer ${token}` } } }
+      )
+      const { data } = await supabase.auth.getUser()
+      user = data.user
+    } else {
+      // Fallback: leer sesión desde cookies (fetch sin header explícito)
+      const cookieStore = cookies()
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: { persistSession: false },
+          global: {
+            headers: {
+              cookie: cookieStore.toString(),
+            },
+          },
+        }
+      )
+      const accessTokenCookie =
+        cookieStore.get("sb-access-token")?.value ||
+        cookieStore.get(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split("//")[1]?.split(".")[0]}-auth-token`)?.value
+
+      if (accessTokenCookie) {
+        const adminClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+        const { data } = await adminClient.auth.getUser(accessTokenCookie)
+        user = data.user
+      }
     }
 
-    const token = authHeader.replace("Bearer ", "")
-
-    // Crear cliente de Supabase con el token del usuario
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    })
-
-    // Verificar el usuario
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      console.error("Auth error:", authError)
+    if (!user) {
+      console.error("Auth error: no user found from header or cookies")
       return NextResponse.json({ error: "Usuario no autorizado" }, { status: 401 })
     }
 
