@@ -66,6 +66,10 @@ export async function POST(request: NextRequest) {
 
     const { data: order, error: orderError } = await adminSupabase.from("orders").insert(orderData).select().single()
 
+    console.log("[v0] orderData enviado:", JSON.stringify({ customer_email: orderData.customer_email, access_token: orderData.access_token }))
+    console.log("[v0] order creado:", JSON.stringify({ id: order?.id, customer_email: order?.customer_email, access_token: order?.access_token }))
+    console.log("[v0] orderError:", orderError)
+
     if (orderError) {
       console.error("Error creating order:", orderError)
       return NextResponse.json(
