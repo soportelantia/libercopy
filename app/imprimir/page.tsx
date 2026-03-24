@@ -61,6 +61,9 @@ export default function ImprimirPage() {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
 
+  // Abandoned cart recovery state (read-only — order created at checkout time)
+  const [recoveredOrder, setRecoveredOrder] = useState(false)
+
   // Initialize editing data
   useEffect(() => {
     if (editingItem && !isInitialized) {
@@ -113,6 +116,49 @@ export default function ImprimirPage() {
       setIsInitialized(true)
     }
   }, [editingItem, isInitialized, searchParams])
+
+  // Recover order from URL params (?order_id=XXX&token=YYY)
+  useEffect(() => {
+    const urlOrderId = searchParams.get("order_id")
+    const urlToken = searchParams.get("token")
+
+    if (!urlOrderId || !urlToken || isEditing) return
+
+    const recover = async () => {
+      try {
+        const res = await fetch(
+          `/api/orders/abandoned?order_id=${encodeURIComponent(urlOrderId)}&token=${encodeURIComponent(urlToken)}`
+        )
+        if (!res.ok) return
+        const data = await res.json()
+        if (!data.order) return
+
+        const order = data.order
+
+        // Persist IDs for reference after checkout
+        if (order.id) {
+          localStorage.setItem("current_order_id", order.id)
+          localStorage.setItem("current_order_token", urlToken)
+        }
+
+        // Restore price info
+        if (order.subtotal) setPrice(order.subtotal)
+
+        setRecoveredOrder(true)
+
+        toast({
+          title: "Pedido recuperado",
+          description: "Has recuperado tu pedido anterior. Puedes continuar desde donde lo dejaste.",
+        })
+      } catch (err) {
+        // Silently ignore — do not disrupt normal flow
+      }
+    }
+
+    recover()
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Calculate price when options or pages change
   const calculatePrice = useCallback(async () => {
@@ -357,6 +403,27 @@ export default function ImprimirPage() {
               </div>
               <button onClick={handleCancelEdit} className="text-white hover:text-gray-200 underline">
                 Cancelar edición
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recovered Order Banner */}
+      {recoveredOrder && (
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 py-3">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                <span className="font-medium text-sm">Has recuperado tu pedido anterior. Puedes continuar desde donde lo dejaste.</span>
+              </div>
+              <button
+                onClick={() => setRecoveredOrder(false)}
+                className="text-white/80 hover:text-white text-sm ml-4 flex-shrink-0"
+                aria-label="Cerrar"
+              >
+                ✕
               </button>
             </div>
           </div>

@@ -103,7 +103,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
     const result = await mg.messages.create(DOMAIN!, {
       from: FROM_EMAIL,
       to: [to],
-      bcc: ["info@libercopy.es"], // Copia oculta a info
+      bcc: ["info@libercopy.es"], // Copia oculta
       subject,
       html,
       text: text || html.replace(/<[^>]*>/g, ""), // Fallback text version
@@ -386,15 +386,14 @@ export function getOrderConfirmationEmail(orderData: any) {
             <div><strong>✨ Acabado:</strong> ${getReadableOption("finishing", item.finishing)}</div>
           </div>
           
-          ${
-            item.comments
-              ? `
+          ${item.comments
+            ? `
             <div style="margin-top: 10px; padding: 8px; background-color: #fff3cd; border-radius: 4px; border-left: 3px solid #ffc107;">
               <strong style="color: #2563eb;">💬 Comentarios:</strong>
               <div style="color: #856404; font-size: 13px; margin-top: 4px;">${item.comments}</div>
             </div>
           `
-              : ""
+            : ""
           }
         </div>
         
@@ -429,16 +428,14 @@ export function getOrderConfirmationEmail(orderData: any) {
     
     ${addressInfo}
     
-    ${
-      itemsList
-        ? `
+    ${itemsList
+      ? `
     <div style="margin: 25px 0;">
       <h3 style="color: #2563eb; margin-bottom: 15px;">🛍️ Elementos del pedido</h3>
       <table style="width: 100%; border-collapse: collapse; margin: 15px 0; border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden;">
         ${itemsList}
-        ${
-          orderData.shipping_cost > 0
-            ? `
+        ${orderData.shipping_cost > 0
+        ? `
         <tr style="background-color: #f8f9fa;">
           <td style="padding: 15px; border-bottom: 1px solid #e9ecef;">
             <strong>🚚 Gastos de envío</strong>
@@ -448,8 +445,8 @@ export function getOrderConfirmationEmail(orderData: any) {
           </td>
         </tr>
         `
-            : ""
-        }
+        : ""
+      }
         <tr style="background-color: #2563eb; color: white;">
           <td style="padding: 20px; font-weight: bold; font-size: 16px;">💰 TOTAL</td>
           <td style="padding: 20px; text-align: right; font-weight: bold; font-size: 18px;">
@@ -459,7 +456,7 @@ export function getOrderConfirmationEmail(orderData: any) {
       </table>
     </div>
     `
-        : ""
+      : ""
     }
     
     <p>Puedes consultar el estado de tu pedido en cualquier momento desde tu cuenta en nuestra web:</p>
@@ -471,14 +468,13 @@ export function getOrderConfirmationEmail(orderData: any) {
       </a>
     </div>
     
-    ${
-      !isPaid
-        ? `
+    ${!isPaid
+      ? `
     <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0;">
       <p style="margin: 0; color: #856404;"><strong>⚠️ Importante:</strong> Tu pedido está pendiente de pago. Por favor, completa el pago para que podamos procesarlo.</p>
     </div>
     `
-        : `
+      : `
     <div style="background-color: #d1edff; border: 1px solid #74b9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
       <p style="margin: 0; color: #0984e3;"><strong>✅ ¡Perfecto!</strong> Tu pedido ha sido pagado y está siendo procesado. Te mantendremos informado del estado.</p>
     </div>
@@ -493,5 +489,48 @@ export function getOrderConfirmationEmail(orderData: any) {
   return {
     subject: `LiberCopy - Confirmación de pedido #${id.substring(0, 8)}`,
     html: getEmailTemplate("Confirmación de pedido", content),
+  }
+}
+
+// Plantilla de recuperación de carrito abandonado
+export function getAbandonedCartEmail(orderData: {
+  id: string
+  customer_email: string
+  subtotal?: number
+  total?: number
+  access_token: string
+}) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://libercopy.es"
+  const recoveryUrl = `${siteUrl}/imprimir?order_id=${orderData.id}&token=${orderData.access_token}`
+  const amount = (orderData.total ?? orderData.subtotal ?? 0).toFixed(2)
+  const orderRef = orderData.id.substring(0, 8).toUpperCase()
+
+  const content = `
+    <p>Hola,</p>
+
+    <p>Vimos que dejaste un pedido de impresión pendiente en LiberCopy y no llegaste a completar el pago.</p>
+
+    <div style="background-color: #f0f7ff; border: 1px solid #bfdbfe; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 0 0 8px 0;"><strong>Referencia:</strong> <span style="font-family: monospace; background-color: #e9ecef; padding: 2px 6px; border-radius: 4px;">#${orderRef}</span></p>
+      <p style="margin: 0;"><strong>Importe:</strong> <span style="font-size: 20px; font-weight: bold; color: #2563eb;">${amount}€</span></p>
+    </div>
+
+    <p>Tu pedido sigue guardado. Puedes retomarlo exactamente donde lo dejaste haciendo clic en el botón de abajo:</p>
+
+    <div style="text-align: center; margin: 35px 0;">
+      <a href="${recoveryUrl}"
+         style="background-color: #2563eb; color: white; padding: 16px 36px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;">
+        Retomar mi pedido
+      </a>
+    </div>
+
+    <p style="color: #666; font-size: 13px;">Si ya completaste tu pedido o no reconoces este mensaje, puedes ignorarlo.</p>
+
+    <p>Saludos,<br>El equipo de LiberCopy</p>
+  `
+
+  return {
+    subject: "¿Olvidaste algo? Tu pedido de impresión te espera",
+    html: getEmailTemplate("Tu pedido sigue guardado", content),
   }
 }

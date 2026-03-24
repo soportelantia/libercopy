@@ -95,6 +95,13 @@ export default function CheckoutPage() {
 
       const data = await response.json()
       setOrderId(data.orderId)
+      // Persist for abandoned cart recovery
+      if (data.orderId) {
+        localStorage.setItem("current_order_id", data.orderId)
+      }
+      if (data.accessToken) {
+        localStorage.setItem("current_order_token", data.accessToken)
+      }
       return data.orderId
     } catch (error) {
       console.error("Error creating order:", error)
