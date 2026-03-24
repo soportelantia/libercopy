@@ -17,10 +17,6 @@ export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization")
   const querySecret = request.nextUrl.searchParams.get("secret")
 
-  console.log("[v0] CRON_SECRET configurado:", !!cronSecret, "| Longitud:", cronSecret.length)
-  console.log("[v0] querySecret recibido:", querySecret?.substring(0, 6) + "...", "| Longitud:", querySecret?.length)
-  console.log("[v0] Coincide:", querySecret === cronSecret)
-
   const isAuthorized =
     authHeader === `Bearer ${cronSecret}` ||
     querySecret === cronSecret
