@@ -6,8 +6,7 @@ import { sendEmail, getAbandonedCartEmail } from "@/lib/mail-service"
 const ABANDONED_AFTER_MINUTES = 60
 
 export async function GET(request: NextRequest) {
-  // Protección por secret — tanto el cron de Vercel como las llamadas manuales deben incluirlo
-  const authHeader = request.headers.get("authorization")
+  // Protección por secret — acepta tanto header Authorization como query param ?secret=
   const cronSecret = process.env.CRON_SECRET
 
   if (!cronSecret) {
@@ -15,7 +14,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Configuración incorrecta del servidor" }, { status: 500 })
   }
 
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  const authHeader = request.headers.get("authorization")
+  const querySecret = request.nextUrl.searchParams.get("secret")
+
+  const isAuthorized =
+    authHeader === `Bearer ${cronSecret}` ||
+    querySecret === cronSecret
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
