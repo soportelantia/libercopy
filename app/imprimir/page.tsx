@@ -141,15 +141,21 @@ export default function ImprimirPage() {
           localStorage.setItem("current_order_token", urlToken)
         }
 
-        // Restore price info
-        if (order.subtotal) setPrice(order.subtotal)
+        // Restore print options from the first item in the order
+        const firstItem = Array.isArray(order.items) ? order.items[0] : null
+        if (firstItem?.options) {
+          setPrintOptions((prev) => ({
+            ...prev,
+            printType: firstItem.options.printType || prev.printType,
+            printForm: firstItem.options.printForm || prev.printForm,
+            finishing: firstItem.options.finishing || prev.finishing,
+            copies: firstItem.options.copies || prev.copies,
+            orientation: firstItem.options.orientation || prev.orientation,
+            comments: firstItem.comments || prev.comments,
+          }))
+        }
 
         setRecoveredOrder(true)
-
-        toast({
-          title: "Pedido recuperado",
-          description: "Has recuperado tu pedido anterior. Puedes continuar desde donde lo dejaste.",
-        })
       } catch (err) {
         // Silently ignore — do not disrupt normal flow
       }
@@ -411,12 +417,14 @@ export default function ImprimirPage() {
 
       {/* Recovered Order Banner */}
       {recoveredOrder && (
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 py-3">
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 py-3">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between text-white">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 flex-shrink-0" />
-                <span className="font-medium text-sm">Has recuperado tu pedido anterior. Puedes continuar desde donde lo dejaste.</span>
+                <span className="font-medium text-sm">
+                  Hemos recuperado las opciones de tu pedido anterior. Vuelve a subir tu archivo PDF para continuar.
+                </span>
               </div>
               <button
                 onClick={() => setRecoveredOrder(false)}
