@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { supabaseAdmin } from "@/lib/supabase/admin"
+import crypto from "crypto"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
@@ -23,6 +25,28 @@ export async function GET(request: Request) {
     if (verificationResponse.status !== "COMPLETED") {
       console.error("PayPal payment verification failed:", verificationResponse)
       return NextResponse.json({ message: "Payment verification failed" }, { status: 400 })
+    }
+
+    // Rellenar customer_email y access_token si están vacíos
+    const { data: existingOrder } = await supabaseAdmin
+      .from("orders")
+      .select("user_id, customer_email, access_token")
+      .eq("id", orderId)
+      .single()
+
+    if (existingOrder && (!existingOrder.customer_email || !existingOrder.access_token)) {
+      let userEmail: string | null = existingOrder.customer_email ?? null
+      if (!userEmail && existingOrder.user_id) {
+        const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(existingOrder.user_id)
+        userEmail = user?.email ?? null
+      }
+      const updateData: Record<string, string> = {}
+      if (!existingOrder.customer_email && userEmail) updateData.customer_email = userEmail
+      if (!existingOrder.access_token) updateData.access_token = crypto.randomUUID()
+      if (Object.keys(updateData).length > 0) {
+        await supabaseAdmin.from("orders").update(updateData).eq("id", orderId)
+        console.log("[v0] paypal: updated order fields:", Object.keys(updateData), "for order:", orderId)
+      }
     }
 
     // Update order status in Supabase

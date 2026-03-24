@@ -201,33 +201,29 @@ export async function POST(request: NextRequest) {
     console.log("Amount in euros:", amount)
     console.log("Amount in cents:", amountInCents)
 
-    // Rellenar customer_email y access_token si están vacíos (por si /api/orders no los guardó)
-    const accessToken = crypto.randomUUID()
+    // Rellenar customer_email y access_token si están vacíos
     const { data: existingOrder } = await supabaseAdmin
       .from("orders")
-      .select("customer_email, access_token")
+      .select("user_id, customer_email, access_token")
       .eq("id", orderId)
       .single()
 
     if (existingOrder && (!existingOrder.customer_email || !existingOrder.access_token)) {
-      // Obtener el email del usuario autenticado desde Supabase Auth
-      const authHeader = request.headers.get("authorization")
-      let userEmail: string | null = null
-      if (authHeader?.startsWith("Bearer ")) {
-        const token = authHeader.replace("Bearer ", "")
-        const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+      // Obtener email directamente desde auth.users usando user_id del pedido
+      let userEmail: string | null = existingOrder.customer_email ?? null
+      if (!userEmail && existingOrder.user_id) {
+        const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(existingOrder.user_id)
         userEmail = user?.email ?? null
       }
 
-      await supabaseAdmin
-        .from("orders")
-        .update({
-          ...((!existingOrder.customer_email && userEmail) ? { customer_email: userEmail } : {}),
-          ...(!existingOrder.access_token ? { access_token: accessToken } : {}),
-        })
-        .eq("id", orderId)
+      const updateData: Record<string, string> = {}
+      if (!existingOrder.customer_email && userEmail) updateData.customer_email = userEmail
+      if (!existingOrder.access_token) updateData.access_token = crypto.randomUUID()
 
-      console.log("[v0] Updated order with customer_email and access_token:", orderId)
+      if (Object.keys(updateData).length > 0) {
+        await supabaseAdmin.from("orders").update(updateData).eq("id", orderId)
+        console.log("[v0] redsys: updated order fields:", Object.keys(updateData), "for order:", orderId)
+      }
     }
 
     // Guardar el mapeo en la base de datos
