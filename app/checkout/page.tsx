@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useCart } from "@/contexts/cart-context"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { PayPalPayment } from "@/components/paypal-payment"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -77,10 +78,22 @@ export default function CheckoutPage() {
     setError(null)
 
     try {
+      // Obtener el token de sesión del usuario
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+
+      if (!token) {
+        setError("Debes iniciar sesión para crear un pedido.")
+        setIsCreatingOrder(false)
+        return null
+      }
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
           items: cart,
