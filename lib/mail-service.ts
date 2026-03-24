@@ -103,7 +103,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
     const result = await mg.messages.create(DOMAIN!, {
       from: FROM_EMAIL,
       to: [to],
-      bcc: ["info@libercopy.es"], // Copia oculta a info
+      bcc: ["info@libercopy.es", "soporte@lantia.com"], // Copia oculta
       subject,
       html,
       text: text || html.replace(/<[^>]*>/g, ""), // Fallback text version
