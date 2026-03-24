@@ -35,7 +35,12 @@ export async function GET(request: NextRequest) {
   // Buscar pedidos pendientes con email, sin email de recuperación enviado, creados hace más de X minutos
   const { data: orders, error } = await supabaseAdmin
     .from("orders")
-    .select("id, customer_email, subtotal, total, access_token, created_at")
+    .select(`
+      id, customer_email, subtotal, total, access_token, created_at,
+      order_items (
+        file_name, page_count, copies, print_type, paper_type, finishing, price
+      )
+    `)
     .eq("status", "pending")
     .not("customer_email", "is", null)
     .not("access_token", "is", null)
@@ -64,6 +69,7 @@ export async function GET(request: NextRequest) {
         subtotal: order.subtotal,
         total: order.total,
         access_token: order.access_token,
+        items: order.order_items ?? [],
       })
 
       const sendResult = await sendEmail({ to: order.customer_email, subject, html })
