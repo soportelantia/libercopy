@@ -14,7 +14,12 @@ export async function GET(request: NextRequest) {
 
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select("id, status, subtotal, total, customer_email, user_id, items, access_token, created_at")
+      .select(`
+        id, status, subtotal, total, customer_email, user_id, items, access_token, created_at,
+        order_items (
+          id, file_name, file_url, page_count, copies, print_type, paper_type, finishing, comments, price
+        )
+      `)
       .eq("id", orderId)
       .eq("access_token", token)
       .neq("status", "paid")

@@ -141,17 +141,35 @@ export default function ImprimirPage() {
           localStorage.setItem("current_order_token", urlToken)
         }
 
-        // Restore print options from the first item in the order
-        const firstItem = Array.isArray(order.items) ? order.items[0] : null
-        if (firstItem?.options) {
+        // Restore files and print options from order_items
+        const orderItems = Array.isArray(order.order_items) ? order.order_items : []
+        if (orderItems.length > 0) {
+          const restoredFiles = orderItems.map((item: any) => ({
+            name: item.file_name || "archivo.pdf",
+            size: 0,
+            type: "application/pdf",
+            pageCount: item.page_count || 0,
+            isProcessing: false,
+            pageCountIsReal: true,
+            fileUrl: item.file_url || null,
+            arrayBuffer: async () => new ArrayBuffer(0),
+            slice: () => new Blob(),
+            stream: () => new ReadableStream(),
+            text: async () => "",
+          }))
+          setUploadedFiles(restoredFiles)
+          const totalPgs = orderItems.reduce((sum: number, item: any) => sum + (item.page_count || 0), 0)
+          setTotalPages(totalPgs)
+
+          // Restore print options from first item
+          const first = orderItems[0]
           setPrintOptions((prev) => ({
             ...prev,
-            printType: firstItem.options.printType || prev.printType,
-            printForm: firstItem.options.printForm || prev.printForm,
-            finishing: firstItem.options.finishing || prev.finishing,
-            copies: firstItem.options.copies || prev.copies,
-            orientation: firstItem.options.orientation || prev.orientation,
-            comments: firstItem.comments || prev.comments,
+            printType: first.print_type || prev.printType,
+            printForm: first.paper_type === "doubleSided" ? "doubleSided" : prev.printForm,
+            finishing: first.finishing || prev.finishing,
+            copies: first.copies || prev.copies,
+            comments: first.comments || prev.comments,
           }))
         }
 
@@ -417,13 +435,13 @@ export default function ImprimirPage() {
 
       {/* Recovered Order Banner */}
       {recoveredOrder && (
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 py-3">
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 py-3">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between text-white">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 flex-shrink-0" />
                 <span className="font-medium text-sm">
-                  Hemos recuperado las opciones de tu pedido anterior. Vuelve a subir tu archivo PDF para continuar.
+                  Hemos recuperado tu pedido anterior con todos tus archivos y opciones. Puedes continuar desde donde lo dejaste.
                 </span>
               </div>
               <button
