@@ -12,25 +12,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "order_id y token son requeridos" }, { status: 400 })
     }
 
+    // Fetch the order first (no join — avoids PostgREST relation errors)
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select(`
-        id, status, subtotal, total, customer_email, user_id, items, access_token, created_at,
-        order_items (
-          id, file_name, file_url, page_count, copies, print_type, paper_type, finishing, comments, price
-        )
-      `)
+      .select("id, status, subtotal, total, customer_email, user_id, access_token, created_at")
       .eq("id", orderId)
       .eq("access_token", token)
-      .neq("status", "paid")
-      .single()
+      .not("status", "in", '("paid","completed","processing")')
+      .maybeSingle()
 
-    if (error || !order) {
-      // Return 404 silently — do not reveal whether the order exists
+    if (error) {
+      console.error("[/api/orders/abandoned GET] Query error:", error)
       return NextResponse.json({ order: null }, { status: 404 })
     }
 
-    return NextResponse.json({ order })
+    if (!order) {
+      console.log(`[/api/orders/abandoned GET] Order not found or already paid — id=${orderId}`)
+      return NextResponse.json({ order: null }, { status: 404 })
+    }
+
+    // Fetch order_items separately to avoid relying on PostgREST foreign-key relations
+    const { data: orderItems, error: itemsError } = await supabaseAdmin
+      .from("order_items")
+      .select("id, file_name, file_url, page_count, copies, print_type, paper_type, finishing, comments, price")
+      .eq("order_id", orderId)
+
+    if (itemsError) {
+      console.warn("[/api/orders/abandoned GET] Could not fetch order_items:", itemsError)
+    }
+
+    return NextResponse.json({ order: { ...order, order_items: orderItems ?? [] } })
   } catch (err) {
     console.error("Unexpected error in /api/orders/abandoned GET:", err)
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
