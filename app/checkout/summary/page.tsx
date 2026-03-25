@@ -252,6 +252,8 @@ export default function CheckoutSummaryPage() {
       // Crear el pedido principal
       const orderData = {
         user_id: user.id,
+        customer_email: user.email || null,
+        access_token: crypto.randomUUID(),
         status: "pending",
         subtotal: subtotal,
         shipping_cost: shippingCost,
