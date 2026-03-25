@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { CheckCircle, Clock, FileText, Truck, Users, ChevronLeft, ChevronRight, Quote, Star, Award,BookOpen } from "lucide-react"
+import { CheckCircle, Clock, FileText, Truck, Users, ChevronLeft, ChevronRight, Quote, Star, Award, BookOpen } from "lucide-react"
 import Footer from "@/components/footer"
 export default function EncuadernarPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -76,7 +76,7 @@ export default function EncuadernarPage() {
       <Navbar />
 
       {/* Hero section */}
-      <section className="relative py-20 md:py-32 overflow-hidden" style={{paddingBottom: "4rem"}}>
+      <section className="relative py-20 md:py-32 overflow-hidden" style={{ paddingBottom: "4rem" }}>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
         <div className="container mx-auto px-4 relative">
           <div className="text-center max-w-4xl mx-auto">
@@ -138,7 +138,7 @@ export default function EncuadernarPage() {
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center text-sm">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-3" />
-                    <span>Disponible en varios colores</span>
+                    <span>Disponible en varios tamaños</span>
                   </div>
                   <div className="flex items-center text-sm">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-3" />
@@ -197,7 +197,7 @@ export default function EncuadernarPage() {
               </CardContent>
             </Card>
 
-            
+
           </div>
         </div>
       </section>
@@ -324,9 +324,8 @@ export default function EncuadernarPage() {
                   {Array.from({ length: maxIndex + 1 }).map((_, index) => (
                     <button
                       key={index}
-                      className={`w-3 h-3 rounded-full transition-colors ${
-                        index === currentIndex ? "bg-blue-600" : "bg-gray-300"
-                      }`}
+                      className={`w-3 h-3 rounded-full transition-colors ${index === currentIndex ? "bg-blue-600" : "bg-gray-300"
+                        }`}
                       onClick={() => setCurrentIndex(index)}
                     />
                   ))}
