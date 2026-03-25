@@ -22,8 +22,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 })
     }
 
-    const { orderId, status, transactionId } = body
+    const { orderId, status, transactionId, details } = body
     const isSuccessful = status === "COMPLETED"
+
+    // Extraer el email del comprador directamente desde el payload de PayPal
+    const paypalPayerEmail: string | null = details?.payer?.email_address ?? null
+    console.log("PayPal payer email from payload:", paypalPayerEmail)
 
     console.log("Processing payment:", { orderId, status, transactionId, isSuccessful })
 
@@ -98,7 +102,9 @@ export async function POST(request: NextRequest) {
         const fieldsToFill: Record<string, string> = {}
 
         if (!order.customer_email) {
-          const emailToUse = userEmail
+          // Prioridad: 1) email del payload de PayPal, 2) email del usuario autenticado
+          const emailToUse = paypalPayerEmail || userEmail
+          console.log("Resolving customer_email — paypalPayerEmail:", paypalPayerEmail, "userEmail:", userEmail, "chosen:", emailToUse)
           if (emailToUse) fieldsToFill.customer_email = emailToUse
         }
 
@@ -107,6 +113,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (Object.keys(fieldsToFill).length > 0) {
+          console.log("Updating order with missing fields:", fieldsToFill)
           const { error: fillError } = await supabaseAdmin
             .from("orders")
             .update(fieldsToFill)
@@ -119,6 +126,10 @@ export async function POST(request: NextRequest) {
             // Actualizar userEmail local si lo acabamos de guardar
             if (fieldsToFill.customer_email) userEmail = fieldsToFill.customer_email
           }
+        } else {
+          console.log("customer_email and access_token already set, no update needed")
+          // Asegurarse de que userEmail refleja el valor actual del pedido
+          if (!userEmail && order.customer_email) userEmail = order.customer_email
         }
       } catch (fillError) {
         console.error("Exception filling order fields:", fillError)
