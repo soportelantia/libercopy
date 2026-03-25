@@ -78,7 +78,7 @@ export default function EncuadernarPage() {
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center text-sm">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-3" />
-                    <span>Disponible en varios tamaños</span>
+                    <span>Popular en estudiantes</span>
                   </div>
                   <div className="flex items-center text-sm">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-3" />
