@@ -1,75 +1,15 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { CheckCircle, Clock, FileText, Truck, Users, ChevronLeft, ChevronRight, Quote, Star, Award, BookOpen } from "lucide-react"
+import { CheckCircle, Clock, FileText, Truck, Users, Award, BookOpen } from "lucide-react"
 import Footer from "@/components/footer"
+import GoogleReviews from "@/components/google-reviews"
+
 export default function EncuadernarPage() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const carouselRef = useRef<HTMLDivElement>(null)
-
-  const testimonials = [
-    {
-      name: "Laura Martínez",
-      role: "Estudiante de Derecho",
-      text: "Imprimí y encuaderné mi TFG con ellos y quedó perfecto. El servicio fue rápido y el acabado muy profesional. Totalmente recomendable para trabajos académicos.",
-      rating: 5,
-    },
-    {
-      name: "Carlos Rodríguez",
-      role: "Arquitecto",
-      text: "Utilizo sus servicios para imprimir presentaciones con grapado. La calidad es excelente y siempre cumplen con los plazos. Mis clientes quedan impresionados con el resultado.",
-      rating: 5,
-    },
-    {
-      name: "Elena Gómez",
-      role: "Profesora universitaria",
-      text: "Recomiendo Liberiscopy a todos mis alumnos para sus trabajos. El servicio online es muy intuitivo y los resultados son siempre profesionales.",
-      rating: 5,
-    },
-    {
-      name: "Miguel Sánchez",
-      role: "Estudiante de Ingeniería",
-      text: "La encuadernación en espiral es perfecta para mis apuntes. Puedo abrir completamente el documento y es muy resistente. Además, el precio es muy competitivo.",
-      rating: 5,
-    },
-    {
-      name: "Ana Fernández",
-      role: "Diseñadora gráfica",
-      text: "Como profesional del diseño, valoro mucho la calidad de impresión y acabado. Liberiscopy siempre cumple con mis expectativas y los plazos de entrega son inmejorables.",
-      rating: 5,
-    },
-    {
-      name: "Javier López",
-      role: "Abogado",
-      text: "Para documentos legales, la presentación es fundamental. El servicio de encuadernación profesional me ha ayudado a dar una imagen seria y de calidad a mis clientes.",
-      rating: 5,
-    },
-  ]
-
-  const maxIndex = testimonials.length - 3
-
-  const nextTestimonial = () => {
-    if (currentIndex < maxIndex) {
-      setCurrentIndex(currentIndex + 1)
-    }
-  }
-
-  const prevTestimonial = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1)
-    }
-  }
-
-  useEffect(() => {
-    if (carouselRef.current) {
-      carouselRef.current.style.transform = `translateX(-${currentIndex * 33.33}%)`
-    }
-  }, [currentIndex])
 
   return (
     <main className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-blue-50">
@@ -267,84 +207,8 @@ export default function EncuadernarPage() {
         </div>
       </section>
 
-      {/* Testimonios */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Lo que dicen nuestros clientes</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Miles de estudiantes y profesionales confían en nuestro servicio de impresión y acabados.
-            </p>
-          </div>
-
-          <div className="max-w-6xl mx-auto">
-            <div className="relative">
-              <div className="overflow-hidden">
-                <div
-                  ref={carouselRef}
-                  className="flex transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${currentIndex * 33.33}%)` }}
-                >
-                  {testimonials.map((testimonial, index) => (
-                    <div key={index} className="w-1/3 flex-shrink-0 px-4">
-                      <Card className="border-0 shadow-xl h-80 flex flex-col">
-                        <CardContent className="p-8 flex flex-col h-full">
-                          <Quote className="h-8 w-8 text-blue-600 opacity-20 mb-4 flex-shrink-0" />
-                          <div className="flex-grow overflow-y-auto mb-6">
-                            <p className="text-gray-600 italic">"{testimonial.text}"</p>
-                          </div>
-                          <div className="mt-auto">
-                            <div className="flex items-center mb-2">
-                              {[...Array(testimonial.rating)].map((_, i) => (
-                                <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
-                              ))}
-                            </div>
-                            <h4 className="font-bold text-gray-800">{testimonial.name}</h4>
-                            <p className="text-sm text-gray-500">{testimonial.role}</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mt-8">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full w-12 h-12 bg-transparent"
-                  onClick={prevTestimonial}
-                  disabled={currentIndex === 0}
-                >
-                  <ChevronLeft className={`h-6 w-6 ${currentIndex === 0 ? "text-gray-300" : ""}`} />
-                </Button>
-
-                <div className="flex space-x-2">
-                  {Array.from({ length: maxIndex + 1 }).map((_, index) => (
-                    <button
-                      key={index}
-                      className={`w-3 h-3 rounded-full transition-colors ${index === currentIndex ? "bg-blue-600" : "bg-gray-300"
-                        }`}
-                      onClick={() => setCurrentIndex(index)}
-                    />
-                  ))}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full w-12 h-12 bg-transparent"
-                  onClick={nextTestimonial}
-                  disabled={currentIndex === maxIndex}
-                >
-                  <ChevronRight className={`h-6 w-6 ${currentIndex === maxIndex ? "text-gray-300" : ""}`} />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Opiniones de Google */}
+      <GoogleReviews />
 
       {/* CTA */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
