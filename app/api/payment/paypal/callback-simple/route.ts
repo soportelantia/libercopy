@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import crypto from "crypto"
 import { createClient } from "@supabase/supabase-js"
 import { sendEmail, getOrderConfirmationEmail } from "@/lib/mail-service"
 
@@ -88,6 +89,39 @@ export async function POST(request: NextRequest) {
         }
       } catch (error) {
         console.error("Error fetching user:", error)
+      }
+    }
+
+    // Rellenar customer_email y access_token si están vacíos
+    if (isSuccessful) {
+      try {
+        const fieldsToFill: Record<string, string> = {}
+
+        if (!order.customer_email) {
+          const emailToUse = userEmail
+          if (emailToUse) fieldsToFill.customer_email = emailToUse
+        }
+
+        if (!order.access_token) {
+          fieldsToFill.access_token = crypto.randomUUID()
+        }
+
+        if (Object.keys(fieldsToFill).length > 0) {
+          const { error: fillError } = await supabaseAdmin
+            .from("orders")
+            .update(fieldsToFill)
+            .eq("id", orderId)
+
+          if (fillError) {
+            console.error("Error filling customer_email/access_token:", fillError)
+          } else {
+            console.log("Filled missing order fields:", Object.keys(fieldsToFill))
+            // Actualizar userEmail local si lo acabamos de guardar
+            if (fieldsToFill.customer_email) userEmail = fieldsToFill.customer_email
+          }
+        }
+      } catch (fillError) {
+        console.error("Exception filling order fields:", fillError)
       }
     }
 
