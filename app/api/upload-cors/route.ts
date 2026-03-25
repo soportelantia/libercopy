@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     // Configurar CORS para el bucket
     const corsConfiguration = [
       {
-        origin: ["https://v0-libery-copy.vercel.app", "http://localhost:3000",NEXT_PUBLIC_SITE_URL],
+        origin: ["https://v0-libery-copy.vercel.app", "http://localhost:3000", process.env.NEXT_PUBLIC_SITE_URL].filter(Boolean) as string[],
         method: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         responseHeader: ["Content-Type", "x-goog-resumable"],
         maxAgeSeconds: 3600,
