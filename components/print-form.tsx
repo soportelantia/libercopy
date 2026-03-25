@@ -22,20 +22,32 @@ interface PrintOptions {
 interface PrintFormProps {
   options: PrintOptions
   onUpdateOptions: (options: Partial<PrintOptions>) => void
+  pageCount?: number
 }
 
-export default function PrintForm({ options, onUpdateOptions }: PrintFormProps) {
+const BOUND_MAX_PAGES = 800
+
+export default function PrintForm({ options, onUpdateOptions, pageCount = 0 }: PrintFormProps) {
+  const isBoundDisabled = pageCount > BOUND_MAX_PAGES
   const handleCopiesChange = (increment: boolean) => {
     const newCopies = increment ? options.copies + 1 : Math.max(1, options.copies - 1)
     onUpdateOptions({ copies: newCopies })
   }
 
   const finishingOptions = [
-    { value: "none", label: "Sin acabado", icon: "📄", description: "Sin acabado adicional" },
-    { value: "stapled", label: "Grapado", icon: "📎", description: "Grapado en esquina superior izquierda" },
+    { value: "none", label: "Sin acabado", icon: "📄", description: "Sin acabado adicional", disabled: false },
+    { value: "stapled", label: "Grapado", icon: "📎", description: "Grapado en esquina superior izquierda", disabled: false },
     /*{ value: "twoHoles", label: "2 agujeros", icon: "⚪", description: "Perforado con 2 agujeros" },
     { value: "fourHoles", label: "4 agujeros", icon: "⚪⚪", description: "Perforado con 4 agujeros" },*/
-    { value: "bound", label: "Encuadernado", icon: "📖", description: "Encuadernación con espiral" },
+    {
+      value: "bound",
+      label: "Encuadernado",
+      icon: "📖",
+      description: isBoundDisabled
+        ? `Máximo ${BOUND_MAX_PAGES} páginas`
+        : "Encuadernación con espiral",
+      disabled: isBoundDisabled,
+    },
     //{ value: "laminated", label: "Plastificado", icon: "🛡️", description: "Plastificado para protección" },
   ]
 
@@ -233,18 +245,26 @@ export default function PrintForm({ options, onUpdateOptions }: PrintFormProps) 
           {finishingOptions.map((option) => (
             <div
               key={option.value}
-              className={`col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-4 p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                options.finishing === option.value
-                  ? "border-blue-500 bg-blue-50 shadow-md"
-                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+              className={`col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-4 p-4 border rounded-lg transition-all duration-200 ${
+                option.disabled
+                  ? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+                  : options.finishing === option.value
+                    ? "border-blue-500 bg-blue-50 shadow-md cursor-pointer"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 cursor-pointer"
               }`}
-              onClick={() => onUpdateOptions({ finishing: option.value as PrintOptions["finishing"] })}
+              onClick={() => {
+                if (!option.disabled) {
+                  onUpdateOptions({ finishing: option.value as PrintOptions["finishing"] })
+                }
+              }}
             >
               <div className="text-center space-y-2">
                 <div className="text-2xl">{option.icon}</div>
-                <div className="font-medium text-sm">{option.label}</div>
-                <div className="text-xs text-gray-500">{option.description}</div>
-                {options.finishing === option.value && (
+                <div className={`font-medium text-sm ${option.disabled ? "text-gray-400" : ""}`}>{option.label}</div>
+                <div className={`text-xs ${option.disabled ? "text-red-400 font-medium" : "text-gray-500"}`}>
+                  {option.description}
+                </div>
+                {options.finishing === option.value && !option.disabled && (
                   <Badge variant="default" className="text-xs">
                     Seleccionado
                   </Badge>

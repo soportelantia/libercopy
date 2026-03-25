@@ -146,7 +146,7 @@ export default function EncuadernarPage() {
                   </div>
                   <div className="flex items-center text-sm">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-3" />
-                    <span>Hasta 300 páginas</span>
+                    <span>Hasta 800 páginas</span>
                   </div>
                 </div>
                 <div className="flex justify-between items-center">

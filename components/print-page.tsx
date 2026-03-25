@@ -241,6 +241,7 @@ export default function PrintPage() {
                     <PrintForm
                       options={options}
                       onUpdateOptions={(newOptions) => setOptions((prev) => ({ ...prev, ...newOptions }))}
+                      pageCount={pageCount}
                     />
                   </CardContent>
                 </Card>
