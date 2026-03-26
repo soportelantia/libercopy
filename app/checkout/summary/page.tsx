@@ -8,7 +8,8 @@ import { supabase } from "@/lib/supabase/client"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, CreditCard, MapPin, Home, Phone } from "lucide-react"
+import { ArrowLeft, CreditCard, MapPin, Home, Phone, Tag, X } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { CheckoutSteps } from "@/components/checkout-steps"
 import { calcularGastosEnvioPorProvincia } from "@/lib/location-service"
 import { PayPalPayment } from "@/components/paypal-payment"
@@ -30,6 +31,14 @@ export default function CheckoutSummaryPage() {
   const orderCreationRef = useRef(false)
   const paymentComponentKey = useRef(0)
   const [showBizum, setShowBizum] = useState(false)
+  const [discountCode, setDiscountCode] = useState("")
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    code: string
+    percentage: number
+    discountAmount: number
+  } | null>(null)
+  const [discountError, setDiscountError] = useState<string | null>(null)
+  const [discountLoading, setDiscountLoading] = useState(false)
 
   useEffect(() => {
     console.log("=== CHECKOUT SUMMARY PAGE INIT ===")
@@ -239,7 +248,8 @@ export default function CheckoutSummaryPage() {
     console.log("[v0] Provincia ID para calcular gastos de envío:", provinciaId)
     console.log("[v0] Shipping data completo:", JSON.stringify(shippingData, null, 2))
     const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId, subtotal)
-    const total = subtotal + shippingCost
+    const discountAmt = appliedDiscount?.discountAmount ?? 0
+    const total = Math.max(0, subtotal + shippingCost - discountAmt)
 
     try {
       console.log("=== CREATING ORDER ===")
@@ -250,7 +260,7 @@ export default function CheckoutSummaryPage() {
       console.log("Total amount:", total)
 
       // Crear el pedido principal
-      const orderData = {
+      const orderData: Record<string, unknown> = {
         user_id: user.id,
         customer_email: user.email || null,
         access_token: crypto.randomUUID(),
@@ -261,6 +271,10 @@ export default function CheckoutSummaryPage() {
         payment_method: paymentMethod,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+      }
+      if (appliedDiscount) {
+        orderData.discount_code = appliedDiscount.code
+        orderData.discount_amount = appliedDiscount.discountAmount
       }
 
       console.log("Creating order with data:", orderData)
@@ -393,6 +407,42 @@ export default function CheckoutSummaryPage() {
     }
   }, [user, shippingData, getTotalPrice, cart, paymentMethod])
 
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) return
+    setDiscountError(null)
+    setDiscountLoading(true)
+    try {
+      const subtotal = getTotalPrice() || 0
+      const res = await fetch("/api/discount-codes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: discountCode.trim(), subtotal }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setDiscountError(data.error || "Código no válido")
+        setAppliedDiscount(null)
+      } else {
+        setAppliedDiscount({
+          code: data.code,
+          percentage: data.percentage,
+          discountAmount: data.discountAmount,
+        })
+        setDiscountCode("")
+      }
+    } catch {
+      setDiscountError("Error al validar el código. Inténtalo de nuevo.")
+    } finally {
+      setDiscountLoading(false)
+    }
+  }
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null)
+    setDiscountError(null)
+    setDiscountCode("")
+  }
+
   const handleContinue = useCallback(async () => {
     if (!shippingData) {
       alert("Por favor selecciona una dirección de envío")
@@ -407,7 +457,8 @@ export default function CheckoutSummaryPage() {
     const subtotal = getTotalPrice() || 0
     const provinciaId = shippingData?.address?.province || "41" // Default a Sevilla (41)
     const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId, subtotal)
-    const total = subtotal + shippingCost
+    const discountAmt = appliedDiscount?.discountAmount ?? 0
+    const total = Math.max(0, subtotal + shippingCost - discountAmt)
 
     // Guardar datos completos para el checkout
     const checkoutData = {
@@ -415,6 +466,7 @@ export default function CheckoutSummaryPage() {
       subtotal,
       shippingCost,
       total,
+      discount: appliedDiscount ?? null,
       shipping: {
         ...shippingData,
         cost: shippingCost,
@@ -567,9 +619,10 @@ export default function CheckoutSummaryPage() {
   const subtotal = getTotalPrice() || 0
   const provinciaId = shippingData?.address?.province || "41" // Default a Sevilla (41)
   const shippingCost = shippingData.type === "pickup" ? 0 : calcularGastosEnvioPorProvincia(provinciaId, subtotal)
+  const discountAmount = appliedDiscount?.discountAmount ?? 0
   const subtotalWithoutIVA = subtotal / 1.21
   const iva = subtotal - subtotalWithoutIVA
-  const total = subtotal + shippingCost
+  const total = Math.max(0, subtotal + shippingCost - discountAmount)
 
   return (
     <main className="flex min-h-screen flex-col bg-white">
@@ -805,6 +858,15 @@ export default function CheckoutSummaryPage() {
                     <span className="text-gray-600">Gastos de envío (IVA incl.):</span>
                     <span>{shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2)}€`}</span>
                   </div>
+                  {appliedDiscount && (
+                    <div className="flex justify-between text-green-600">
+                      <span className="flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        Descuento ({appliedDiscount.code}, -{appliedDiscount.percentage}%):
+                      </span>
+                      <span>-{appliedDiscount.discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
                   <div className="border-t pt-3">
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total:</span>
@@ -812,6 +874,59 @@ export default function CheckoutSummaryPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Código de descuento */}
+                {!showPayPal && !showRedsys && !showBizum && (
+                  <div className="mt-4">
+                    {appliedDiscount ? (
+                      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm">
+                        <span className="flex items-center gap-2 text-green-700 font-medium">
+                          <Tag className="h-4 w-4" />
+                          {appliedDiscount.code} ({appliedDiscount.percentage}% dto.)
+                        </span>
+                        <button
+                          onClick={handleRemoveDiscount}
+                          className="text-green-600 hover:text-green-800 ml-2"
+                          aria-label="Eliminar código de descuento"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <label className="text-sm text-gray-600 font-medium flex items-center gap-1">
+                          <Tag className="h-3.5 w-3.5" />
+                          ¿Tienes un código de descuento?
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={discountCode}
+                            onChange={(e) => {
+                              setDiscountCode(e.target.value.toUpperCase())
+                              setDiscountError(null)
+                            }}
+                            onKeyDown={(e) => e.key === "Enter" && handleApplyDiscount()}
+                            placeholder="LIBER-XXXXXX"
+                            className="flex-1 text-sm h-9 uppercase"
+                            disabled={discountLoading}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleApplyDiscount}
+                            disabled={discountLoading || !discountCode.trim()}
+                            className="h-9 border-[#2E5FEB] text-[#2E5FEB] hover:bg-[#2E5FEB] hover:text-white"
+                          >
+                            {discountLoading ? "..." : "Aplicar"}
+                          </Button>
+                        </div>
+                        {discountError && (
+                          <p className="text-xs text-red-600">{discountError}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {!showPayPal && !showRedsys && (
                   <Button
