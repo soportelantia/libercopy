@@ -405,7 +405,7 @@ export default function CheckoutSummaryPage() {
       setIsCreatingOrder(false)
       orderCreationRef.current = false
     }
-  }, [user, shippingData, getTotalPrice, cart, paymentMethod])
+  }, [user, shippingData, getTotalPrice, cart, paymentMethod, appliedDiscount])
 
   const handleApplyDiscount = async () => {
     if (!discountCode.trim()) return
@@ -516,7 +516,7 @@ export default function CheckoutSummaryPage() {
       console.error("Error:", error)
       alert("Error al crear el pedido. Por favor, inténtalo de nuevo.")
     }
-  }, [shippingData, getTotalPrice, cart, paymentMethod, createOrderDirectly, isCreatingOrder])
+  }, [shippingData, getTotalPrice, cart, paymentMethod, createOrderDirectly, isCreatingOrder, appliedDiscount])
 
   const handleBack = useCallback(() => {
     router.push("/checkout/payment")
