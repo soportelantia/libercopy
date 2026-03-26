@@ -37,6 +37,33 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/libercopy-favicon.svg" />
         <link rel="apple-touch-icon" href="/libercopy-favicon.svg" />
         
+        {/* JSON-LD Organization */}
+        <Script
+          id="jsonld-organization"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "Libercopy",
+              "url": "https://www.libercopy.es",
+              "logo": "https://www.libercopy.es/libercopy-logo.png",
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "email": "info@libercopy.es",
+                "contactType": "customer service",
+                "availableLanguage": "Spanish",
+              },
+              "sameAs": [
+                "https://instagram.com/libercopy",
+                "https://tiktok.com/@libercopy",
+                "https://x.com/LibercopyOnline",
+                "https://www.facebook.com/share/1EpbbMPf2L/",
+              ],
+            }),
+          }}
+        />
+
         {/* Google Analytics */}
         <Script
           async
