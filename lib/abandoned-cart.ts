@@ -178,7 +178,7 @@ export function getAbandonedCartEmailStep1(orderData: AbandonedCartOrderData): {
   `
 
   return {
-    subject: "¿Olvidaste algo? Tu pedido de impresión te espera",
+    subject: "Libercopy - ¿Olvidaste algo? Tu pedido de impresión te espera",
     html: getEmailTemplate("Tu pedido sigue guardado", content),
   }
 }
@@ -232,7 +232,7 @@ export function getAbandonedCartEmailStep2(
   `
 
   return {
-    subject: `${discountPercentage} % de descuento para terminar tu pedido de impresión`,
+    subject: `Libercopy - ${discountPercentage} % de descuento para terminar tu pedido de impresión`,
     html: getEmailTemplate("Un descuento especial para ti", content),
   }
 }
@@ -280,7 +280,7 @@ export function getAbandonedCartEmailStep3(
   `
 
   return {
-    subject: "Ultimo aviso: tu pedido de impresión expira pronto",
+    subject: "Libercopy - Ultimo aviso: tu pedido de impresión expira pronto",
     html: getEmailTemplate("Ultima oportunidad para tu pedido", content),
   }
 }
