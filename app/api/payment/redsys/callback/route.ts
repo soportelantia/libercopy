@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
 import { createClient } from "@supabase/supabase-js"
 import { sendEmail, getOrderConfirmationEmail } from "@/lib/mail-service"
+import { markOrderAsRecovered } from "@/lib/abandoned-cart"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ""
@@ -306,6 +307,11 @@ export async function POST(request: NextRequest) {
       finalStatus: newStatus,
       success: isSuccessful,
     })
+
+    // Marcar pedido como recuperado si había iniciado el flujo de abandono
+    if (isSuccessful) {
+      await markOrderAsRecovered(supabase, realOrderId)
+    }
 
     // Enviar email de confirmación si fue exitoso
     if (isSuccessful && userEmail && orderData) {
