@@ -45,12 +45,12 @@ if (isServer && isMailgunConfigured) {
 
 // Función para calcular el total del pedido correctamente
 function calculateOrderTotal(orderData: any): number {
-  // Si ya existe total_amount y es mayor que 0, usarlo
-  if (orderData.total_amount && orderData.total_amount > 0) {
-    return orderData.total_amount
+  // Si ya existe total y es mayor que 0, usarlo (campo guardado en DB con descuento ya aplicado)
+  if (orderData.total && orderData.total > 0) {
+    return orderData.total
   }
 
-  // Si no, calcular desde los items + gastos de envío
+  // Fallback: calcular desde los items + gastos de envío - descuento
   const itemsTotal =
     orderData.order_items?.reduce((sum: number, item: any) => {
       const itemPrice = item.price || 0
@@ -59,7 +59,8 @@ function calculateOrderTotal(orderData: any): number {
     }, 0) || 0
 
   const shippingCost = orderData.shipping_cost || 0
-  return itemsTotal + shippingCost
+  const discountAmount = orderData.discount_amount || 0
+  return Math.max(0, itemsTotal + shippingCost - discountAmount)
 }
 
 interface SendEmailParams {
@@ -442,6 +443,19 @@ export function getOrderConfirmationEmail(orderData: any) {
           </td>
           <td style="padding: 15px; border-bottom: 1px solid #e9ecef; text-align: right;">
             <strong>${orderData.shipping_cost.toFixed(2)}€</strong>
+          </td>
+        </tr>
+        `
+        : ""
+      }
+        ${orderData.discount_code && orderData.discount_amount > 0
+        ? `
+        <tr style="background-color: #f0fdf4;">
+          <td style="padding: 15px; border-bottom: 1px solid #e9ecef;">
+            <strong style="color: #16a34a;">🏷️ Descuento (${orderData.discount_code})</strong>
+          </td>
+          <td style="padding: 15px; border-bottom: 1px solid #e9ecef; text-align: right; color: #16a34a;">
+            <strong>-${Number(orderData.discount_amount).toFixed(2)}€</strong>
           </td>
         </tr>
         `
