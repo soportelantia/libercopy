@@ -69,7 +69,7 @@ const productJsonLd = buildProductSchema({
   description:
     "Servicio de impresión online en color para documentos, presentaciones y material académico en formato A4. Calidad láser, opciones de doble cara y encuadernado disponibles.",
   url: PAGE_URL,
-  price: "0.09",
+  price: "0.06",
 })
 
 const faqJsonLd = buildFaqSchema(faqs)
