@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   CheckCircle,
+  Calculator,
   Printer,
   Truck,
   BookOpen,
@@ -342,21 +343,52 @@ export default function ImprimirApuntesOnlinePage() {
           </div>
         </section>
 
-        {/* Calculadora */}
-        <section id="calculadora" className="py-16 bg-white/70">
+        {/* ─── Calculadora ─── */}
+        <section id="calculadora" className="py-16 bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">
-                Calcula cuánto cuestan{" "}
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  tus apuntes impresos
-                </span>
-              </h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Sin registro ni subida de archivos. Solo indícanos el número de páginas.
-              </p>
+            <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+              <div>
+                <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2">
+                  <Calculator className="w-4 h-4 mr-2" />
+                  Calcula tu precio al instante
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">
+                  Sabe exactamente{" "}
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    cuánto cuestan tus apuntes impresos
+                  </span>{" "}
+                  antes de subir el PDF
+                </h2>
+                <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                  Sin registro ni subida de archivos. Solo indícanos el número de páginas.
+                </p>
+                <div className="space-y-3 text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+                    <span>Precios actualizados desde nuestra base de datos</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-blue-500 shrink-0" />
+                    <span>Sin necesidad de crear cuenta ni subir ningún fichero</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-purple-500 shrink-0" />
+                    <span>IVA incluido en el precio mostrado</span>
+                  </div>
+                </div>
+                <Link
+                  href="/calcular-precio"
+                  className="mt-8 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Abrir calculadora completa
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <PriceCalculator />
+              </div>
             </div>
-            <PriceCalculator />
           </div>
         </section>
 
