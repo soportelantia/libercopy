@@ -141,7 +141,7 @@ export default function ImpresionColorA4Page() {
                 <p className="text-2xl font-bold text-blue-600 mb-8">
                   Desde{" "}
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    0,09 €/página
+                    0,06 €/página
                   </span>
                 </p>
 
