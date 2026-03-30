@@ -69,7 +69,7 @@ export default function CheckoutSummaryPage() {
             // Si es envío a domicilio, recargar la dirección desde la base de datos
             if (data.shipping.type === "home" && data.shipping.address?.id) {
               console.log("[v0] Reloading address from database, ID:", data.shipping.address.id)
-              
+
               const { data: addressData, error } = await supabase
                 .from("user_addresses")
                 .select("*")
@@ -99,12 +99,12 @@ export default function CheckoutSummaryPage() {
 
                 console.log("[v0] Address reloaded:", updatedAddress)
                 console.log("[v0] Province ID for shipping cost:", addressData.province)
-                
+
                 // Recalcular el costo de envío con la nueva dirección
                 const cartTotal = getTotalPrice() || 0
                 const newShippingCost = calcularGastosEnvioPorProvincia(addressData.province, cartTotal)
                 console.log("[v0] Recalculated shipping cost:", newShippingCost)
-                
+
                 // Actualizar shippingData con la dirección actualizada y el nuevo costo
                 const updatedShipping = {
                   ...data.shipping,
@@ -112,7 +112,7 @@ export default function CheckoutSummaryPage() {
                   cost: newShippingCost,
                 }
                 setShippingData(updatedShipping)
-                
+
                 // Actualizar sessionStorage con los datos actualizados
                 sessionStorage.setItem(
                   "checkoutData",
@@ -125,7 +125,7 @@ export default function CheckoutSummaryPage() {
             } else {
               setShippingData(data.shipping)
             }
-            
+
             console.log("Shipping data from checkoutData:", data.shipping.type)
           }
           if (data.payment?.method && !savedPayment) {
@@ -144,11 +144,11 @@ export default function CheckoutSummaryPage() {
         if (savedShipping) {
           try {
             const shipping = JSON.parse(savedShipping)
-            
+
             // Si es envío a domicilio, recargar la dirección desde la base de datos
             if (shipping.type === "home" && shipping.address?.id) {
               console.log("[v0] Reloading address from database (shippingSelection), ID:", shipping.address.id)
-              
+
               const { data: addressData, error } = await supabase
                 .from("user_addresses")
                 .select("*")
@@ -178,12 +178,12 @@ export default function CheckoutSummaryPage() {
 
                 console.log("[v0] Address reloaded (shippingSelection):", updatedAddress)
                 console.log("[v0] Province ID for shipping cost (shippingSelection):", addressData.province)
-                
+
                 // Recalcular el costo de envío con la nueva dirección
                 const cartTotal = getTotalPrice() || 0
                 const newShippingCost = calcularGastosEnvioPorProvincia(addressData.province, cartTotal)
                 console.log("[v0] Recalculated shipping cost (shippingSelection):", newShippingCost)
-                
+
                 // Actualizar shippingData con la dirección actualizada y el nuevo costo
                 const updatedShipping = {
                   ...shipping,
@@ -191,7 +191,7 @@ export default function CheckoutSummaryPage() {
                   cost: newShippingCost,
                 }
                 setShippingData(updatedShipping)
-                
+
                 // Actualizar sessionStorage con los datos actualizados
                 sessionStorage.setItem("shippingSelection", JSON.stringify(updatedShipping))
               } else {
@@ -201,7 +201,7 @@ export default function CheckoutSummaryPage() {
             } else {
               setShippingData(shipping)
             }
-            
+
             console.log("Shipping data from shippingSelection:", shipping.type)
           } catch (e) {
             console.error("Error parsing shippingSelection:", e)
@@ -906,7 +906,7 @@ export default function CheckoutSummaryPage() {
                               setDiscountError(null)
                             }}
                             onKeyDown={(e) => e.key === "Enter" && handleApplyDiscount()}
-                            placeholder="LIBER-XXXXXX"
+                            placeholder="XXXXXXXXXXX"
                             className="flex-1 text-sm h-9 uppercase"
                             disabled={discountLoading}
                           />
