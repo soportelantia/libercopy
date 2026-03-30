@@ -25,6 +25,9 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { useState } from "react"
+import { buildServiceSchema, buildFaqSchema } from "@/lib/schemas"
+
+const PAGE_URL = "https://www.libercopy.es/imprimir-temarios-oposiciones"
 
 const faqs = [
   {
@@ -59,40 +62,18 @@ const faqs = [
   },
 ]
 
+const jsonLdService = buildServiceSchema({
+  name: "Impresión de temarios de oposiciones online",
+  description:
+    "Servicio online para imprimir temarios y apuntes de oposiciones con diferentes acabados: blanco y negro, color, doble cara, grapado o espiral. Envío a domicilio en toda España.",
+  url: PAGE_URL,
+  serviceType: "Impresión bajo demanda",
+})
+
+const jsonLdFaq = buildFaqSchema(faqs)
+
 export default function ImprimirTemariosOposicionesPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-
-  const jsonLdService = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: "Impresión de temarios de oposiciones online",
-    provider: {
-      "@type": "Organization",
-      name: "Libercopy",
-      url: "https://www.libercopy.es",
-    },
-    areaServed: {
-      "@type": "Country",
-      name: "España",
-    },
-    description:
-      "Servicio online para imprimir temarios y apuntes de oposiciones con diferentes acabados: blanco y negro, color, doble cara, grapado o espiral. Envío a domicilio en toda España.",
-    url: "https://www.libercopy.es/imprimir-temarios-oposiciones",
-    serviceType: "Impresión bajo demanda",
-  }
-
-  const jsonLdFaq = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
-  }
 
   return (
     <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">

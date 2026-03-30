@@ -28,6 +28,7 @@ import {
   Settings2,
   PackageCheck,
 } from "lucide-react"
+import { buildProductSchema, buildFaqSchema } from "@/lib/schemas"
 
 const PAGE_URL = "https://www.libercopy.es/impresion-blanco-y-negro-a4"
 
@@ -64,43 +65,15 @@ const faqs = [
   },
 ]
 
-const productJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Product",
+const productJsonLd = buildProductSchema({
   name: "Impresión en blanco y negro A4",
   description:
     "Servicio de impresión online en blanco y negro para apuntes, temarios y documentos en formato A4. Opciones de doble cara, grapado y espiral disponibles.",
-  brand: {
-    "@type": "Brand",
-    name: "Libercopy",
-  },
   url: PAGE_URL,
-  offers: {
-    "@type": "Offer",
-    priceCurrency: "EUR",
-    price: "0.02",
-    priceValidUntil: "2026-12-31",
-    availability: "https://schema.org/InStock",
-    url: PAGE_URL,
-    seller: {
-      "@type": "Organization",
-      name: "Libercopy",
-    },
-  },
-}
+  price: "0.02",
+})
 
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqs.map((faq) => ({
-    "@type": "Question",
-    name: faq.question,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: faq.answer,
-    },
-  })),
-}
+const faqJsonLd = buildFaqSchema(faqs)
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false)
