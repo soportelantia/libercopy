@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 
+export const revalidate = 3600 // Revalidar cada hora
+
 const BASE_URL = "https://libercopy.es"
 
 // Rutas estáticas con su prioridad y frecuencia de cambio
